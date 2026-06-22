@@ -61,23 +61,23 @@ export const DEFAULT_CONFIG: LayoutConfig = {
   noteFontSize: 28,
   noteWidth: 36,
   noteHeight: 36,
-  measureGap: 20,
-  rowGap: 50,
-  dotRadius: 3.5,
-  dotGap: 5,
-  accentDotRadius: 3,
-  underlineOffset: 6,
-  underlineGap: 5,
-  underlineThickness: 2,
-  dashThickness: 2.5,
+  measureGap: 10,
+  rowGap: 24,
+  dotRadius: 2,
+  dotGap: 3,
+  accentDotRadius: 2,
+  underlineOffset: 1,
+  underlineGap: 2.5,
+  underlineThickness: 1.5,
+  dashThickness: 2,
   barlineWidth: 1.5,
-  techniqueFontSize: 14,
-  techniqueOffset: 8,
+  techniqueFontSize: 11,
+  techniqueOffset: 0,
   titleFontSize: 22,
   metaFontSize: 16,
-  tieCurveHeight: 14,
-  lyricFontSize: 13,
-  lyricOffset: 6,
+  tieCurveHeight: 8,
+  lyricFontSize: 11,
+  lyricOffset: 2,
 };
 
 function isNote(item: NoteType | Dash): item is NoteType {
@@ -105,7 +105,7 @@ function layoutNote(
       for (let i = 0; i < octave; i++) {
         upperDots.push({
           x: x + config.noteWidth / 2 - config.dotRadius,
-          y: y - config.dotGap * (i + 1) - config.dotRadius,
+          y: y - config.dotRadius + 3 - (i > 0 ? config.dotGap * i : 0),
           width: config.dotRadius * 2,
           height: config.dotRadius * 2,
         });
@@ -166,40 +166,63 @@ function layoutNote(
       }
     }
 
-    // 技巧符号位置
+    // 技巧符号位置（统一高度，倚音特殊处理）
     const techniquePositions: { technique: DiziTechnique; position: SymbolPosition }[] = [];
+    const techYBase = y - (config.techniqueOffset + config.techniqueFontSize);
     if (note.techniques) {
       note.techniques.forEach((tech, idx) => {
-        const techLabel = getTechniqueLabel(tech);
-        const techWidth = techLabel.length * config.techniqueFontSize * 0.7;
+        if (tech.type === 'yinyin') {
+          const notes = tech.graceNotes || [];
+          const label = notes.join('');
+          const gFontSize = config.techniqueFontSize + 1;
+          const width = label.length * gFontSize * 0.6 + 2;
+          techniquePositions.push({
+            technique: tech,
+            position: {
+              x: x - width + 4,
+              y: y - gFontSize - 2,
+              width,
+              height: gFontSize + 6,
+            },
+            mainNotePos: { x: x + config.noteWidth / 2, y: y + 2, width: 0, height: 0 },
+          });
+          return;
+        }
+        const label = getTechniqueLabel(tech);
+        const width = label.length * config.techniqueFontSize * 0.7;
         techniquePositions.push({
           technique: tech,
           position: {
-            x: x + config.noteWidth / 2 - techWidth / 2,
-            y: y - config.techniqueOffset - (octave > 0 ? octave * config.dotGap : 0) - config.techniqueFontSize * (idx + 1) - 2,
-            width: techWidth,
+            x: x + config.noteWidth / 2 - width / 2,
+            y: techYBase,
+            width,
             height: config.techniqueFontSize,
           },
         });
       });
     }
 
-    // 重音、保持音、延长记号
+    // 重音、保持音、延长记号（统一在技法符号上方）
+    const hasTechniques = (note.techniques?.length || 0) > 0;
+    const accentY = hasTechniques
+      ? techYBase - config.techniqueFontSize - 2
+      : y - 2;
+
     const accentPosition = note.accent ? {
       x: x + config.noteWidth / 2 - 5,
-      y: y - 8 - (octave > 0 ? octave * config.dotGap : 0) - (note.techniques?.length || 0) * (config.techniqueFontSize + 2),
+      y: accentY,
       width: 10, height: 8,
     } : undefined;
 
     const tenutoPosition = note.tenuto ? {
       x: x + config.noteWidth / 2 - 8,
-      y: y - 6 - (octave > 0 ? octave * config.dotGap : 0),
+      y: y - 2,
       width: 16, height: 3,
     } : undefined;
 
     const fermataPosition = note.fermata ? {
       x: x + config.noteWidth / 2 - 10,
-      y: y - 22 - (octave > 0 ? octave * config.dotGap : 0) - (note.techniques?.length || 0) * (config.techniqueFontSize + 2),
+      y: hasTechniques ? accentY - 10 : y - 12,
       width: 20, height: 14,
     } : undefined;
 
@@ -362,10 +385,9 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
   } : undefined;
   if (titlePosition) currentY += titlePosition.height + 8;
 
-  // 调号、拍号
+  // 调号、拍号、速度标记
   const metaY = currentY;
   const keyText = `1=${score.key}`;
-  const tsText = `${score.timeSignature.numerator}/${score.timeSignature.denominator}`;
   const tempoText = score.tempo ? `♩=${score.tempo}` : '';
 
   const keyPosition: SymbolPosition = {
@@ -374,22 +396,30 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
     width: keyText.length * cfg.metaFontSize * 0.7,
     height: cfg.metaFontSize + 4,
   };
+  // 拍号放在调号右边，垂直居中对齐
+  const tsDigitWidth = cfg.metaFontSize * 0.65;
+  const tsLineWidth = tsDigitWidth + 4;
+  const tsTotalHeight = cfg.metaFontSize * 2 + 10; // 两个数字 + 横线 + 间距
+  const keyCenterY = metaY + (cfg.metaFontSize + 4) / 2;
   const timeSignaturePosition: SymbolPosition = {
-    x: keyPosition.x + keyPosition.width + 20,
-    y: metaY,
-    width: cfg.metaFontSize,
-    height: cfg.metaFontSize * 2 + 6,
+    x: keyPosition.x + keyPosition.width + 6,
+    y: keyCenterY - tsTotalHeight / 2,
+    width: tsLineWidth,
+    height: tsTotalHeight,
   };
+  // 速度标记放在调号下方，左对齐
   let tempoPosition: SymbolPosition | undefined;
   if (tempoText) {
     tempoPosition = {
-      x: timeSignaturePosition.x + timeSignaturePosition.width + 20,
-      y: metaY,
+      x: cfg.paddingHorizontal,
+      y: metaY + (cfg.metaFontSize + 4) + 6,
       width: tempoText.length * cfg.metaFontSize * 0.6,
       height: cfg.metaFontSize + 4,
     };
   }
-  currentY += cfg.metaFontSize + 16;
+  currentY = tempoPosition
+    ? tempoPosition.y + tempoPosition.height + 4
+    : timeSignaturePosition.y + tsTotalHeight + 4;
 
   // 计算行布局
   const rows: RowLayout[] = [];
