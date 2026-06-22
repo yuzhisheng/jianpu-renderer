@@ -244,7 +244,7 @@ function drawTriplet(ctx: CanvasRenderingContext2D, startNote: NoteLayout, endNo
 }
 
 /** 绘制技巧符号 */
-function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme) {
+function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme, mainNotePos?: SymbolPosition) {
   ctx.fillStyle = theme.techniqueColor;
   ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", "SimSun", serif`;
   ctx.textAlign = 'left';
@@ -267,22 +267,9 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
 
   const label = labels[tech.type] || tech.type;
 
-  // 颤音需要额外绘制波浪线
+  // 颤音 - 只显示 tr
   if (tech.type === 'chanyin') {
     ctx.fillText(label, pos.x, pos.y + pos.height);
-    // 波浪线
-    const startX = pos.x;
-    const endX = pos.x + pos.width + 10;
-    const y = pos.y + pos.height + 4;
-    ctx.strokeStyle = theme.techniqueColor;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let x = startX; x <= endX; x += 2) {
-      const dy = Math.sin((x - startX) * 0.8) * 3;
-      if (x === startX) ctx.moveTo(x, y + dy);
-      else ctx.lineTo(x, y + dy);
-    }
-    ctx.stroke();
     return;
   }
 
@@ -303,19 +290,49 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
     return;
   }
 
-  // 倚音 - 小字标注
+  // 倚音 - 小字标注在左上，减时线，斜线连主音
   if (tech.type === 'yinyin' && tech.graceNotes?.length) {
-    ctx.font = `${config.techniqueFontSize - 2}px "Noto Sans", serif`;
+    const gFontSize = config.techniqueFontSize + 1;
     const graceText = tech.graceNotes.join('');
-    ctx.fillText(graceText, pos.x, pos.y + pos.height);
-    // 小音符下划线
-    const underY = pos.y + pos.height + 2;
-    ctx.strokeStyle = theme.techniqueColor;
+    const textBottom = pos.y + pos.height - 6; // 留空给减时线
+
+    // 小字
+    ctx.fillStyle = theme.noteColor;
+    ctx.font = `bold ${gFontSize}px "Noto Sans", serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(graceText, pos.x + pos.width / 2, textBottom);
+
+    // 减时线（双线）
+    ctx.strokeStyle = theme.underlineColor;
     ctx.lineWidth = 1;
+    const lineStartX = pos.x + 1;
+    const lineEndX = pos.x + pos.width - 1;
+    const lineY1 = textBottom + 2;
+    const lineY2 = textBottom + 4.5;
     ctx.beginPath();
-    ctx.moveTo(pos.x, underY);
-    ctx.lineTo(pos.x + pos.width, underY);
+    ctx.moveTo(lineStartX, lineY1);
+    ctx.lineTo(lineEndX, lineY1);
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(lineStartX, lineY2);
+    ctx.lineTo(lineEndX, lineY2);
+    ctx.stroke();
+
+    // 弧线从减时线下方向下再向右弯到主音
+    if (mainNotePos) {
+      const graceX = pos.x + 2;
+      const graceY = textBottom + 6.5; // 双横线下方
+      const mainX = mainNotePos.x - config.noteWidth * 0.2;
+      const mainY = mainNotePos.y + 2;
+
+      ctx.strokeStyle = theme.tieColor;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(graceX, graceY);
+      ctx.quadraticCurveTo(graceX, mainY + 4, mainX, mainY);
+      ctx.stroke();
+    }
     return;
   }
 
@@ -410,11 +427,30 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
     ctx.fillStyle = theme.metaColor;
     ctx.font = `bold ${config.metaFontSize}px "Noto Sans", serif`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+
     const ts = score.timeSignature;
     const cx = layout.timeSignaturePosition.x + layout.timeSignaturePosition.width / 2;
-    ctx.fillText(`${ts.numerator}`, cx, layout.timeSignaturePosition.y);
-    ctx.fillText(`${ts.denominator}`, cx, layout.timeSignaturePosition.y + config.metaFontSize + 2);
+    const topY = layout.timeSignaturePosition.y;
+    const half = Math.round(config.metaFontSize * 1.1);
+    const numeratorY = topY + 2;
+    const lineY = topY + half;
+    const denominatorY = lineY + 4;
+
+    // 分子
+    ctx.textBaseline = 'top';
+    ctx.fillText(`${ts.numerator}`, cx, numeratorY);
+    // 分母
+    ctx.fillText(`${ts.denominator}`, cx, denominatorY);
+
+    // 中间横线
+    const lineStartX = cx - config.metaFontSize * 0.32;
+    const lineEndX = cx + config.metaFontSize * 0.32;
+    ctx.strokeStyle = theme.metaColor;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(lineStartX, lineY);
+    ctx.lineTo(lineEndX, lineY);
+    ctx.stroke();
   }
 
   if (layout.tempoPosition && score.tempo) {
@@ -478,7 +514,7 @@ export function render(
 
         // 技巧符号
         noteLayout.techniquePositions.forEach(tp => {
-          drawTechnique(ctx, tp.technique, tp.position, config, theme);
+          drawTechnique(ctx, tp.technique, tp.position, config, theme, tp.mainNotePos);
         });
 
         // 重音/保持音/延长记号

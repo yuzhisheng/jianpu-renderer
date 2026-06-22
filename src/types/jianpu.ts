@@ -169,7 +169,7 @@ export interface NoteLayout {
   /** 减时线 Y 坐标和宽度列表 */
   underlines: { y: number; width: number; xOffset: number }[];
   /** 技巧符号位置列表 */
-  techniquePositions: { technique: DiziTechnique; position: SymbolPosition }[];
+  techniquePositions: { technique: DiziTechnique; position: SymbolPosition; mainNotePos?: SymbolPosition }[];
   /** 连音线起点/终点信息 */
   tieStart?: boolean;
   tieEnd?: boolean;
