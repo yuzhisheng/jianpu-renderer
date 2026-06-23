@@ -3,6 +3,12 @@ import type {
   Note, Dash, DiziTechnique,
 } from '../types';
 import type { LayoutConfig } from './layout';
+import { drawSymbol as drawSvgSymbol } from './symbols';
+
+/** 用 SVG 路径符号替换 Canvas 本地绘制 */
+function drawSymbol(ctx: CanvasRenderingContext2D, num: number, x: number, y: number, size: number, color: string) {
+  drawSvgSymbol(ctx, num, x, y, size, color);
+}
 
 /** 渲染配色方案 */
 export interface RenderTheme {
@@ -22,19 +28,19 @@ export interface RenderTheme {
 }
 
 export const DEFAULT_THEME: RenderTheme = {
-  noteColor: '#1a1a1a',
-  symbolColor: '#1a1a1a',
-  barlineColor: '#1a1a1a',
-  titleColor: '#1a1a1a',
-  metaColor: '#333333',
-  lyricColor: '#444444',
-  techniqueColor: '#c0392b',
-  backgroundColor: '#ffffff',
-  dashColor: '#1a1a1a',
-  dotColor: '#1a1a1a',
-  underlineColor: '#1a1a1a',
-  tieColor: '#1a1a1a',
-  repeatDotColor: '#1a1a1a',
+  noteColor: '#569cd6',
+  symbolColor: '#569cd6',
+  barlineColor: '#5a5a5a',
+  titleColor: '#569cd6',
+  metaColor: '#9cdcfe',
+  lyricColor: '#8a8a8a',
+  techniqueColor: '#569cd6',
+  backgroundColor: '#1e1e1e',
+  dashColor: '#569cd6',
+  dotColor: '#569cd6',
+  underlineColor: '#569cd6',
+  tieColor: '#569cd6',
+  repeatDotColor: '#569cd6',
 };
 
 function isNoteType(data: Note | Dash): data is Note {
@@ -84,6 +90,12 @@ function drawDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition[], th
 
 /** 绘制升降号 */
 function drawAccidental(ctx: CanvasRenderingContext2D, accidental: string, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme) {
+  const symbolMap: Record<string, number> = { sharp: 1, flat: 2, natural: 3 };
+  const num = symbolMap[accidental];
+  if (num) {
+    drawSymbol(ctx, num, pos.x, pos.y, pos.height, theme.symbolColor);
+    return;
+  }
   ctx.fillStyle = theme.symbolColor;
   ctx.font = `bold ${config.noteFontSize - 4}px "Noto Sans", serif`;
   ctx.textAlign = 'center';
@@ -244,21 +256,131 @@ function drawTriplet(ctx: CanvasRenderingContext2D, startNote: NoteLayout, endNo
 }
 
 /** 绘制技巧符号 */
-function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme, mainNotePos?: SymbolPosition) {
+function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme, mainNotePos?: SymbolPosition, nextNotePos?: SymbolPosition) {
   ctx.fillStyle = theme.techniqueColor;
   ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", "SimSun", serif`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
 
+  // 滑音 — 两个音符之间使用 SVG 图标
+  if (tech.type === 'huayin') {
+    const symNum = tech.slideDirection === 'up' ? 13 : 14;
+    if (nextNotePos && mainNotePos) {
+      const currCenterX = mainNotePos.x;
+      const nextCenterX = nextNotePos.x + nextNotePos.width / 2;
+      const currCenterY = mainNotePos.y;
+      const nextCenterY = nextNotePos.y + nextNotePos.height / 2;
+      const midX = (currCenterX + nextCenterX) / 2;
+      const midY = (currCenterY + nextCenterY) / 2;
+      const dist = nextCenterX - currCenterX;
+      const size = Math.max(dist * 0.7, 20);
+      drawSymbol(ctx, symNum, midX - size * 0.5, midY - size * 0.4 - 10, size, theme.symbolColor);
+    } else {
+      drawSymbol(ctx, symNum, pos.x, pos.y - 2, pos.height + 6, theme.symbolColor);
+    }
+    return;
+  }
+  // 颤音
+  if (tech.type === 'chanyin') {
+    drawSymbol(ctx, 19, pos.x, pos.y - 2, pos.height + 8, theme.symbolColor);
+    return;
+  }
+  // 历音 — 完全按赠音样式 + 斜波浪线
+  if (tech.type === 'liyin') {
+    const isDown = tech.liyinDirection === 'down';
+    const gFontSize = config.techniqueFontSize + 2;
+    const cx = pos.x + pos.width / 2;
+    const textBottom = pos.y + pos.height - 4;
+    const graceText = tech.graceNotes?.length ? tech.graceNotes.join('') : (isDown ? '下' : '上');
+
+    // 小字
+    ctx.fillStyle = theme.noteColor;
+    ctx.font = `bold ${gFontSize}px "Noto Sans", serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(graceText, cx, textBottom - 1);
+
+    // 高音点
+    const oct = tech.graceOctave || 0;
+    if (oct > 0) {
+      ctx.fillStyle = theme.dotColor;
+      for (let i = 0; i < oct; i++) {
+        const dotR = config.dotRadius - 0.5;
+        const dy = pos.y - dotR - 2 - (i > 0 ? config.dotGap * i : 0);
+        ctx.beginPath();
+        ctx.arc(cx, dy + dotR, dotR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // 双横线
+    ctx.strokeStyle = theme.underlineColor;
+    ctx.lineWidth = 0.8;
+    const lineY1 = textBottom;
+    const lineY2 = textBottom + 2.5;
+    ctx.beginPath();
+    ctx.moveTo(pos.x, lineY1);
+    ctx.lineTo(pos.x + pos.width, lineY1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pos.x, lineY2);
+    ctx.lineTo(pos.x + pos.width, lineY2);
+    ctx.stroke();
+
+    // SVG 弧线 (与赠音完全一致)
+    {
+      const scale = pos.width * 0.55 / 5;
+      const arcSize = 6 * scale;
+      const arcY = lineY2 + 1;
+      if (isDown) {
+        drawSymbol(ctx, 100, cx - 0.16 * scale, arcY, arcSize, theme.symbolColor);
+      } else {
+        ctx.save();
+        ctx.translate(cx, 0);
+        ctx.scale(-1, 1);
+        ctx.translate(-cx, 0);
+        drawSymbol(ctx, 100, cx - 0.16 * scale, arcY, arcSize, theme.symbolColor);
+        ctx.restore();
+      }
+    }
+
+    // 斜波浪线
+    if (mainNotePos) {
+      ctx.strokeStyle = theme.symbolColor;
+      ctx.lineWidth = 1;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      const sx = mainNotePos.x;
+      const sy = mainNotePos.y - 1;
+      const ex = isDown ? pos.x + pos.width : pos.x;
+      const ey = pos.y + 2;
+      const dx = ex - sx;
+      const dy = ey - sy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const cycles = Math.max(6, Math.round(dist / 4));
+      const steps = Math.max(60, Math.round(dist * 4));
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const px = sx + dx * t;
+        const py = sy + dy * t;
+        const wave = Math.sin(t * Math.PI * cycles) * 1;
+        if (i === 0) ctx.moveTo(px, py + wave);
+        else ctx.lineTo(px, py + wave);
+      }
+      ctx.stroke();
+    }
+    return;
+  }
+  // 气震音
+  if (tech.type === 'qizhenyin') {
+    drawSymbol(ctx, 18, pos.x, pos.y - 2, pos.height + 6, theme.symbolColor);
+    return;
+  }
+
   const labels: Record<string, string> = {
-    zengyin: '赠',
     dieyin: '又',
-    liyin: tech.liyinDirection === 'up' ? '历↑' : tech.liyinDirection === 'down' ? '历↓' : '历',
-    huayin: tech.slideDirection === 'up' ? '↗' : '↘',
     dayin: '扌',
     yinyin: '倚',
-    chanyin: 'tr',
-    qizhenyin: '﹏',
     tuyin: tech.articulation === 'double' ? 'TK' : tech.articulation === 'triple' ? 'TKT' : 'T',
     huashe: '✱',
     xunhuan: '↻',
@@ -267,71 +389,110 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
 
   const label = labels[tech.type] || tech.type;
 
-  // 颤音 - 只显示 tr
-  if (tech.type === 'chanyin') {
-    ctx.fillText(label, pos.x, pos.y + pos.height);
-    return;
-  }
-
-  // 气震音波浪线
-  if (tech.type === 'qizhenyin') {
-    const startX = pos.x;
-    const endX = pos.x + pos.width + 8;
-    const y = pos.y + pos.height / 2;
-    ctx.strokeStyle = theme.techniqueColor;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let x = startX; x <= endX; x += 2) {
-      const dy = Math.sin((x - startX) * 1.2) * 4;
-      if (x === startX) ctx.moveTo(x, y + dy);
-      else ctx.lineTo(x, y + dy);
-    }
-    ctx.stroke();
-    return;
-  }
-
-  // 倚音 - 小字标注在左上，减时线，斜线连主音
+  // 倚音 — 双横线 + 数字小字 + 弧线连主音
   if (tech.type === 'yinyin' && tech.graceNotes?.length) {
-    const gFontSize = config.techniqueFontSize + 1;
+    const gFontSize = config.techniqueFontSize + 2;
     const graceText = tech.graceNotes.join('');
-    const textBottom = pos.y + pos.height - 6; // 留空给减时线
+    const cx = pos.x + pos.width / 2;
+    const textBottom = pos.y + pos.height - 4;
 
     // 小字
     ctx.fillStyle = theme.noteColor;
     ctx.font = `bold ${gFontSize}px "Noto Sans", serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(graceText, pos.x + pos.width / 2, textBottom);
+    ctx.fillText(graceText, cx, textBottom - 1);
 
-    // 减时线（双线）
+    // 高音点（倚音音符的八度）
+    const graceOct = tech.graceOctave || 0;
+    if (graceOct > 0) {
+      ctx.fillStyle = theme.dotColor;
+      for (let i = 0; i < graceOct; i++) {
+        const dotR = config.dotRadius - 0.5;
+        const dy = pos.y - dotR - 2 - (i > 0 ? config.dotGap * i : 0);
+        ctx.beginPath();
+        ctx.arc(cx, dy + dotR, dotR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // 双横线（减时线）
     ctx.strokeStyle = theme.underlineColor;
-    ctx.lineWidth = 1;
-    const lineStartX = pos.x + 1;
-    const lineEndX = pos.x + pos.width - 1;
-    const lineY1 = textBottom + 2;
-    const lineY2 = textBottom + 4.5;
+    ctx.lineWidth = 0.8;
+    const lineY1 = textBottom;
+    const lineY2 = textBottom + 2.5;
     ctx.beginPath();
-    ctx.moveTo(lineStartX, lineY1);
-    ctx.lineTo(lineEndX, lineY1);
+    ctx.moveTo(pos.x, lineY1);
+    ctx.lineTo(pos.x + pos.width, lineY1);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(lineStartX, lineY2);
-    ctx.lineTo(lineEndX, lineY2);
+    ctx.moveTo(pos.x, lineY2);
+    ctx.lineTo(pos.x + pos.width, lineY2);
     ctx.stroke();
 
-    // 弧线从减时线下方向下再向右弯到主音
-    if (mainNotePos) {
-      const graceX = pos.x + 2;
-      const graceY = textBottom + 6.5; // 双横线下方
-      const mainX = mainNotePos.x - config.noteWidth * 0.2;
-      const mainY = mainNotePos.y + 2;
+    // SVG 弧线从横线中间下方开始连接
+    {
+      const scale = pos.width * 0.55 / 5;
+      const arcSize = 6 * scale;
+      const arcX = cx - 0.16 * scale;
+      const arcY = lineY2 + 1;
+      drawSymbol(ctx, 100, arcX, arcY, arcSize, theme.symbolColor);
+    }
+    return;
+  }
 
-      ctx.strokeStyle = theme.tieColor;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(graceX, graceY);
-      ctx.quadraticCurveTo(graceX, mainY + 4, mainX, mainY);
-      ctx.stroke();
+  // 赠音 — 在音符右侧，与倚音镜像对称
+  if (tech.type === 'zengyin') {
+    const gFontSize = config.techniqueFontSize + 2;
+    const labelText = tech.giftPitch !== undefined ? String(tech.giftPitch) : '赠';
+    const cx = pos.x + pos.width / 2;
+    const textBottom = pos.y + pos.height - 4;
+
+    // 小字
+    ctx.fillStyle = theme.noteColor;
+    ctx.font = `bold ${gFontSize}px "Noto Sans", serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(labelText, cx, textBottom - 1);
+
+    // 高音点（赠音八度）
+    const giftOct = tech.giftOctave || 0;
+    if (giftOct > 0) {
+      ctx.fillStyle = theme.dotColor;
+      for (let i = 0; i < giftOct; i++) {
+        const dotR = config.dotRadius - 0.5;
+        const dy = pos.y - dotR - 2 - (i > 0 ? config.dotGap * i : 0);
+        ctx.beginPath();
+        ctx.arc(cx, dy + dotR, dotR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // 双横线
+    ctx.strokeStyle = theme.underlineColor;
+    ctx.lineWidth = 0.8;
+    const lineY1 = textBottom;
+    const lineY2 = textBottom + 2.5;
+    ctx.beginPath();
+    ctx.moveTo(pos.x, lineY1);
+    ctx.lineTo(pos.x + pos.width, lineY1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pos.x, lineY2);
+    ctx.lineTo(pos.x + pos.width, lineY2);
+    ctx.stroke();
+
+    // 向左的弧线（倚音弧线镜像，大小一致）
+    {
+      const scale = pos.width * 0.55 / 5;
+      const arcSize = 6 * scale;
+      const arcY = lineY2 + 1;
+      ctx.save();
+      ctx.translate(cx, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-cx, 0);
+      drawSymbol(ctx, 100, cx - 0.16 * scale, arcY, arcSize, theme.symbolColor);
+      ctx.restore();
     }
     return;
   }
@@ -340,14 +501,8 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
 }
 
 /** 绘制重音标记 */
-function drawAccent(ctx: CanvasRenderingContext2D, pos: SymbolPosition, theme: RenderTheme) {
-  ctx.fillStyle = theme.symbolColor;
-  ctx.beginPath();
-  ctx.moveTo(pos.x, pos.y + pos.height / 2);
-  ctx.lineTo(pos.x + pos.width / 2, pos.y);
-  ctx.lineTo(pos.x + pos.width, pos.y + pos.height / 2);
-  ctx.closePath();
-  ctx.fill();
+function drawAccent(ctx: CanvasRenderingContext2D, pos: SymbolPosition, _config: LayoutConfig, theme: RenderTheme) {
+  drawSymbol(ctx, 10, pos.x - 2, pos.y - 2, pos.width + 6, theme.symbolColor);
 }
 
 /** 绘制保持音标记 */
@@ -362,23 +517,9 @@ function drawTenuto(ctx: CanvasRenderingContext2D, pos: SymbolPosition, theme: R
 
 /** 绘制延长记号（Fermata） */
 function drawFermata(ctx: CanvasRenderingContext2D, pos: SymbolPosition, theme: RenderTheme) {
-  ctx.strokeStyle = theme.symbolColor;
-  ctx.lineWidth = 1.5;
+  const size = pos.width * 0.6;
   const cx = pos.x + pos.width / 2;
-  const topY = pos.y;
-  const bottomY = pos.y + pos.height - 4;
-
-  // 弧线
-  ctx.beginPath();
-  ctx.moveTo(pos.x, bottomY);
-  ctx.quadraticCurveTo(cx, topY - 2, pos.x + pos.width, bottomY);
-  ctx.stroke();
-
-  // 中心点
-  ctx.fillStyle = theme.symbolColor;
-  ctx.beginPath();
-  ctx.arc(cx, bottomY + 2, 2, 0, Math.PI * 2);
-  ctx.fill();
+  drawSymbol(ctx, 8, cx - size * 0.5, pos.y + 2, size, theme.symbolColor);
 }
 
 /** 绘制反复跳跃记号 */
@@ -475,6 +616,16 @@ export function render(
   ctx.fillStyle = theme.backgroundColor;
   ctx.fillRect(0, 0, layout.width, layout.height);
 
+  // 绘制对齐网格（横向每 10px）
+  ctx.strokeStyle = 'rgba(80, 140, 200, 0.15)';
+  ctx.lineWidth = 0.5;
+  for (let y = 0; y < layout.height; y += 10) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(layout.width, y);
+    ctx.stroke();
+  }
+
   // 绘制元信息
   drawMeta(ctx, layout, score, config, theme);
 
@@ -496,8 +647,10 @@ export function render(
         drawRepeatEnding(ctx, measure.data.repeatEnding.numbers, measure.repeatEndingPosition, config, theme);
       }
 
-      // 绘制音符
-      measure.notes.forEach(noteLayout => {
+      // 绘制音符 (用索引遍历，以便获取前后音符位置)
+      for (let ni = 0; ni < measure.notes.length; ni++) {
+        const noteLayout = measure.notes[ni];
+        const nextNoteLayout = ni + 1 < measure.notes.length ? measure.notes[ni + 1] : undefined;
         const data = noteLayout.data;
         if (isNoteType(data)) {
           drawNoteNumber(ctx, data, noteLayout.position, config, theme);
@@ -512,13 +665,14 @@ export function render(
         }
         drawUnderlines(ctx, noteLayout, config, theme);
 
-        // 技巧符号
+        // 技巧符号 (传入主音位置和后一个音符位置用于滑音)
+        const noteCenterPos = isNoteType(data) ? { x: noteLayout.position.x + noteLayout.position.width / 2, y: noteLayout.position.y + noteLayout.position.height / 2, width: 0, height: 0 } : undefined;
         noteLayout.techniquePositions.forEach(tp => {
-          drawTechnique(ctx, tp.technique, tp.position, config, theme, tp.mainNotePos);
+          drawTechnique(ctx, tp.technique, tp.position, config, theme, tp.mainNotePos || noteCenterPos, nextNoteLayout?.position);
         });
 
         // 重音/保持音/延长记号
-        if (noteLayout.accentPosition) drawAccent(ctx, noteLayout.accentPosition, theme);
+        if (noteLayout.accentPosition) drawAccent(ctx, noteLayout.accentPosition, config, theme);
         if (noteLayout.tenutoPosition) drawTenuto(ctx, noteLayout.tenutoPosition, theme);
         if (noteLayout.fermataPosition) drawFermata(ctx, noteLayout.fermataPosition, theme);
 
@@ -556,7 +710,7 @@ export function render(
             tripletStarts.delete(noteLayout.tripletId);
           }
         }
-      });
+      }
     });
   });
 }

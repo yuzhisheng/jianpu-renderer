@@ -54,7 +54,7 @@ export const guSuXing: Score = {
   measures: [
     {
       notes: [
-        { pitch: 5, duration: 0.5, techniques: [{ type: 'dieyin' }] },
+        { pitch: 5, duration: 0.5, techniques: [{ type: 'liyin', liyinDirection: 'down', graceNotes: [6], graceOctave: 1 }] },
         { pitch: 6, duration: 0.5 },
         { pitch: 1, octave: 1, duration: 1, techniques: [{ type: 'dayin' }] },
         { pitch: 6, duration: 0.5 },
@@ -64,7 +64,7 @@ export const guSuXing: Score = {
     },
     {
       notes: [
-        { pitch: 5, duration: 0.5, techniques: [{ type: 'yinyin', graceNotes: [6] }] },
+        { pitch: 5, duration: 0.5, techniques: [{ type: 'yinyin', graceNotes: [6], graceOctave: 1 }] },
         { pitch: 3, duration: 0.5 },
         { pitch: 2, duration: 1, techniques: [{ type: 'chanyin' }] },
         { pitch: 3, duration: 0.5 },
@@ -84,8 +84,34 @@ export const guSuXing: Score = {
       notes: [
         { pitch: 5, duration: 0.5, techniques: [{ type: 'zengyin', giftPitch: 6 }] },
         { pitch: 3, duration: 0.5 },
-        { pitch: 2, duration: 1, techniques: [{ type: 'liyin', liyinDirection: 'up' }] },
+        { pitch: 2, duration: 1, techniques: [{ type: 'liyin', liyinDirection: 'up', graceNotes: [1], graceOctave: 1 }] },
         { pitch: 1, duration: 2, dot: 1 },
+      ],
+    },
+    // 第5-7小节，凑成两行
+    {
+      notes: [
+        { pitch: 6, duration: 0.5, techniques: [{ type: 'dieyin' }] },
+        { pitch: 5, duration: 0.5 },
+        { pitch: 3, duration: 1, techniques: [{ type: 'qizhenyin' }] },
+        { pitch: 5, duration: 0.5, techniques: [{ type: 'huayin', slideDirection: 'up' }] },
+        { pitch: 6, duration: 1 },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 1, octave: 1, duration: 1, techniques: [{ type: 'tuyin', articulation: 'double' }] },
+        { pitch: 6, duration: 0.5 },
+        { pitch: 5, duration: 0.5 },
+        { pitch: 3, duration: 1, techniques: [{ type: 'xunhuan' }] },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 2, duration: 1, techniques: [{ type: 'fanyin' }] },
+        { pitch: 1, duration: 1 },
+        { pitch: 6, octave: -1, duration: 1 },
+        { pitch: 1, duration: 1 },
       ],
       barline: 'end',
     },
@@ -123,14 +149,14 @@ export const techniqueDemo: Score = {
       notes: [
         { pitch: 6, duration: 1, techniques: [{ type: 'huayin', slideDirection: 'up' }] },
         { pitch: 1, octave: 1, duration: 1, techniques: [{ type: 'huayin', slideDirection: 'down' }] },
-        { pitch: 6, duration: 0.5, techniques: [{ type: 'liyin', liyinDirection: 'up' }] },
+        { pitch: 6, duration: 0.5, techniques: [{ type: 'liyin', liyinDirection: 'up', graceNotes: [5], graceOctave: 1 }] },
         { pitch: 5, duration: 0.5 },
         { pitch: 3, duration: 1, techniques: [{ type: 'zengyin', giftPitch: 5 }] },
       ],
     },
     {
       notes: [
-        { pitch: 5, duration: 0.5, techniques: [{ type: 'yinyin', graceNotes: [6] }] },
+        { pitch: 5, duration: 0.5, techniques: [{ type: 'yinyin', graceNotes: [6], graceOctave: 1 }] },
         { pitch: 3, duration: 0.5 },
         { pitch: 2, duration: 1, techniques: [{ type: 'xunhuan' }] },
         { pitch: 1, duration: 2 },

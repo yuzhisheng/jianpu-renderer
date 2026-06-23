@@ -1,15 +1,14 @@
 import { useState, useCallback, useRef } from 'react';
 import type { Score, ScoreLayout } from './types';
-import { examples } from './data/examples';
-import { defaultScore } from './data/defaults';
+import { examples, guSuXing } from './data/examples';
 import { downloadPNG } from './engine';
 import Editor from './components/Editor';
 import Preview from './components/Preview';
 import Toolbar from './components/Toolbar';
 
 export default function App() {
-  const [jsonValue, setJsonValue] = useState(() => JSON.stringify(defaultScore, null, 2));
-  const [score, setScore] = useState<Score | null>(defaultScore);
+  const [jsonValue, setJsonValue] = useState(() => JSON.stringify(guSuXing, null, 2));
+  const [score, setScore] = useState<Score | null>(guSuXing);
   const [zoom, setZoom] = useState(1);
   const [isValid, setIsValid] = useState(true);
   const canvasLayoutRef = useRef<ScoreLayout | null>(null);
@@ -51,7 +50,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-dark-900 overflow-hidden">
+    <div className="h-screen w-screen flex flex-col overflow-hidden" style={{backgroundColor:'#1e1e1e'}}>
       <Toolbar
         onExampleSelect={handleExampleSelect}
         onExport={handleExport}

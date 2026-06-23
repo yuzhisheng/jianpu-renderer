@@ -40,8 +40,10 @@ export type LiyinDirection = 'up' | 'down';
 /** 竹笛技巧 */
 export interface DiziTechnique {
   type: DiziTechniqueType;
-  /** 倚音的附加音符 */
+  /** 倚音/历音的附加音符 */
   graceNotes?: Pitch[];
+  /** 倚音/历音音符的八度偏移 */
+  graceOctave?: Octave;
   /** 滑音方向 */
   slideDirection?: SlideDirection;
   /** 历音方向 */
@@ -50,6 +52,8 @@ export interface DiziTechnique {
   articulation?: Articulation;
   /** 赠音音高 */
   giftPitch?: Pitch;
+  /** 赠音八度偏移 */
+  giftOctave?: Octave;
 }
 
 /** 音符 */

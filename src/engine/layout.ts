@@ -56,28 +56,28 @@ export interface LayoutConfig {
 
 export const DEFAULT_CONFIG: LayoutConfig = {
   canvasWidth: 800,
-  paddingHorizontal: 40,
-  paddingVertical: 30,
-  noteFontSize: 28,
-  noteWidth: 36,
-  noteHeight: 36,
-  measureGap: 10,
-  rowGap: 24,
-  dotRadius: 2,
-  dotGap: 3,
-  accentDotRadius: 2,
-  underlineOffset: 1,
-  underlineGap: 2.5,
-  underlineThickness: 1.5,
-  dashThickness: 2,
-  barlineWidth: 1.5,
-  techniqueFontSize: 11,
+  paddingHorizontal: 24,
+  paddingVertical: 24,
+  noteFontSize: 18,
+  noteWidth: 22,
+  noteHeight: 22,
+  measureGap: 6,
+  rowGap: 14,
+  dotRadius: 1.5,
+  dotGap: 2,
+  accentDotRadius: 1.5,
+  underlineOffset: 0.5,
+  underlineGap: 1.5,
+  underlineThickness: 1,
+  dashThickness: 1.2,
+  barlineWidth: 1,
+  techniqueFontSize: 9,
   techniqueOffset: 0,
-  titleFontSize: 22,
-  metaFontSize: 16,
-  tieCurveHeight: 8,
-  lyricFontSize: 11,
-  lyricOffset: 2,
+  titleFontSize: 14,
+  metaFontSize: 11,
+  tieCurveHeight: 5,
+  lyricFontSize: 9,
+  lyricOffset: 1,
 };
 
 function isNote(item: NoteType | Dash): item is NoteType {
@@ -115,7 +115,7 @@ function layoutNote(
       for (let i = 0; i < -octave; i++) {
         lowerDots.push({
           x: x + config.noteWidth / 2 - config.dotRadius,
-          y: y + config.noteHeight + config.dotGap * i,
+          y: y + config.noteHeight - 5 + config.dotGap * i,
           width: config.dotRadius * 2,
           height: config.dotRadius * 2,
         });
@@ -180,6 +180,40 @@ function layoutNote(
             technique: tech,
             position: {
               x: x - width + 4,
+              y: y - gFontSize - 2,
+              width,
+              height: gFontSize + 6,
+            },
+            mainNotePos: { x: x + config.noteWidth / 2, y: y + 2, width: 0, height: 0 },
+          });
+          return;
+        }
+        // 历音 - 下历音在左侧(像倚音), 上历音在右侧(像赠音)
+        if (tech.type === 'liyin') {
+          const gFontSize = config.techniqueFontSize + 1;
+          const width = gFontSize * 0.6 + 2;
+          const isDown = tech.liyinDirection === 'down';
+          techniquePositions.push({
+            technique: tech,
+            position: {
+              x: isDown ? x - width + 4 : x + config.noteWidth - 2,
+              y: y - gFontSize - 2,
+              width,
+              height: gFontSize + 6,
+            },
+            mainNotePos: { x: x + config.noteWidth / 2, y: y + 2, width: 0, height: 0 },
+          });
+          return;
+        }
+        // 赠音 - 在音符右侧，与倚音对称
+        if (tech.type === 'zengyin') {
+          const label = tech.giftPitch !== undefined ? String(tech.giftPitch) : '赠';
+          const gFontSize = config.techniqueFontSize + 1;
+          const width = label.length * gFontSize * 0.6 + 2;
+          techniquePositions.push({
+            technique: tech,
+            position: {
+              x: x + config.noteWidth - 2,
               y: y - gFontSize - 2,
               width,
               height: gFontSize + 6,
@@ -355,7 +389,7 @@ function fitMeasuresInRow(
     // 附点额外宽度
     m.notes.forEach(n => {
       if (isNote(n) && (n.dot || 0) > 0) {
-        mWidth += (n.dot || 0) * (config.accentDotRadius * 2 + 6);
+        mWidth += (n.dot || 0) * (config.accentDotRadius * 2 + 12);
       }
       if (isNote(n) && n.accidental) {
         mWidth += 14;
@@ -420,6 +454,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
   currentY = tempoPosition
     ? tempoPosition.y + tempoPosition.height + 4
     : timeSignaturePosition.y + tsTotalHeight + 4;
+  currentY += 60; // 谱子主体额外下移
 
   // 计算行布局
   const rows: RowLayout[] = [];
@@ -443,7 +478,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
       let mWidth = m.notes.length * cfg.noteWidth;
       m.notes.forEach(n => {
         if (isNote(n) && (n.dot || 0) > 0) {
-          mWidth += (n.dot || 0) * (cfg.accentDotRadius * 2 + 6);
+          mWidth += (n.dot || 0) * (cfg.accentDotRadius * 2 + 12);
         }
         if (isNote(n) && n.accidental) {
           mWidth += 14;
@@ -472,7 +507,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
 
         let advanceX = cfg.noteWidth;
         if (isNote(item) && (item.dot || 0) > 0) {
-          advanceX += (item.dot || 0) * (cfg.accentDotRadius * 2 + 6);
+          advanceX += (item.dot || 0) * (cfg.accentDotRadius * 2 + 12);
         }
         if (isNote(item) && item.accidental) {
           advanceX += 14;
