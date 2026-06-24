@@ -75,13 +75,18 @@ export const DEFAULT_CONFIG: LayoutConfig = {
   techniqueOffset: 0,
   titleFontSize: 14,
   metaFontSize: 11,
-  tieCurveHeight: 5,
+  tieCurveHeight: 6,
   lyricFontSize: 9,
   lyricOffset: 1,
 };
 
 function isNote(item: NoteType | Dash): item is NoteType {
   return 'pitch' in item;
+}
+
+/** 音符主体之间的水平间距：固定 noteWidth（不按时值区分） */
+function getNoteSpacing(_duration: number, cfg: LayoutConfig): number {
+  return cfg.noteWidth;
 }
 
 /** 计算单个音符的布局 */
@@ -150,11 +155,12 @@ function layoutNote(
     const ulWidth = config.noteWidth - 6;
     const underlines: { y: number; width: number; xOffset: number }[] = [];
     if (groupInfo && groupInfo.underlineLevel > 0) {
+      // 分组音符：横线从组内第一个音符连接到最后一个音符
       for (let i = 0; i < groupInfo.underlineLevel; i++) {
         underlines.push({
           y: y + config.noteHeight + config.underlineOffset + config.underlineGap * i,
-          width: ulWidth,
-          xOffset: 3,
+          width: groupInfo.groupWidth - 6,
+          xOffset: (groupInfo.groupStartX - x) + 3,
         });
       }
     } else if (!groupInfo) {
@@ -368,41 +374,81 @@ function getTechniqueLabel(tech: DiziTechnique): string {
   return labels[tech.type] || tech.type;
 }
 
-/** 分析小节中的减时线分组 */
+/** 分析小节中的减时线分组：按拍号划界，同一拍内的所有短音符共享一组 */
 interface UnderlineGroup {
   startIndex: number;
   endIndex: number;
   level: number;
 }
 
-function analyzeUnderlineGroups(notes: (NoteType | Dash)[]): UnderlineGroup[] {
+function analyzeUnderlineGroups(
+  notes: (NoteType | Dash)[],
+  beatsPerMeasure: number,
+  beatUnitDuration: number,
+): UnderlineGroup[] {
   const groups: UnderlineGroup[] = [];
-  // 将连续的短时值音符（duration <= 0.5）分为一组
-  // 每组的 underline level 取组内最低 level（即最大时值对应的 level）
+  // 按拍号切拍：每拍 = beatUnitDuration 时值
+  // 同一拍内所有带减时线的短音符合并为一组，level 取组内最大
+  // Dash（增时线）不参与累计和分组
+  // 大时值音符（duration >= beatUnitDuration）独占对应拍位但不参与减时线分组
   let i = 0;
+  let beatIdx = 0;
+
+  while (i < notes.length && beatIdx < beatsPerMeasure) {
+    let acc = 0;
+    let curStart = -1;
+    let curEnd = -1;
+    let curLevel = 0;
+
+    // 在当前拍内累计时值
+    while (acc < beatUnitDuration - 1e-6 && i < notes.length) {
+      const item = notes[i];
+      if (!isNote(item)) {
+        i++;
+        continue;
+      }
+      const noteLevel = getUnderlineLevel(item.duration);
+
+      if (noteLevel > 0) {
+        // 短音符：参与当前拍组
+        if (curStart < 0) curStart = i;
+        curEnd = i;
+        if (noteLevel > curLevel) curLevel = noteLevel;
+      } else {
+        // 大时值音符（duration >= 0.5，level=0）：独立成"无横线"组，
+        // 但只有当它正好占满当前拍剩余空间时才不影响后面的累计；否则跳过
+      }
+
+      acc += item.duration;
+      i++;
+    }
+
+    if (curStart >= 0) {
+      groups.push({ startIndex: curStart, endIndex: curEnd, level: curLevel });
+    }
+    beatIdx++;
+  }
+
+  // 处理超出所有拍的小节尾部（数据不规范时）
+  // 把剩余的连续短音符合并成最后一个组
+  let curStart = -1;
+  let curEnd = -1;
+  let curLevel = 0;
   while (i < notes.length) {
     const item = notes[i];
     if (!isNote(item)) { i++; continue; }
-    const level = getUnderlineLevel(item.duration);
-    if (level > 0) {
-      const start = i;
-      let end = i;
-      let minLevel = level;
-      while (end + 1 < notes.length && isNote(notes[end + 1])) {
-        const nextLevel = getUnderlineLevel((notes[end + 1] as NoteType).duration);
-        if (nextLevel > 0) {
-          minLevel = Math.min(minLevel, nextLevel);
-          end++;
-        } else {
-          break;
-        }
-      }
-      groups.push({ startIndex: start, endIndex: end, level: minLevel });
-      i = end + 1;
-    } else {
-      i++;
+    const noteLevel = getUnderlineLevel(item.duration);
+    if (noteLevel > 0) {
+      if (curStart < 0) curStart = i;
+      curEnd = i;
+      if (noteLevel > curLevel) curLevel = noteLevel;
     }
+    i++;
   }
+  if (curStart >= 0) {
+    groups.push({ startIndex: curStart, endIndex: curEnd, level: curLevel });
+  }
+
   return groups;
 }
 
@@ -426,14 +472,18 @@ function fitMeasuresInRow(
     const m = measures[i];
     const noteCount = m.notes.length;
     const dashCount = m.notes.filter(n => !isNote(n)).length;
-    let mWidth = noteCount * config.noteWidth;
-    // 附点额外宽度
+    let mWidth = 0;
     m.notes.forEach(n => {
-      if (isNote(n) && (n.dot || 0) > 0) {
-        mWidth += (n.dot || 0) * (config.accentDotRadius * 2 + 12);
-      }
-      if (isNote(n) && n.accidental) {
-        mWidth += 14;
+      if (isNote(n)) {
+        mWidth += getNoteSpacing(n.duration, config);
+        if ((n.dot || 0) > 0) {
+          mWidth += (n.dot || 0) * (config.accentDotRadius * 2 + 10);
+        }
+        if (n.accidental) {
+          mWidth += 10;
+        }
+      } else {
+        mWidth += config.noteWidth;
       }
     });
     mWidth += config.barlineWidth;
@@ -512,8 +562,12 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
       const m = rowMeasures[mi];
       const mStartX = currentX;
 
-      // 分析减时线分组
-      const groups = analyzeUnderlineGroups(m.notes);
+      // 分析减时线分组（按拍号划界）
+      const groups = analyzeUnderlineGroups(
+        m.notes,
+        score.timeSignature.numerator,
+        4 / score.timeSignature.denominator,
+      );
 
       // 计算小节宽度
       let mWidth = m.notes.length * cfg.noteWidth;
@@ -536,25 +590,47 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
 
         // 查找是否属于某个减时线分组
         const group = groups.find(g => ni >= g.startIndex && ni <= g.endIndex);
-        let groupInfo: { underlineLevel: number; groupStartX: number; groupWidth: number } | undefined;
-        if (group) {
-          const gNoteStartX = mStartX + group.startIndex * cfg.noteWidth;
-          const gWidth = (group.endIndex - group.startIndex + 1) * cfg.noteWidth;
-          groupInfo = { underlineLevel: group.level, groupStartX: gNoteStartX, groupWidth: gWidth };
-        }
+        // 属于分组的音符不创建独立横线，由后面 post-processing 统一绘制
+        const groupInfo = group ? { underlineLevel: 0, groupStartX: 0, groupWidth: 0 } : undefined;
 
         const nl = layoutNote(item, noteX, currentY, cfg, measureIdx + mi, ni, groupInfo);
         noteLayouts.push(nl);
 
-        let advanceX = cfg.noteWidth;
+        let advanceX = isNote(item) ? getNoteSpacing(item.duration, cfg) : cfg.noteWidth;
         if (isNote(item) && (item.dot || 0) > 0) {
-          advanceX += (item.dot || 0) * (cfg.accentDotRadius * 2 + 12);
+          advanceX += (item.dot || 0) * (cfg.accentDotRadius * 2 + 10);
         }
         if (isNote(item) && item.accidental) {
-          advanceX += 14;
+          advanceX += 10;
         }
         noteX += advanceX;
       }
+
+      // 根据音符实际位置修正分组减时线
+      // 只在组内第一个音符上保留 underlines 数组，其他音符清空，
+      // 避免每个音符都重复画同一条横线导致渲染时被按音符右侧边界 clamp 成阶梯状
+      groups.forEach(g => {
+        const first = noteLayouts[g.startIndex];
+        const last = noteLayouts[g.endIndex];
+        if (!first || !last) return;
+        const startX = first.position.x + 3;
+        const endX = last.position.x + last.position.width - 3;
+        const gw = endX - startX;
+        const arr: { y: number; width: number; xOffset: number }[] = [];
+        for (let li = 0; li < g.level; li++) {
+          arr.push({
+            y: currentY + cfg.noteHeight + cfg.underlineOffset + cfg.underlineGap * li,
+            width: gw,
+            xOffset: startX - first.position.x,
+          });
+        }
+          // 组内只有第一个音符的 underlines 保留有效数据
+        first.underlines = arr;
+        for (let gi = g.startIndex + 1; gi <= g.endIndex; gi++) {
+          noteLayouts[gi].underlines = [];
+        }
+      });
+      // 单独的音符（不在分组中）使用 layoutNote 已创建的独立横线
 
       // 每次小节线前留出间距，与后面间距一致
       noteX += 10;

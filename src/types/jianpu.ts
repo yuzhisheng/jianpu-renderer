@@ -84,6 +84,8 @@ export interface Note {
   tenuto?: boolean;
   /** 延长记号（自由延长） */
   fermata?: boolean;
+  /** 力度突变标记 (sf/sfp/fp) */
+  forceAccent?: 'sf' | 'sfp' | 'fp';
   /** 歌词 */
   lyric?: string;
 }
@@ -114,6 +116,8 @@ export interface Measure {
   barline?: BarlineType;
   /** 反复跳跃记号 */
   repeatEnding?: RepeatEnding;
+  /** 渐强/渐弱标记 */
+  dynamics?: { type: 'crescendo' | 'descrescendo'; endMeasureIndex?: number };
 }
 
 /** 拍号 */
@@ -141,6 +145,8 @@ export interface Score {
   tempoText?: string;
   /** 力度 */
   dynamics?: DynamicMark;
+  /** 谱面力度术语（一次性） */
+  dynamicsText?: Array<{ text: string; measureIndex: number; noteIndex: number }>;
   /** 小节列表 */
   measures: Measure[];
 }

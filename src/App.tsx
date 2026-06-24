@@ -3,15 +3,15 @@ import { Code, Sun } from 'lucide-react';
 import type { Score, ScoreLayout } from './types';
 import type { RenderTheme } from './engine';
 import type { EditorHandle } from './components/Editor';
-import { examples, comprehensiveDemo } from './data/examples';
+import { examples, moonSong } from './data/examples';
 import { downloadPNG, DEFAULT_THEME, LIGHT_THEME } from './engine';
 import Editor from './components/Editor';
 import Preview from './components/Preview';
 import Toolbar from './components/Toolbar';
 
 export default function App() {
-  const [jsonValue, setJsonValue] = useState(() => JSON.stringify(comprehensiveDemo, null, 2));
-  const [score, setScore] = useState<Score | null>(comprehensiveDemo);
+  const [jsonValue, setJsonValue] = useState(() => JSON.stringify(moonSong, null, 2));
+  const [score, setScore] = useState<Score | null>(moonSong);
   const [zoom, setZoom] = useState(1);
   const [isValid, setIsValid] = useState(true);
   const [showEditor, setShowEditor] = useState(true);

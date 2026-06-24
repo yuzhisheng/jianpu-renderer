@@ -73,15 +73,9 @@ function drawNoteNumber(ctx: CanvasRenderingContext2D, note: Note, pos: SymbolPo
   ctx.fillText(text, pos.x + pos.width / 2, pos.y + pos.height / 2);
 }
 
-/** 绘制增时线 */
-function drawDash(ctx: CanvasRenderingContext2D, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme) {
-  ctx.strokeStyle = theme.dashColor;
-  ctx.lineWidth = config.dashThickness;
-  const y = pos.y + pos.height / 2;
-  ctx.beginPath();
-  ctx.moveTo(pos.x + 2, y);
-  ctx.lineTo(pos.x + pos.width - 2, y);
-  ctx.stroke();
+/** 绘制增时线（使用番茄简谱符号5） */
+function drawDash(ctx: CanvasRenderingContext2D, pos: SymbolPosition, _config: LayoutConfig, theme: RenderTheme) {
+  drawSymbol(ctx, 5, pos.x, pos.y, pos.width, theme.dashColor);
 }
 
 /** 绘制八度点 */
@@ -94,15 +88,10 @@ function drawOctaveDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition
   });
 }
 
-/** 绘制附点（用短横线代替圆点） */
-function drawDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition[], config: LayoutConfig, theme: RenderTheme) {
-  ctx.strokeStyle = theme.dotColor;
-  ctx.lineWidth = config.dashThickness;
+/** 绘制附点（使用番茄简谱符号6-真圆点） */
+function drawDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition[], _config: LayoutConfig, theme: RenderTheme) {
   positions.forEach(p => {
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y + p.height / 2);
-    ctx.lineTo(p.x + config.noteWidth * 0.4, p.y + p.height / 2);
-    ctx.stroke();
+    drawSymbol(ctx, 6, p.x, p.y, p.width, theme.dotColor);
   });
 }
 
@@ -129,6 +118,7 @@ function drawUnderlines(ctx: CanvasRenderingContext2D, noteLayout: NoteLayout, c
   noteLayout.underlines.forEach(ul => {
     const startX = noteLayout.position.x + (ul.xOffset || 0);
     const endX = startX + ul.width;
+    if (endX <= startX) return;
     ctx.beginPath();
     ctx.moveTo(startX, ul.y);
     ctx.lineTo(endX, ul.y);
@@ -523,14 +513,9 @@ function drawAccent(ctx: CanvasRenderingContext2D, pos: SymbolPosition, _config:
   drawSymbol(ctx, 10, pos.x - 2, pos.y - 2, pos.width + 6, theme.symbolColor);
 }
 
-/** 绘制保持音标记 */
+/** 绘制保持音标记（使用番茄简谱符号45） */
 function drawTenuto(ctx: CanvasRenderingContext2D, pos: SymbolPosition, theme: RenderTheme) {
-  ctx.strokeStyle = theme.symbolColor;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(pos.x, pos.y + pos.height / 2);
-  ctx.lineTo(pos.x + pos.width, pos.y + pos.height / 2);
-  ctx.stroke();
+  drawSymbol(ctx, 45, pos.x, pos.y, pos.width, theme.symbolColor);
 }
 
 /** 绘制延长记号（Fermata） */
@@ -542,7 +527,7 @@ function drawFermata(ctx: CanvasRenderingContext2D, pos: SymbolPosition, theme: 
 
 /** 绘制反复跳跃记号（小房子） */
 function drawRepeatEnding(ctx: CanvasRenderingContext2D, numbers: number[], pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme, isLast: boolean = false) {
-  const text = numbers.join('.');
+  const text = numbers.map(n => n + '.').join(' ');
   ctx.strokeStyle = theme.symbolColor;
   ctx.lineWidth = 1;
 
@@ -555,9 +540,19 @@ function drawRepeatEnding(ctx: CanvasRenderingContext2D, numbers: number[], pos:
   ctx.lineTo(pos.x, bracketBottom);
   ctx.stroke();
 
-  // 横线（与竖线顶部对齐）
+  // 测量文字宽度
+  ctx.font = `bold ${config.techniqueFontSize + 1}px "Noto Sans", sans-serif`;
+  const textX = pos.x + 14;
+  const textWidth = ctx.measureText(text).width + 4;
+
+  // 横线在文字处断开
   ctx.beginPath();
   ctx.moveTo(pos.x, bracketTop);
+  ctx.lineTo(textX - 2, bracketTop);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(textX + textWidth, bracketTop);
   ctx.lineTo(pos.x + pos.width, bracketTop);
   ctx.stroke();
 
@@ -569,12 +564,11 @@ function drawRepeatEnding(ctx: CanvasRenderingContext2D, numbers: number[], pos:
     ctx.stroke();
   }
 
-  // 数字（横线下方）
+  // 数字（跨在横线上）
   ctx.fillStyle = theme.symbolColor;
-  ctx.font = `${config.techniqueFontSize}px "Noto Sans", sans-serif`;
   ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.fillText(text, pos.x + 6, bracketTop + 3);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, textX, bracketTop);
 }
 
 /** 绘制标题和元信息 */
@@ -647,16 +641,6 @@ export function render(
   ctx.fillStyle = theme.backgroundColor;
   ctx.fillRect(0, 0, layout.width, layout.height);
 
-  // 绘制对齐网格（横向每 10px）
-  ctx.strokeStyle = 'rgba(80, 140, 200, 0.15)';
-  ctx.lineWidth = 0.5;
-  for (let y = 0; y < layout.height; y += 10) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(layout.width, y);
-    ctx.stroke();
-  }
-
   // 绘制元信息
   drawMeta(ctx, layout, score, config, theme);
 
@@ -712,13 +696,21 @@ export function render(
         if (noteLayout.fermataPosition) drawFermata(ctx, noteLayout.fermataPosition, theme);
         if (noteLayout.staccatoPosition) drawSymbol(ctx, 11, noteLayout.staccatoPosition.x, noteLayout.staccatoPosition.y, 10, theme.symbolColor);
         if (noteLayout.breathPosition) drawSymbol(ctx, 12, noteLayout.breathPosition.x, noteLayout.breathPosition.y, 10, theme.symbolColor);
-        // 力度突变 (sf/sfp/fp)
+        // 力度突变 (sf/sfp/fp) — 使用番茄简谱符号
         if (isNoteType(data) && data.forceAccent) {
-          ctx.fillStyle = theme.symbolColor;
-          ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'bottom';
-          ctx.fillText(data.forceAccent, noteLayout.position.x + noteLayout.position.width / 2, noteLayout.position.y - 2);
+          const forceSymbolMap: Record<string, number> = { sf: 37, sfp: 36, fp: 40 };
+          const forceNum = forceSymbolMap[data.forceAccent];
+          if (forceNum) {
+            const size = Math.max(noteLayout.position.width * 1.5, 16);
+            drawSymbol(ctx, forceNum, noteLayout.position.x + noteLayout.position.width / 2 - size / 2, noteLayout.position.y - size, size, theme.symbolColor);
+          } else {
+            // fallback：非标准力度文字仍用文本渲染
+            ctx.fillStyle = theme.symbolColor;
+            ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(data.forceAccent, noteLayout.position.x + noteLayout.position.width / 2, noteLayout.position.y - 2);
+          }
         }
 
         // 歌词

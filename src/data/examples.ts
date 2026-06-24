@@ -347,6 +347,182 @@ export const comprehensiveDemo: Score = {
   ],
 };
 
+/** 月亮代表我的心 — 经典流行歌曲 */
+export const moonSong: Score = {
+  title: '月亮代表我的心',
+  key: 'C',
+  timeSignature: { numerator: 4, denominator: 4 },
+  tempo: 76,
+  measures: [
+    // 你 问 我 爱  你 有 多 深
+    {
+      notes: [
+        { pitch: 5, duration: 0.5, lyric: '你' },
+        { pitch: 3, duration: 0.5, lyric: '问' },
+        { pitch: 2, duration: 0.25, lyric: '我' },
+        { pitch: 1, duration: 0.25, lyric: '爱' },
+        { pitch: 6, octave: -1, duration: 0.5, lyric: '你' },
+        { pitch: 6, octave: -1, duration: 0.25 },
+        { pitch: 5, duration: 0.25 },
+        { pitch: 3, duration: 0.5, lyric: '有' },
+        { pitch: 2, duration: 0.25 },
+        { pitch: 1, duration: 0.25, lyric: '多' },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 6, octave: -1, duration: 1, dot: 1, lyric: '深' },
+        { pitch: 6, octave: -1, duration: 0.25 },
+        { pitch: 1, duration: 0.25 },
+        { pitch: 2, duration: 0.5, lyric: '我' },
+        { pitch: 3, duration: 0.25, lyric: '爱' },
+        { pitch: 5, duration: 0.25 },
+      ],
+    },
+    // 我 爱 你  有 几 分
+    {
+      notes: [
+        { pitch: 6, duration: 0.5, lyric: '我' },
+        { pitch: 5, duration: 0.5, lyric: '爱' },
+        { pitch: 6, duration: 0.5, lyric: '你' },
+        { pitch: 5, duration: 0.5, lyric: '有' },
+        { pitch: 3, duration: 0.5, lyric: '几' },
+        { pitch: 2, duration: 0.5, lyric: '分' },
+      ],
+    },
+    // 我 的 情 也 真  我 的 爱 也 真
+    {
+      notes: [
+        { pitch: 1, duration: 0.5, lyric: '我' },
+        { pitch: 2, duration: 0.25, lyric: '的' },
+        { pitch: 3, duration: 0.25 },
+        { pitch: 5, duration: 0.5, lyric: '情' },
+        { pitch: 6, duration: 0.5, lyric: '也' },
+        { pitch: 5, duration: 0.5, lyric: '真' },
+        { pitch: 3, duration: 0.5, lyric: '我' },
+        { pitch: 2, duration: 0.5, lyric: '的' },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 1, duration: 0.5, lyric: '爱' },
+        { pitch: 6, octave: -1, duration: 0.5, lyric: '也' },
+        { pitch: 1, duration: 0.5, lyric: '真' },
+        { pitch: 3, duration: 0.5 },
+        { pitch: 3, duration: 0.5 },
+        { pitch: 5, duration: 0.5 },
+        { pitch: 6, duration: 0.5 },
+      ],
+    },
+    // 月 亮 代 表  我 的 心
+    {
+      notes: [
+        { pitch: 1, octave: 1, duration: 0.5, lyric: '月' },
+        { pitch: 6, duration: 0.5, lyric: '亮' },
+        { pitch: 5, duration: 0.5, lyric: '代' },
+        { pitch: 3, duration: 0.5, lyric: '表' },
+        { pitch: 5, duration: 0.5, lyric: '我' },
+        { pitch: 3, duration: 0.5, lyric: '的' },
+        { pitch: 2, duration: 0.5, lyric: '心' },
+        { pitch: 1, duration: 0.5 },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 1, duration: 1 },
+        { pitch: 5, duration: 0.5 },
+        { pitch: 3, duration: 0.5 },
+        { pitch: 2, duration: 0.5, lyric: '—' },
+        { pitch: 1, duration: 0.5 },
+      ],
+    },
+    // 轻 轻 的 一 个 吻
+    {
+      notes: [
+        { pitch: 6, octave: -1, duration: 0.5, lyric: '轻' },
+        { pitch: 1, duration: 0.25, lyric: '轻' },
+        { pitch: 2, duration: 0.25 },
+        { pitch: 3, duration: 0.5, lyric: '的' },
+        { pitch: 5, duration: 0.5, lyric: '一' },
+        { pitch: 6, duration: 0.5, lyric: '个' },
+        { pitch: 1, octave: 1, duration: 0.5, lyric: '吻' },
+      ],
+    },
+    // 已 经 打 动 我 的 心
+    {
+      notes: [
+        { pitch: 6, duration: 0.5, lyric: '已' },
+        { pitch: 5, duration: 0.5, lyric: '经' },
+        { pitch: 3, duration: 0.5, lyric: '打' },
+        { pitch: 2, duration: 0.5, lyric: '动' },
+        { pitch: 1, duration: 0.5, lyric: '我' },
+        { pitch: 2, duration: 0.25, lyric: '的' },
+        { pitch: 3, duration: 0.25 },
+        { pitch: 5, duration: 0.5, lyric: '心' },
+      ],
+    },
+    // 深 深 的 一 段 情
+    {
+      notes: [
+        { pitch: 6, duration: 0.5, lyric: '深' },
+        { pitch: 5, duration: 0.5, lyric: '深' },
+        { pitch: 3, duration: 0.5, lyric: '的' },
+        { pitch: 2, duration: 0.5, lyric: '一' },
+        { pitch: 1, duration: 0.5, lyric: '段' },
+        { pitch: 6, octave: -1, duration: 0.5, lyric: '情' },
+        { pitch: 1, duration: 0.5 },
+        { pitch: 2, duration: 0.5 },
+      ],
+    },
+    // 教 我 思 念 到 如 今
+    {
+      notes: [
+        { pitch: 3, duration: 0.5, lyric: '教' },
+        { pitch: 5, duration: 0.5, lyric: '我' },
+        { pitch: 6, duration: 0.5, lyric: '思' },
+        { pitch: 5, duration: 0.5, lyric: '念' },
+        { pitch: 6, duration: 0.5, lyric: '到' },
+        { pitch: 5, duration: 0.5, lyric: '如' },
+        { pitch: 3, duration: 0.5, lyric: '今' },
+        { pitch: 2, duration: 0.5 },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 2, duration: 1 },
+        { pitch: 3, duration: 0.5 },
+        { pitch: 5, duration: 0.5 },
+        { pitch: 6, duration: 0.5, lyric: '月' },
+        { pitch: 1, octave: 1, duration: 0.5, lyric: '亮' },
+      ],
+    },
+    // 月 亮 代 表 我 的 心（副歌）
+    {
+      notes: [
+        { pitch: 6, duration: 0.5, lyric: '代' },
+        { pitch: 5, duration: 0.5, lyric: '表' },
+        { pitch: 3, duration: 0.5, lyric: '我' },
+        { pitch: 2, duration: 0.5, lyric: '的' },
+        { pitch: 1, duration: 0.5, lyric: '心' },
+        { pitch: 3, duration: 0.5 },
+        { pitch: 5, duration: 0.5, lyric: '永' },
+        { pitch: 6, duration: 0.5, lyric: '远' },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 1, octave: 1, duration: 0.5, lyric: '不' },
+        { pitch: 6, duration: 0.5, lyric: '变' },
+        { pitch: 5, duration: 0.5, lyric: '的' },
+        { pitch: 3, duration: 0.25 },
+        { pitch: 2, duration: 0.25 },
+        { pitch: 1, duration: 2, dot: 1 },
+      ],
+      barline: 'end',
+    },
+  ],
+};
+
 export const examples: Record<string, { name: string; data: Score }> = {
   jasmine: { name: '茉莉花', data: jasmineFlower },
   gusu: { name: '姑苏行（片段）', data: guSuXing },
@@ -355,4 +531,5 @@ export const examples: Record<string, { name: string; data: Score }> = {
   repeat: { name: '反复记号演示', data: repeatDemo },
   accidental: { name: '升降号与附点', data: accidentalDemo },
   comprehensive: { name: '综合练习曲', data: comprehensiveDemo },
+  moon: { name: '月亮代表我的心', data: moonSong },
 };
