@@ -160,6 +160,10 @@ export interface NoteLayout {
   type: 'note' | 'dash';
   /** 音符数据引用 */
   data: Note | Dash;
+  /** 小节索引 */
+  measureIndex: number;
+  /** 音符在小节内的索引 */
+  noteIndex: number;
   /** 音符主体位置 */
   position: SymbolPosition;
   /** 八度上方点位置列表 */
@@ -172,6 +176,8 @@ export interface NoteLayout {
   accidentalPosition?: SymbolPosition;
   /** 减时线 Y 坐标和宽度列表 */
   underlines: { y: number; width: number; xOffset: number }[];
+  /** 增时线位置列表（duration>1 音符的时值延长横线） */
+  dashLinePositions: SymbolPosition[];
   /** 技巧符号位置列表 */
   techniquePositions: { technique: DiziTechnique; position: SymbolPosition; mainNotePos?: SymbolPosition }[];
   /** 连音线起点/终点信息 */

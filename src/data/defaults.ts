@@ -8,18 +8,19 @@ export const defaultScore: Score = {
   measures: [
     {
       notes: [
-        { pitch: 1, duration: 1 },
-        { pitch: 2, duration: 1 },
-        { pitch: 3, duration: 1 },
-        { pitch: 5, duration: 1 },
+        { pitch: 1, duration: 1, lyric: '我' },
+        { pitch: 2, duration: 1, lyric: '是' },
+        { pitch: 3, duration: 1, lyric: '一' },
+        { pitch: 5, duration: 1, lyric: '朵' },
       ],
     },
     {
       notes: [
-        { pitch: 6, duration: 1 },
-        { pitch: 5, duration: 1 },
-        { pitch: 3, duration: 1 },
-        { pitch: 2, duration: 1 },
+        { pitch: 6, duration: 1, lyric: '小' },
+        { pitch: 5, duration: 1, lyric: '小' },
+        { pitch: 3, duration: 1, lyric: '花' },
+        { pitch: 2, duration: 0.5 },
+        { pitch: 1, duration: 0.5 },
       ],
       barline: 'end',
     },

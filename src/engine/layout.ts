@@ -90,6 +90,8 @@ function layoutNote(
   x: number,
   y: number,
   config: LayoutConfig,
+  measureIndex: number,
+  noteIndex: number,
   groupInfo?: { underlineLevel: number; groupStartX: number; groupWidth: number },
 ): NoteLayout {
   const pos: SymbolPosition = { x, y, width: config.noteWidth, height: config.noteHeight };
@@ -115,7 +117,7 @@ function layoutNote(
       for (let i = 0; i < -octave; i++) {
         lowerDots.push({
           x: x + config.noteWidth / 2 - config.dotRadius,
-          y: y + config.noteHeight - 5 + config.dotGap * i,
+          y: y + config.noteHeight - 4 + config.dotGap * i,
           width: config.dotRadius * 2,
           height: config.dotRadius * 2,
         });
@@ -169,6 +171,7 @@ function layoutNote(
     // 技巧符号位置（统一高度，倚音特殊处理）
     const techniquePositions: { technique: DiziTechnique; position: SymbolPosition }[] = [];
     const techYBase = y - (config.techniqueOffset + config.techniqueFontSize);
+    const hasYinyin = note.techniques?.some(t => t.type === 'yinyin') ?? false;
     if (note.techniques) {
       note.techniques.forEach((tech, idx) => {
         if (tech.type === 'yinyin') {
@@ -222,6 +225,24 @@ function layoutNote(
           });
           return;
         }
+        // 倚音上叠加颤音 — 颤音"tr"定位在倚音区域上方
+        if (tech.type === 'chanyin' && hasYinyin) {
+          const yinyinTech = note.techniques!.find(t => t.type === 'yinyin')!;
+          const graceNotes = yinyinTech.graceNotes || [];
+          const label = graceNotes.join('');
+          const gFontSize = config.techniqueFontSize + 1;
+          const yinyinWidth = label.length * gFontSize * 0.6 + 2;
+          techniquePositions.push({
+            technique: tech,
+            position: {
+              x: x - yinyinWidth + 4,
+              y: y - gFontSize - 2 - config.techniqueFontSize - 6,
+              width: yinyinWidth,
+              height: config.techniqueFontSize + 4,
+            },
+          });
+          return;
+        }
         const label = getTechniqueLabel(tech);
         const width = label.length * config.techniqueFontSize * 0.7;
         techniquePositions.push({
@@ -271,12 +292,15 @@ function layoutNote(
     return {
       type: 'note',
       data: note,
+      measureIndex,
+      noteIndex,
       position: pos,
       upperDotPositions: upperDots,
       lowerDotPositions: lowerDots,
       dotPositions,
       accidentalPosition: accidentalPos,
       underlines,
+      dashLinePositions: [],
       techniquePositions,
       tieStart: !!note.tieId,
       tieEnd: !!note.tieId,
@@ -298,11 +322,14 @@ function layoutNote(
   return {
     type: 'dash',
     data: item,
+    measureIndex,
+    noteIndex,
     position: pos,
     upperDotPositions: upperDots,
     lowerDotPositions: lowerDots,
     dotPositions,
     underlines: [],
+    dashLinePositions: [],
     techniquePositions: [],
     tieId: item.tieId,
   };
@@ -502,7 +529,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
           groupInfo = { underlineLevel: group.level, groupStartX: gNoteStartX, groupWidth: gWidth };
         }
 
-        const nl = layoutNote(item, noteX, currentY, cfg, groupInfo);
+        const nl = layoutNote(item, noteX, currentY, cfg, measureIdx + mi, ni, groupInfo);
         noteLayouts.push(nl);
 
         let advanceX = cfg.noteWidth;

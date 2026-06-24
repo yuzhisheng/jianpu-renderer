@@ -10,32 +10,32 @@ export const jasmineFlower: Score = {
   measures: [
     {
       notes: [
-        { pitch: 3, duration: 1 },
-        { pitch: 5, duration: 1 },
-        { pitch: 6, duration: 1 },
-        { pitch: 1, octave: 1, duration: 1 },
+        { pitch: 3, duration: 1, lyric: '好' },
+        { pitch: 5, duration: 1, lyric: '一' },
+        { pitch: 6, duration: 1, lyric: '朵' },
+        { pitch: 1, octave: 1, duration: 1, lyric: '茉' },
       ],
     },
     {
       notes: [
-        { pitch: 6, duration: 1 },
+        { pitch: 6, duration: 1, lyric: '莉' },
         { pitch: 5, duration: 0.5 },
         { pitch: 3, duration: 0.5 },
-        { pitch: 5, duration: 1, techniques: [{ type: 'huayin', slideDirection: 'up' }] },
+        { pitch: 5, duration: 1, techniques: [{ type: 'huayin', slideDirection: 'up' }], lyric: '花' },
         { pitch: 3, duration: 1 },
       ],
     },
     {
       notes: [
-        { pitch: 2, duration: 0.5 },
-        { pitch: 3, duration: 0.5 },
-        { pitch: 5, duration: 1 },
-        { pitch: 3, duration: 1 },
+        { pitch: 2, duration: 0.5, lyric: '好' },
+        { pitch: 3, duration: 0.5, lyric: '一' },
+        { pitch: 5, duration: 1, lyric: '朵' },
+        { pitch: 3, duration: 1, lyric: '茉' },
       ],
     },
     {
       notes: [
-        { pitch: 2, duration: 1 },
+        { pitch: 2, duration: 1, lyric: '莉' },
         { pitch: 1, duration: 0.5 },
         { pitch: 6, octave: -1, duration: 0.5 },
         { pitch: 1, duration: 1 },
@@ -64,7 +64,7 @@ export const guSuXing: Score = {
     },
     {
       notes: [
-        { pitch: 5, duration: 0.5, techniques: [{ type: 'yinyin', graceNotes: [6], graceOctave: 1 }] },
+        { pitch: 5, duration: 0.5, techniques: [{ type: 'yinyin', graceNotes: [6], graceOctave: 1 }, { type: 'chanyin' }] },
         { pitch: 3, duration: 0.5 },
         { pitch: 2, duration: 1, techniques: [{ type: 'chanyin' }] },
         { pitch: 3, duration: 0.5 },
@@ -231,10 +231,38 @@ export const accidentalDemo: Score = {
   ],
 };
 
+/** 连音与圆滑线示例 */
+export const tieDemo: Score = {
+  title: '连音与圆滑线演示',
+  key: 'C',
+  timeSignature: { numerator: 4, denominator: 4 },
+  tempo: 80,
+  measures: [
+    {
+      notes: [
+        { pitch: 1, duration: 0.5, tieId: 't1' },
+        { pitch: 1, duration: 0.5, tieId: 't1' },
+        { pitch: 3, duration: 0.5, slurId: 's1' },
+        { pitch: 5, duration: 0.5, slurId: 's1' },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 6, duration: 0.5 },
+        { pitch: 5, duration: 0.5, tieId: 't2' },
+        { pitch: 5, duration: 0.5, tieId: 't2' },
+        { pitch: 2, duration: 1 },
+      ],
+      barline: 'end',
+    },
+  ],
+};
+
 export const examples: Record<string, { name: string; data: Score }> = {
   jasmine: { name: '茉莉花', data: jasmineFlower },
   gusu: { name: '姑苏行（片段）', data: guSuXing },
   technique: { name: '竹笛技巧演示', data: techniqueDemo },
+  tie: { name: '连音与圆滑线', data: tieDemo },
   repeat: { name: '反复记号演示', data: repeatDemo },
   accidental: { name: '升降号与附点', data: accidentalDemo },
 };

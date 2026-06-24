@@ -43,6 +43,22 @@ export const DEFAULT_THEME: RenderTheme = {
   repeatDotColor: '#569cd6',
 };
 
+export const LIGHT_THEME: RenderTheme = {
+  noteColor: '#333333',
+  symbolColor: '#333333',
+  barlineColor: '#999999',
+  titleColor: '#222222',
+  metaColor: '#555555',
+  lyricColor: '#888888',
+  techniqueColor: '#333333',
+  backgroundColor: '#ffffff',
+  dashColor: '#333333',
+  dotColor: '#333333',
+  underlineColor: '#333333',
+  tieColor: '#333333',
+  repeatDotColor: '#333333',
+};
+
 function isNoteType(data: Note | Dash): data is Note {
   return 'pitch' in data;
 }
@@ -78,13 +94,15 @@ function drawOctaveDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition
   });
 }
 
-/** 绘制附点 */
-function drawDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition[], theme: RenderTheme) {
-  ctx.fillStyle = theme.dotColor;
+/** 绘制附点（用短横线代替圆点） */
+function drawDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition[], config: LayoutConfig, theme: RenderTheme) {
+  ctx.strokeStyle = theme.dotColor;
+  ctx.lineWidth = config.dashThickness;
   positions.forEach(p => {
     ctx.beginPath();
-    ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(p.x, p.y + p.height / 2);
+    ctx.lineTo(p.x + config.noteWidth * 0.4, p.y + p.height / 2);
+    ctx.stroke();
   });
 }
 
@@ -656,7 +674,7 @@ export function render(
           drawNoteNumber(ctx, data, noteLayout.position, config, theme);
           drawOctaveDots(ctx, noteLayout.upperDotPositions, theme);
           drawOctaveDots(ctx, noteLayout.lowerDotPositions, theme);
-          drawDots(ctx, noteLayout.dotPositions, theme);
+          drawDots(ctx, noteLayout.dotPositions, config, theme);
           if (data.accidental && noteLayout.accidentalPosition) {
             drawAccidental(ctx, data.accidental, noteLayout.accidentalPosition, config, theme);
           }

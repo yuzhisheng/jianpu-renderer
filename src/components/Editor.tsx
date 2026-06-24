@@ -1,15 +1,31 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import Editor, { OnMount } from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
 import type { Score } from '../types';
 import schema from '../schema/jianpu.schema.json';
+
+export interface EditorHandle {
+  scrollToLine: (line: number) => void;
+  revealLine: (line: number) => void;
+}
 
 interface EditorProps {
   value: string;
   onChange: (value: string, score: Score | null) => void;
+  isDarkTheme?: boolean;
 }
 
-export default function JsonEditor({ value, onChange }: EditorProps) {
-  const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+const JsonEditor = forwardRef<EditorHandle, EditorProps>(({ value, onChange, isDarkTheme = true }, ref) => {
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    scrollToLine(line: number) {
+      editorRef.current?.revealLineInCenter(line);
+    },
+    revealLine(line: number) {
+      editorRef.current?.revealLineInCenter(line);
+    },
+  }), []);
 
   const handleMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
@@ -45,7 +61,7 @@ export default function JsonEditor({ value, onChange }: EditorProps) {
         value={value}
         onChange={handleChange}
         onMount={handleMount}
-        theme="vs-dark"
+        theme={isDarkTheme ? 'vs-dark' : 'light'}
         options={{
           minimap: { enabled: false },
           fontSize: 13,
@@ -61,4 +77,6 @@ export default function JsonEditor({ value, onChange }: EditorProps) {
       />
     </div>
   );
-}
+});
+
+export default JsonEditor;
