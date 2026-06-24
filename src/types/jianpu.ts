@@ -198,6 +198,10 @@ export interface NoteLayout {
   tenutoPosition?: SymbolPosition;
   /** 延长记号位置 */
   fermataPosition?: SymbolPosition;
+  /** 顿音位置 */
+  staccatoPosition?: SymbolPosition;
+  /** 换气位置 */
+  breathPosition?: SymbolPosition;
   /** 歌词位置 */
   lyricPosition?: SymbolPosition;
 }

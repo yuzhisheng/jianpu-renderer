@@ -61,7 +61,7 @@ export const DEFAULT_CONFIG: LayoutConfig = {
   noteFontSize: 18,
   noteWidth: 22,
   noteHeight: 22,
-  measureGap: 6,
+  measureGap: 12,
   rowGap: 14,
   dotRadius: 1.5,
   dotGap: 2,
@@ -146,24 +146,24 @@ function layoutNote(
       };
     }
 
-    // 减时线
+    // 减时线（比音符宽度略窄，留出左右边距）
+    const ulWidth = config.noteWidth - 6;
     const underlines: { y: number; width: number; xOffset: number }[] = [];
     if (groupInfo && groupInfo.underlineLevel > 0) {
       for (let i = 0; i < groupInfo.underlineLevel; i++) {
         underlines.push({
           y: y + config.noteHeight + config.underlineOffset + config.underlineGap * i,
-          width: groupInfo.groupWidth,
-          xOffset: groupInfo.groupStartX - x,
+          width: ulWidth,
+          xOffset: 3,
         });
       }
     } else if (!groupInfo) {
-      // 独立音符（不在分组中）
       const levels = getUnderlineLevel(note.duration);
       for (let i = 0; i < levels; i++) {
         underlines.push({
           y: y + config.noteHeight + config.underlineOffset + config.underlineGap * i,
-          width: config.noteWidth,
-          xOffset: 0,
+          width: ulWidth,
+          xOffset: 3,
         });
       }
     }
@@ -281,6 +281,18 @@ function layoutNote(
       width: 20, height: 14,
     } : undefined;
 
+    const staccatoPosition = note.staccato ? {
+      x: x + config.noteWidth / 2 - 8,
+      y: y - 6,
+      width: 16, height: 8,
+    } : undefined;
+
+    const breathPosition = note.breathMark ? {
+      x: x + config.noteWidth + 2,
+      y: y - 2,
+      width: 16, height: 8,
+    } : undefined;
+
     // 歌词
     const lyricPosition = note.lyric ? {
       x: x + config.noteWidth / 2 - note.lyric.length * config.lyricFontSize * 0.5,
@@ -314,6 +326,8 @@ function layoutNote(
       accentPosition,
       tenutoPosition,
       fermataPosition,
+      staccatoPosition,
+      breathPosition,
       lyricPosition,
     };
   }
@@ -542,6 +556,12 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         noteX += advanceX;
       }
 
+      // 每次小节线前留出间距，与后面间距一致
+      noteX += 10;
+      if (m.barline === 'repeat-end' || m.barline === 'repeat-start') {
+        noteX += 6;
+      }
+
       // 小节线
       const barlinePos: SymbolPosition = {
         x: noteX,
@@ -566,7 +586,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         repeatEndingPosition: repeatEndingPos,
       });
 
-      currentX = noteX + cfg.barlineWidth + (mi < rowMeasures.length - 1 ? cfg.measureGap : 0);
+      currentX = noteX + cfg.barlineWidth + 10;
     }
 
     // 计算本行最大高度

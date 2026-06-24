@@ -540,28 +540,41 @@ function drawFermata(ctx: CanvasRenderingContext2D, pos: SymbolPosition, theme: 
   drawSymbol(ctx, 8, cx - size * 0.5, pos.y + 2, size, theme.symbolColor);
 }
 
-/** 绘制反复跳跃记号 */
-function drawRepeatEnding(ctx: CanvasRenderingContext2D, numbers: number[], pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme) {
+/** 绘制反复跳跃记号（小房子） */
+function drawRepeatEnding(ctx: CanvasRenderingContext2D, numbers: number[], pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme, isLast: boolean = false) {
   const text = numbers.join('.');
   ctx.strokeStyle = theme.symbolColor;
   ctx.lineWidth = 1;
 
-  // 上方横线
-  ctx.beginPath();
-  ctx.moveTo(pos.x, pos.y + pos.height / 2);
-  ctx.lineTo(pos.x + pos.width, pos.y + pos.height / 2);
-  ctx.stroke();
+  const bracketTop = pos.y;
+  const bracketBottom = pos.y + pos.height;
+
   // 左端竖线
   ctx.beginPath();
-  ctx.moveTo(pos.x, pos.y);
-  ctx.lineTo(pos.x, pos.y + pos.height);
+  ctx.moveTo(pos.x, bracketTop);
+  ctx.lineTo(pos.x, bracketBottom);
   ctx.stroke();
 
+  // 横线（与竖线顶部对齐）
+  ctx.beginPath();
+  ctx.moveTo(pos.x, bracketTop);
+  ctx.lineTo(pos.x + pos.width, bracketTop);
+  ctx.stroke();
+
+  // 若是最后一小节，画右端竖线
+  if (isLast) {
+    ctx.beginPath();
+    ctx.moveTo(pos.x + pos.width, bracketTop);
+    ctx.lineTo(pos.x + pos.width, bracketBottom);
+    ctx.stroke();
+  }
+
+  // 数字（横线下方）
   ctx.fillStyle = theme.symbolColor;
   ctx.font = `${config.techniqueFontSize}px "Noto Sans", sans-serif`;
   ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(text, pos.x + 4, pos.y + pos.height / 2 - 2);
+  ctx.textBaseline = 'top';
+  ctx.fillText(text, pos.x + 6, bracketTop + 3);
 }
 
 /** 绘制标题和元信息 */
@@ -654,7 +667,9 @@ export function render(
 
   // 遍历行
   layout.rows.forEach(row => {
-    row.measures.forEach(measure => {
+    row.measures.forEach((measure, mi) => {
+      const nextMeasure = mi + 1 < row.measures.length ? row.measures[mi + 1] : undefined;
+
       // 绘制小节线（先画，避免被音符遮挡）
       if (measure.barlinePosition) {
         drawBarline(ctx, measure.data.barline || 'single', measure.barlinePosition, theme);
@@ -662,7 +677,9 @@ export function render(
 
       // 反复跳跃记号
       if (measure.repeatEndingPosition && measure.data.repeatEnding) {
-        drawRepeatEnding(ctx, measure.data.repeatEnding.numbers, measure.repeatEndingPosition, config, theme);
+        const isLast = !nextMeasure?.data.repeatEnding ||
+          JSON.stringify(nextMeasure.data.repeatEnding.numbers) !== JSON.stringify(measure.data.repeatEnding.numbers);
+        drawRepeatEnding(ctx, measure.data.repeatEnding.numbers, measure.repeatEndingPosition, config, theme, isLast);
       }
 
       // 绘制音符 (用索引遍历，以便获取前后音符位置)
@@ -689,10 +706,20 @@ export function render(
           drawTechnique(ctx, tp.technique, tp.position, config, theme, tp.mainNotePos || noteCenterPos, nextNoteLayout?.position);
         });
 
-        // 重音/保持音/延长记号
+        // 重音/保持音/延长记号/顿音/换气
         if (noteLayout.accentPosition) drawAccent(ctx, noteLayout.accentPosition, config, theme);
         if (noteLayout.tenutoPosition) drawTenuto(ctx, noteLayout.tenutoPosition, theme);
         if (noteLayout.fermataPosition) drawFermata(ctx, noteLayout.fermataPosition, theme);
+        if (noteLayout.staccatoPosition) drawSymbol(ctx, 11, noteLayout.staccatoPosition.x, noteLayout.staccatoPosition.y, 10, theme.symbolColor);
+        if (noteLayout.breathPosition) drawSymbol(ctx, 12, noteLayout.breathPosition.x, noteLayout.breathPosition.y, 10, theme.symbolColor);
+        // 力度突变 (sf/sfp/fp)
+        if (isNoteType(data) && data.forceAccent) {
+          ctx.fillStyle = theme.symbolColor;
+          ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(data.forceAccent, noteLayout.position.x + noteLayout.position.width / 2, noteLayout.position.y - 2);
+        }
 
         // 歌词
         if (noteLayout.lyricPosition && isNoteType(data) && data.lyric) {
