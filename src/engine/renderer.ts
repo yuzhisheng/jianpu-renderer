@@ -404,9 +404,14 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
     }
     return;
   }
-  // 颤音（紧贴音符顶部）
+  // 颤音（直接绘制 tr 文本，精准居中于音符上方）
   if (tech.type === 'chanyin') {
-    drawSymbol(ctx, 19, pos.x, pos.y + 1, pos.height + 2, theme.symbolColor);
+    const cx = pos.x + pos.width / 2;
+    ctx.fillStyle = theme.symbolColor;
+    ctx.font = `italic bold ${config.techniqueFontSize + 5}px "Noto Sans", serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('tr', cx, pos.y + 6);
     return;
   }
   // 波音（紧贴音符顶部）
@@ -415,13 +420,28 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
     drawSymbol(ctx, 15, cx, pos.y + 4, pos.height + 2, theme.symbolColor);
     return;
   }
-  // 历音 — 完全按赠音样式 + 斜波浪线
+  // 顿音（实心倒三角 ▼，音符正上方）
+  if (tech.type === 'dunyin') {
+    const cx = pos.x + pos.width / 2;
+    const triH = 6;
+    const triW = 5;
+    const topY = pos.y - 1;
+    ctx.fillStyle = theme.symbolColor;
+    ctx.beginPath();
+    ctx.moveTo(cx - triW / 2, topY);
+    ctx.lineTo(cx + triW / 2, topY);
+    ctx.lineTo(cx, topY + triH);
+    ctx.closePath();
+    ctx.fill();
+    return;
+  }
+  // 历音 — 小字 + 双横线 + 弧线 + 斜波浪线
   if (tech.type === 'liyin') {
     const isDown = tech.liyinDirection === 'down';
     const gFontSize = config.techniqueFontSize + 2;
     const cx = pos.x + pos.width / 2;
     const textBottom = pos.y + pos.height - 4;
-    const graceText = tech.graceNotes?.length ? tech.graceNotes.join('') : (isDown ? '下' : '上');
+    const graceText = tech.graceNotes?.length ? tech.graceNotes.join('') : (isDown ? '1' : '5');
 
     // 小字
     ctx.fillStyle = theme.noteColor;
@@ -457,7 +477,7 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
     ctx.lineTo(pos.x + pos.width, lineY2);
     ctx.stroke();
 
-    // SVG 弧线 (与赠音完全一致)
+    // SVG 弧线
     {
       const scale = pos.width * 0.55 / 5;
       const arcSize = 6 * scale;
@@ -511,7 +531,7 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
     dieyin: '又',
     dayin: '扌',
     yinyin: '倚',
-    tuyin: tech.articulation === 'double' ? 'TK' : tech.articulation === 'triple' ? 'TKT' : 'T',
+    tuyin: tech.articulation === 'triple' ? '三' : 'T',
     huashe: '✱',
     xunhuan: '↻',
     fanyin: '○',
@@ -627,12 +647,16 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
     return;
   }
 
-  ctx.fillText(label, pos.x, pos.y + pos.height);
+  ctx.fillStyle = theme.symbolColor;
+  ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(label, pos.x + pos.width / 2, pos.y + 3);
 }
 
 /** 绘制重音标记 */
 function drawAccent(ctx: CanvasRenderingContext2D, pos: SymbolPosition, _config: LayoutConfig, theme: RenderTheme) {
-  drawSymbol(ctx, 10, pos.x - 2, pos.y - 2, pos.width + 6, theme.symbolColor);
+  drawSymbol(ctx, 10, pos.x + pos.width / 2, pos.y - 2, 7, theme.symbolColor);
 }
 
 /** 绘制保持音标记（使用番茄简谱符号45） */
@@ -645,6 +669,53 @@ function drawFermata(ctx: CanvasRenderingContext2D, pos: SymbolPosition, theme: 
   const size = pos.width * 0.6;
   const cx = pos.x + pos.width / 2;
   drawSymbol(ctx, 8, cx - size * 0.5, pos.y + 2, size, theme.symbolColor);
+}
+
+/** 绘制渐强/渐弱（放在音符下方，拉伸覆盖指定小节） */
+function drawDynamics(
+  ctx: CanvasRenderingContext2D,
+  startMeasure: MeasureLayout,
+  endMeasure: MeasureLayout,
+  type: 'crescendo' | 'descrescendo',
+  theme: RenderTheme,
+) {
+  // 如果起始小节有力度标记 (pp/mp/f 等)，hairpin 右移避开
+  let x1 = startMeasure.position.x + 2;
+  for (const nl of startMeasure.notes) {
+    if (nl.dynamicPosition) {
+      const textEnd = nl.dynamicPosition.x + nl.dynamicPosition.width + 4;
+      if (textEnd > x1) x1 = textEnd;
+    }
+  }
+  const x2 = endMeasure.position.x + endMeasure.position.width;
+  const y = startMeasure.position.y + startMeasure.position.height + 12;
+  const h = 12;
+  const midY = y + h / 2;
+  const isCrescendo = type === 'crescendo';
+
+  ctx.strokeStyle = theme.symbolColor;
+  ctx.lineWidth = 1;
+
+  // 上下对称倾斜线
+  ctx.beginPath();
+  if (isCrescendo) {
+    // < 左窄右宽：两条线从左中点发散到右上、右下
+    ctx.moveTo(x1, midY);
+    ctx.lineTo(x2, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x1, midY);
+    ctx.lineTo(x2, y + h);
+  } else {
+    // > 左宽右窄：两条线从左上、左下汇聚到右中点
+    ctx.moveTo(x1, y);
+    ctx.lineTo(x2, midY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x1, y + h);
+    ctx.lineTo(x2, midY);
+  }
+  ctx.stroke();
 }
 
 /** 绘制反复跳跃记号（小房子） */
@@ -863,6 +934,15 @@ export function render(
           }
         }
 
+        // 力度标记 (pp/mp/mf/f/ff 等)，放在歌词下方
+        if (isNoteType(data) && data.dynamic && noteLayout.dynamicPosition) {
+          ctx.fillStyle = theme.symbolColor;
+          ctx.font = `bold italic ${config.lyricFontSize}px "Noto Sans", serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(data.dynamic, noteLayout.dynamicPosition.x + noteLayout.dynamicPosition.width / 2, noteLayout.dynamicPosition.y);
+        }
+
         // 收集连音线起点
         if (noteLayout.tieId) {
           if (!tieStarts.has(noteLayout.tieId)) {
@@ -891,4 +971,24 @@ export function render(
       }
     });
   });
+
+  // 绘制渐强/渐弱（跨小节，放在音符下方）
+  let globalMeasureIdx = 0;
+  const allMeasures: { layout: MeasureLayout; idx: number }[] = [];
+  for (const row of layout.rows) {
+    for (const m of row.measures) {
+      allMeasures.push({ layout: m, idx: globalMeasureIdx });
+      globalMeasureIdx++;
+    }
+  }
+  for (const item of allMeasures) {
+    const m = item.layout;
+    const d = m.data.dynamics;
+    if (d && d.endMeasureIndex !== undefined) {
+      const endItem = allMeasures.find(im => im.idx === d.endMeasureIndex);
+      if (endItem) {
+        drawDynamics(ctx, m, endItem.layout, d.type!, theme);
+      }
+    }
+  }
 }

@@ -66,8 +66,8 @@ export const DEFAULT_CONFIG: LayoutConfig = {
   dotRadius: 1.5,
   dotGap: 2,
   accentDotRadius: 1.5,
-  underlineOffset: 0.5,
-  underlineGap: 1.5,
+  underlineOffset: 2.5,
+  underlineGap: 2.5,
   underlineThickness: 1,
   dashThickness: 1.2,
   barlineWidth: 1,
@@ -77,7 +77,7 @@ export const DEFAULT_CONFIG: LayoutConfig = {
   metaFontSize: 11,
   tieCurveHeight: 6,
   lyricFontSize: 9,
-  lyricOffset: 1,
+  lyricOffset: 14,
 };
 
 function isNote(item: NoteType | Dash): item is NoteType {
@@ -112,7 +112,7 @@ function layoutNote(
       for (let i = 0; i < octave; i++) {
         upperDots.push({
           x: x + config.noteWidth / 2 - config.dotRadius,
-          y: y - config.dotRadius + 3 - (i > 0 ? config.dotGap * i : 0),
+          y: y - config.dotRadius + 2 - (i > 0 ? config.dotGap * i : 0),
           width: config.dotRadius * 2,
           height: config.dotRadius * 2,
         });
@@ -122,7 +122,7 @@ function layoutNote(
       for (let i = 0; i < -octave; i++) {
         lowerDots.push({
           x: x + config.noteWidth / 2 - config.dotRadius,
-          y: y + config.noteHeight - 4 + config.dotGap * i,
+          y: y + config.noteHeight - 3.5 + config.dotGap * i,
           width: config.dotRadius * 2,
           height: config.dotRadius * 2,
         });
@@ -140,14 +140,14 @@ function layoutNote(
       });
     }
 
-    // 升降号位置
+    // 升降号位置（左上角紧贴音符）
     let accidentalPos: SymbolPosition | undefined;
     if (note.accidental) {
       accidentalPos = {
-        x: x - 14,
-        y: y,
-        width: 14,
-        height: config.noteHeight,
+        x: x - 2,
+        y: y - 3,
+        width: 16,
+        height: 16,
       };
     }
 
@@ -263,11 +263,11 @@ function layoutNote(
       });
     }
 
-    // 重音、保持音、延长记号（统一在技法符号上方）
+    // 重音、保持音、延长记号（音符上方，避免重叠）
     const hasTechniques = (note.techniques?.length || 0) > 0;
     const accentY = hasTechniques
       ? techYBase - config.techniqueFontSize - 2
-      : y - 2;
+      : y - 8;
 
     const accentPosition = note.accent ? {
       x: x + config.noteWidth / 2 - 5,
@@ -277,7 +277,7 @@ function layoutNote(
 
     const tenutoPosition = note.tenuto ? {
       x: x + config.noteWidth / 2 - 8,
-      y: y - 2,
+      y: y - 8,
       width: 16, height: 3,
     } : undefined;
 
@@ -312,6 +312,14 @@ function layoutNote(
     }));
     const lyricPosition = lyricPositions.length > 0 ? lyricPositions[0] : undefined;
 
+    // 力度标记 (pp/mp/mf/f/ff 等)，与渐强渐弱符号同一水平线
+    const dynamicPosition = note.dynamic ? {
+      x: x + config.noteWidth / 2 - note.dynamic.length * config.lyricFontSize * 0.4,
+      y: y + config.noteHeight + 11,
+      width: note.dynamic.length * config.lyricFontSize,
+      height: config.lyricFontSize,
+    } : undefined;
+
     return {
       type: 'note',
       data: note,
@@ -341,6 +349,7 @@ function layoutNote(
       breathPosition,
       lyricPosition,
       lyricPositions: lyricPositions.length > 1 ? lyricPositions : undefined,
+      dynamicPosition,
     };
   }
 
@@ -743,6 +752,9 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         if (nl.underlines.length > 0) {
           const lastLine = nl.underlines[nl.underlines.length - 1];
           maxBottom = Math.max(maxBottom, lastLine.y + cfg.underlineThickness + 2);
+        }
+        if (nl.dynamicPosition) {
+          maxBottom = Math.max(maxBottom, nl.dynamicPosition.y + nl.dynamicPosition.height + 2);
         }
         if (nl.lyricPositions && nl.lyricPositions.length > 0) {
           const last = nl.lyricPositions[nl.lyricPositions.length - 1];

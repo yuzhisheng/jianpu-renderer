@@ -30,7 +30,8 @@ export type DiziTechniqueType =
   | 'huashe'       // 花舌
   | 'xunhuan'      // 循环换气
   | 'fanyin'      // 泛音
-  | 'boyin';       // 波音（上波音用顺回音符号）
+  | 'boyin'        // 波音（上波音用顺回音符号）
+  | 'dunyin';       // 顿音（倒三角▼）
 
 /** 滑音方向 */
 export type SlideDirection = 'up' | 'down';
@@ -87,6 +88,8 @@ export interface Note {
   fermata?: boolean;
   /** 力度突变标记 (sf/sfp/fp) */
   forceAccent?: 'sf' | 'sfp' | 'fp';
+  /** 力度标记 (pp/p/mp/mf/f/ff 等)，显示在音符下方 */
+  dynamic?: string;
   /** 歌词（第一行） */
   lyric?: string;
   /** 多行歌词（如歌谱多段词），每行独立数组 */
@@ -217,6 +220,8 @@ export interface NoteLayout {
   lyricPosition?: SymbolPosition;
   /** 多行歌词每行位置 */
   lyricPositions?: SymbolPosition[];
+  /** 力度标记位置 (pp/mp/f 等) */
+  dynamicPosition?: SymbolPosition;
 }
 
 /** 小节布局 */

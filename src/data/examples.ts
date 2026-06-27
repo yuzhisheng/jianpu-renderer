@@ -548,16 +548,17 @@ export const moonSong: Score = {
         { pitch: 1, duration: 2 },
       ],
       repeatEnding: { numbers: [1] },
+      barline: 'double',
     },
-    // 衔接段
+    // 衔接段（分隔两个小房子）
     {
       notes: [
-        { pitch: 5, duration: 0.5, lyric: '你' },
-        { pitch: 3, duration: 0.5, lyric: '的' },
-        { pitch: 2, duration: 0.5, lyric: '心' },
-        { pitch: 1, duration: 1.5 },
-        { pitch: 6, octave: -1, duration: 1 },
+        { pitch: 5, duration: 1, lyric: '你' },
+        { pitch: 3, duration: 1, lyric: '的' },
+        { pitch: 2, duration: 0.5 },
+        { pitch: 1, duration: 1.5, lyric: '心' },
       ],
+      barline: 'double',
     },
     // 小房子 2.
     {

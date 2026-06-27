@@ -28,8 +28,6 @@ def make_note(pitch: int, dur: float, lyric: str = "", py: str = "", octave: int
     n: dict[str, Any] = {"pitch": pitch, "duration": dur}
     if lyric:
         n["lyric"] = lyric
-        if py:
-            n["lyrics"] = [lyric, py]
     if octave != 0:
         n["octave"] = octave
     for k, v in kw.items():
@@ -103,21 +101,10 @@ def fill_measure(beats: int = 4) -> tuple[list[dict], list[dict]]:
         # 连音线（相邻两个0.5拍的音符）
         if dur == 0.5 and len(notes) > 0 and notes[-1].get("duration") == 0.5 and random.random() < 0.3:
             sid = f"s{len(slurs) + 1}"
-            slurs.append({
-                "id": sid,
-                "lyrics": [lyric, py],
-                "prev_lyric": notes[-1].get("lyric", lyric),
-            })
             notes[-1]["slurId"] = sid
             extra["slurId"] = sid
 
-        # 力度/装饰
-        if random.random() < 0.06:
-            extra["accent"] = True
-        if random.random() < 0.04:
-            extra["tenuto"] = True
-        if random.random() < 0.03:
-            extra["fermata"] = True
+        # 附点
         if random.random() < 0.05 and dur >= 1.0:
             extra["dot"] = 1
 
@@ -137,18 +124,18 @@ def generate(args):
         # 随机小节线
         if random.random() < 0.08:
             m["barline"] = random.choice(["double", "repeat-start", "repeat-end", "end"])
-        if random.random() < 0.03:
-            m["dynamics"] = {"type": random.choice(["crescendo", "descrescendo"])}
         measures.append(m)
 
-    # 随机加小房子
-    if len(measures) >= 3 and random.random() < 0.5:
-        pos = random.randint(len(measures) - 3, len(measures) - 2)
-        measures.insert(pos, dict(measures[pos - 1]) if pos > 0 else measures[0])
-        measures[pos - 1]["barline"] = "repeat-start"
-        measures[pos]["repeatEnding"] = {"numbers": [1]}
-        measures[pos + 1]["repeatEnding"] = {"numbers": [2]}
-        measures[pos + 1]["barline"] = "end"
+    # 随机加小房子（中间插入1小节间隙）
+    if len(measures) >= 3 and random.random() < 0.4:
+        idx = random.randint(1, len(measures) - 2)
+        measures[idx - 1]["barline"] = "repeat-start"
+        measures[idx]["repeatEnding"] = {"numbers": [1]}
+        # 插入间隙小节
+        gap_notes, _ = fill_measure(args.beats or 4)
+        measures.insert(idx + 1, {"notes": gap_notes})
+        measures[idx + 2]["repeatEnding"] = {"numbers": [2]}
+        measures[idx + 2]["barline"] = "end"
 
     # 构建 score
     key = args.key or random.choice(["C", "D", "G", "F", "A"])

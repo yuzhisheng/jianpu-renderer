@@ -1,0 +1,213 @@
+{
+  "title": "力度变化",
+  "key": "C",
+  "timeSignature": {
+    "numerator": 4,
+    "denominator": 4
+  },
+  "measures": [
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "lyric": "渐",
+          "dynamic": "pp"
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "lyric": "强"
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5,
+          "lyric": "自",
+          "dynamic": "mp"
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5,
+          "lyric": "弱"
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "lyric": "至"
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "octave": 1,
+          "lyric": "强",
+          "dynamic": "f"
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "lyric": "~"
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5,
+          "lyric": "~"
+        }
+      ],
+      "dynamics": {
+        "type": "crescendo",
+        "endMeasureIndex": 1
+      }
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 0.25,
+          "octave": 1,
+          "lyric": "渐"
+        },
+        {
+          "pitch": 6,
+          "duration": 0.25,
+          "lyric": "强"
+        },
+        {
+          "pitch": 5,
+          "duration": 0.25,
+          "lyric": "至"
+        },
+        {
+          "pitch": 3,
+          "duration": 0.25,
+          "lyric": "顶"
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "lyric": "峰"
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5,
+          "lyric": "~"
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5,
+          "lyric": "~"
+        },
+        {
+          "pitch": 6,
+          "duration": 0.25,
+          "lyric": "~"
+        },
+        {
+          "pitch": 5,
+          "duration": 0.25,
+          "lyric": "~"
+        }
+      ]
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "lyric": "渐"
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5,
+          "lyric": "弱"
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5,
+          "lyric": "自"
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "lyric": "强"
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "lyric": "至"
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "octave": -1,
+          "lyric": "弱"
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5,
+          "lyric": "~"
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5,
+          "lyric": "~"
+        }
+      ],
+      "dynamics": {
+        "type": "descrescendo",
+        "endMeasureIndex": 3
+      }
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "lyric": "渐"
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "lyric": "弱"
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "octave": -1,
+          "lyric": "至"
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5,
+          "octave": -1,
+          "lyric": "底"
+        },
+        {
+          "pitch": 6,
+          "duration": 0.25,
+          "octave": -1,
+          "lyric": "~"
+        },
+        {
+          "pitch": 1,
+          "duration": 0.25,
+          "lyric": "~"
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "lyric": "~"
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5,
+          "lyric": "~"
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "lyric": "~"
+        }
+      ]
+    }
+  ]
+}

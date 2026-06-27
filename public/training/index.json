@@ -1,0 +1,47 @@
+[
+  {
+    "file": "score_001.json",
+    "title": "节奏型示例",
+    "measures": 4
+  },
+  {
+    "file": "score_002.json",
+    "title": "八度与变音",
+    "measures": 4
+  },
+  {
+    "file": "score_003.json",
+    "title": "波音颤音倚音",
+    "measures": 4
+  },
+  {
+    "file": "score_004.json",
+    "title": "滑音历音叠音",
+    "measures": 4
+  },
+  {
+    "file": "score_005.json",
+    "title": "打音与吐音",
+    "measures": 4
+  },
+  {
+    "file": "score_006.json",
+    "title": "连音与圆滑线",
+    "measures": 4
+  },
+  {
+    "file": "score_007.json",
+    "title": "反复跳跃",
+    "measures": 6
+  },
+  {
+    "file": "score_008.json",
+    "title": "力度变化",
+    "measures": 4
+  },
+  {
+    "file": "score_009.json",
+    "title": "综合符号示例",
+    "measures": 5
+  }
+]

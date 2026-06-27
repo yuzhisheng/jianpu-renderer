@@ -8,6 +8,7 @@ import { downloadPNG, DEFAULT_THEME, LIGHT_THEME } from './engine';
 import Editor from './components/Editor';
 import Preview from './components/Preview';
 import Toolbar from './components/Toolbar';
+import TrainingViewer from './components/TrainingViewer';
 
 export default function App() {
   // 从 localStorage 恢复主题和示例选择
@@ -22,6 +23,7 @@ export default function App() {
   const [zoom, setZoom] = useState(1);
   const [isValid, setIsValid] = useState(true);
   const [showEditor, setShowEditor] = useState(true);
+  const [showTraining, setShowTraining] = useState(false);
   const [noteSpacing, setNoteSpacing] = useState(() => {
     const s = localStorage.getItem('jianpu-noteSpacing');
     return s !== null ? Number(s) : 22;
@@ -164,6 +166,10 @@ export default function App() {
     localStorage.setItem('jianpu-noteSpacing', String(v));
   }, []);
 
+  const handleToggleTraining = useCallback(() => {
+    setShowTraining(v => !v);
+  }, []);
+
   const handleRowGapChange = useCallback((v: number) => {
     setRowGap(v);
     localStorage.setItem('jianpu-rowGap', String(v));
@@ -181,6 +187,20 @@ export default function App() {
   const editorBorder = isDarkTheme ? 'border-gray-800' : 'border-gray-200';
   const editorHeaderBg = isDarkTheme ? 'bg-dark-900' : 'bg-gray-100';
   const editorHeaderBorder = isDarkTheme ? 'border-gray-800' : 'border-gray-200';
+
+  if (showTraining) {
+    return (
+      <div className="h-screen w-screen flex flex-col overflow-hidden" style={{backgroundColor: '#f5f5f5'}}>
+        <div className="h-10 flex items-center px-4 bg-white border-b shadow-sm gap-3">
+          <button onClick={handleToggleTraining}
+            className="text-xs px-3 py-1 rounded bg-gray-200 hover:bg-gray-300">返回编辑器</button>
+        </div>
+        <div className="flex-1 overflow-auto">
+          <TrainingViewer />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden transition-colors duration-200" style={{backgroundColor: isDarkTheme ? '#1e1e1e' : '#f5f5f5'}}>
@@ -222,6 +242,7 @@ export default function App() {
         <div className="flex-1 relative">
           <div className={`absolute top-0 left-0 right-0 h-7 flex items-center px-3 z-10 border-b ${editorHeaderBg} ${editorHeaderBorder}`}>
             <span className="text-[10px] font-medium uppercase tracking-wider" style={{color: isDarkTheme ? '#6b7280' : '#9ca3af'}}>Preview</span>
+            <button onClick={handleToggleTraining} className="mx-2 text-[10px] px-2 py-0.5 rounded bg-blue-500 text-white hover:bg-blue-600">训练素材</button>
             <span className="ml-auto text-[10px]" style={{color: isDarkTheme ? '#4b5563' : '#d1d5db'}}>{Math.round(zoom * 100)}%</span>
           </div>
           <div className="pt-7 h-full">
