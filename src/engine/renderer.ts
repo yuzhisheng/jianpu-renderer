@@ -73,9 +73,17 @@ function drawNoteNumber(ctx: CanvasRenderingContext2D, note: Note, pos: SymbolPo
   ctx.fillText(text, pos.x + pos.width / 2, pos.y + pos.height / 2);
 }
 
-/** 绘制增时线（使用番茄简谱符号5） */
+/** 绘制增时线（短横线，居中于音符区域） */
 function drawDash(ctx: CanvasRenderingContext2D, pos: SymbolPosition, _config: LayoutConfig, theme: RenderTheme) {
-  drawSymbol(ctx, 5, pos.x, pos.y, pos.width, theme.dashColor);
+  const cx = pos.x + pos.width / 2;
+  const cy = pos.y + pos.height / 2;
+  const halfW = pos.width * 0.25;
+  ctx.strokeStyle = theme.dashColor;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(cx - halfW, cy);
+  ctx.lineTo(cx + halfW, cy);
+  ctx.stroke();
 }
 
 /** 绘制八度点 */
@@ -88,10 +96,16 @@ function drawOctaveDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition
   });
 }
 
-/** 绘制附点（使用番茄简谱符号6-真圆点） */
+/** 绘制附点（真圆点，直接使用 Canvas arc 避免 SVG 缩放过小） */
 function drawDots(ctx: CanvasRenderingContext2D, positions: SymbolPosition[], _config: LayoutConfig, theme: RenderTheme) {
   positions.forEach(p => {
-    drawSymbol(ctx, 6, p.x, p.y, p.width, theme.dotColor);
+    const cx = p.x + p.width / 2;
+    const cy = p.y + p.height / 2;
+    const r = p.width / 2;
+    ctx.fillStyle = theme.dotColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
   });
 }
 
@@ -111,13 +125,52 @@ function drawAccidental(ctx: CanvasRenderingContext2D, accidental: string, pos: 
   ctx.fillText(symbols[accidental] || '', pos.x + pos.width / 2, pos.y + pos.height / 2);
 }
 
-/** 绘制减时线 */
+/** 绘制减时线（根据音符数字实际渲染宽度精确定位） */
 function drawUnderlines(ctx: CanvasRenderingContext2D, noteLayout: NoteLayout, config: LayoutConfig, theme: RenderTheme) {
   ctx.strokeStyle = theme.underlineColor;
   ctx.lineWidth = config.underlineThickness;
+
+  // 获取当前音符数字宽度
+  ctx.font = `bold ${config.noteFontSize}px "Noto Sans", "SimSun", serif`;
+  const getDigitWidth = (pitch: number): number => {
+    const t = pitch === 0 ? '0' : String(pitch);
+    return ctx.measureText(t).width;
+  };
+
+  const thisPitch = 'pitch' in noteLayout.data ? noteLayout.data.pitch : -1;
+  const thisDigitW = thisPitch >= 0 ? getDigitWidth(thisPitch) : 0;
+  const xCenter = noteLayout.position.x + noteLayout.position.width / 2;
+
   noteLayout.underlines.forEach(ul => {
-    const startX = noteLayout.position.x + (ul.xOffset || 0);
-    const endX = startX + ul.width;
+    let startX: number;
+    let endX: number;
+
+    const ulExt = ul as any;
+    if (ulExt.groupFirstCenter !== undefined) {
+      // 分组横线：从段首音符数字左边缘到段尾音符数字右边缘
+      const firstCenter = ulExt.groupFirstCenter;
+      const lastCenter = ulExt.groupLastCenter;
+      const firstPitch = ulExt.groupFirstPitch !== undefined ? ulExt.groupFirstPitch : -1;
+      const lastPitch = ulExt.groupLastPitch !== undefined ? ulExt.groupLastPitch : -1;
+      const firstDw = firstPitch >= 0 ? getDigitWidth(firstPitch) : config.noteWidth * 0.5;
+      const lastDw = lastPitch >= 0 ? getDigitWidth(lastPitch) : config.noteWidth * 0.5;
+      if (firstCenter === lastCenter) {
+        // 段内只有一个音符（如 16-8-16 中间被打断），居中画数字宽
+        startX = firstCenter - firstDw / 2;
+        endX = firstCenter + firstDw / 2;
+      } else {
+        startX = firstCenter - firstDw / 2;
+        endX = lastCenter + lastDw / 2;
+      }
+    } else if (thisDigitW > 0) {
+      // 单个音符：横线宽度=数字宽度，居中于音符区域
+      startX = xCenter - thisDigitW / 2;
+      endX = xCenter + thisDigitW / 2;
+    } else {
+      startX = noteLayout.position.x + (ul.xOffset || 0);
+      endX = startX + ul.width;
+    }
+
     if (endX <= startX) return;
     ctx.beginPath();
     ctx.moveTo(startX, ul.y);
@@ -211,34 +264,97 @@ function drawBarline(ctx: CanvasRenderingContext2D, type: string, pos: SymbolPos
   }
 }
 
-/** 绘制连音线（Tie） */
+/** 绘制两端细、中间粗的弧线 */
+function drawVariableWidthCurve(
+  ctx: CanvasRenderingContext2D,
+  x1: number, y1: number,
+  x2: number, y2: number,
+  cpx: number, cpy: number,
+  thickWidth: number,
+  thinWidth: number,
+  color: string,
+  steps: number = 40,
+) {
+  // 沿着二次贝塞尔曲线采样，两端细中间粗
+  const pts: { x: number; y: number; t: number }[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const mt = 1 - t;
+    const x = mt * mt * x1 + 2 * mt * t * cpx + t * t * x2;
+    const yVal = mt * mt * y1 + 2 * mt * t * cpy + t * t * y2;
+    pts.push({ x, y: yVal, t });
+  }
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    const { x, y: py, t } = pts[i];
+    // 宽度从两端向中间渐变：sin(π*t) 曲线
+    const widthFactor = Math.sin(Math.PI * t);
+    const halfW = (thinWidth + (thickWidth - thinWidth) * widthFactor) / 2;
+
+    // 切线方向 (dx, dy)
+    const next = pts[Math.min(i + 1, pts.length - 1)];
+    const prev = pts[Math.max(i - 1, 0)];
+    const dx = next.x - prev.x;
+    const dy = next.y - prev.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len * halfW;
+    const ny = dx / len * halfW;
+
+    if (i === 0) {
+      ctx.moveTo(x + nx, py + ny);
+    } else {
+      ctx.lineTo(x + nx, py + ny);
+    }
+  }
+  // 回程（从终点到起点，法线反向）
+  for (let i = pts.length - 1; i >= 0; i--) {
+    const { x, y: py, t } = pts[i];
+    const widthFactor = Math.sin(Math.PI * t);
+    const halfW = (thinWidth + (thickWidth - thinWidth) * widthFactor) / 2;
+    const next = pts[Math.min(i + 1, pts.length - 1)];
+    const prev = pts[Math.max(i - 1, 0)];
+    const dx = next.x - prev.x;
+    const dy = next.y - prev.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len * halfW;
+    const ny = dx / len * halfW;
+    ctx.lineTo(x - nx, py - ny);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** 根据距离计算弧线高度，距离越长弧度越大 */
+function getCurveHeight(dist: number, base: number): number {
+  return Math.max(base, dist * 0.2);
+}
+
+/** 绘制连音线（Tie），两端细中间粗 */
 function drawTie(ctx: CanvasRenderingContext2D, startNote: NoteLayout, endNote: NoteLayout, config: LayoutConfig, theme: RenderTheme) {
   const x1 = startNote.position.x + startNote.position.width / 2;
   const x2 = endNote.position.x + endNote.position.width / 2;
   const y = startNote.position.y - 4;
-  const curveH = config.tieCurveHeight;
+  const dist = x2 - x1;
+  const curveH = getCurveHeight(dist, config.tieCurveHeight);
+  const cpx = (x1 + x2) / 2;
+  const cpy = y - curveH;
 
-  ctx.strokeStyle = theme.tieColor;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(x1, y);
-  ctx.quadraticCurveTo((x1 + x2) / 2, y - curveH, x2, y);
-  ctx.stroke();
+  drawVariableWidthCurve(ctx, x1, y, x2, y, cpx, cpy, 1.5, 0.8, theme.tieColor);
 }
 
-/** 绘制圆滑线（Slur） */
+/** 绘制圆滑线（Slur），两端细中间粗 */
 function drawSlur(ctx: CanvasRenderingContext2D, startNote: NoteLayout, endNote: NoteLayout, config: LayoutConfig, theme: RenderTheme) {
   const x1 = startNote.position.x + startNote.position.width / 2;
   const x2 = endNote.position.x + endNote.position.width / 2;
   const y = startNote.position.y - 2;
-  const curveH = config.tieCurveHeight + 4;
+  const dist = x2 - x1;
+  const curveH = getCurveHeight(dist, config.tieCurveHeight + 4);
+  const cpx = (x1 + x2) / 2;
+  const cpy = y - curveH;
 
-  ctx.strokeStyle = theme.tieColor;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(x1, y);
-  ctx.quadraticCurveTo((x1 + x2) / 2, y - curveH, x2, y);
-  ctx.stroke();
+  drawVariableWidthCurve(ctx, x1, y, x2, y, cpx, cpy, 1.2, 0.7, theme.tieColor);
 }
 
 /** 绘制三连音标记 */
@@ -288,9 +404,15 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
     }
     return;
   }
-  // 颤音
+  // 颤音（紧贴音符顶部）
   if (tech.type === 'chanyin') {
-    drawSymbol(ctx, 19, pos.x, pos.y - 2, pos.height + 8, theme.symbolColor);
+    drawSymbol(ctx, 19, pos.x, pos.y + 1, pos.height + 2, theme.symbolColor);
+    return;
+  }
+  // 波音（紧贴音符顶部）
+  if (tech.type === 'boyin') {
+    const cx = pos.x + pos.width / 2;
+    drawSymbol(ctx, 15, cx, pos.y + 4, pos.height + 2, theme.symbolColor);
     return;
   }
   // 历音 — 完全按赠音样式 + 斜波浪线
@@ -632,7 +754,7 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 export function render(
   ctx: CanvasRenderingContext2D,
   layout: ScoreLayout,
-  score: { title?: string; key: string; timeSignature: { numerator: number; denominator: number }; tempo?: number; tempoText?: string },
+  score: { title?: string; key: string; timeSignature: { numerator: number; denominator: number }; tempo?: number; tempoText?: string; introMeasureCount?: number },
   config: LayoutConfig,
   theme: RenderTheme = DEFAULT_THEME,
 ) {
@@ -664,6 +786,18 @@ export function render(
         const isLast = !nextMeasure?.data.repeatEnding ||
           JSON.stringify(nextMeasure.data.repeatEnding.numbers) !== JSON.stringify(measure.data.repeatEnding.numbers);
         drawRepeatEnding(ctx, measure.data.repeatEnding.numbers, measure.repeatEndingPosition, config, theme, isLast);
+      }
+
+      // 前奏括号（像音符一样占位，pos.x/pos.y 即中心点）
+      // 括号高度略大于音符，垂直中心与音符数字中心精确对齐
+      if (measure.bracketLeft || measure.bracketRight) {
+        const bracketSize = config.noteHeight * 1.15;
+        if (measure.bracketLeft) {
+          drawSymbol(ctx, 41, measure.bracketLeft.x, measure.bracketLeft.y, bracketSize, theme.symbolColor);
+        }
+        if (measure.bracketRight) {
+          drawSymbol(ctx, 42, measure.bracketRight.x, measure.bracketRight.y, bracketSize, theme.symbolColor);
+        }
       }
 
       // 绘制音符 (用索引遍历，以便获取前后音符位置)
@@ -713,13 +847,20 @@ export function render(
           }
         }
 
-        // 歌词
-        if (noteLayout.lyricPosition && isNoteType(data) && data.lyric) {
-          ctx.fillStyle = theme.lyricColor;
-          ctx.font = `${config.lyricFontSize}px "Noto Sans", sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'top';
-          ctx.fillText(data.lyric, noteLayout.lyricPosition.x + noteLayout.lyricPosition.width / 2, noteLayout.lyricPosition.y);
+        // 歌词（支持多行）
+        if (isNoteType(data)) {
+          const lyricLines = data.lyrics || (data.lyric ? [data.lyric] : []);
+          const positions = noteLayout.lyricPositions || (noteLayout.lyricPosition ? [noteLayout.lyricPosition] : []);
+          if (lyricLines.length > 0 && positions.length > 0) {
+            ctx.fillStyle = theme.lyricColor;
+            ctx.font = `${config.lyricFontSize}px "Noto Sans", sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const count = Math.min(lyricLines.length, positions.length);
+            for (let li = 0; li < count; li++) {
+              ctx.fillText(lyricLines[li], positions[li].x + positions[li].width / 2, positions[li].y);
+            }
+          }
         }
 
         // 收集连音线起点

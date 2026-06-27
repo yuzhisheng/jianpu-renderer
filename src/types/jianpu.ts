@@ -29,7 +29,8 @@ export type DiziTechniqueType =
   | 'tuyin'        // 吐音
   | 'huashe'       // 花舌
   | 'xunhuan'      // 循环换气
-  | 'fanyin';      // 泛音
+  | 'fanyin'      // 泛音
+  | 'boyin';       // 波音（上波音用顺回音符号）
 
 /** 滑音方向 */
 export type SlideDirection = 'up' | 'down';
@@ -86,8 +87,10 @@ export interface Note {
   fermata?: boolean;
   /** 力度突变标记 (sf/sfp/fp) */
   forceAccent?: 'sf' | 'sfp' | 'fp';
-  /** 歌词 */
+  /** 歌词（第一行） */
   lyric?: string;
+  /** 多行歌词（如歌谱多段词），每行独立数组 */
+  lyrics?: string[];
 }
 
 /** 增时线（单独的时值延长线） */
@@ -147,6 +150,8 @@ export interface Score {
   dynamics?: DynamicMark;
   /** 谱面力度术语（一次性） */
   dynamicsText?: Array<{ text: string; measureIndex: number; noteIndex: number }>;
+  /** 前奏小节数（用括号包起） */
+  introMeasureCount?: number;
   /** 小节列表 */
   measures: Measure[];
 }
@@ -208,8 +213,10 @@ export interface NoteLayout {
   staccatoPosition?: SymbolPosition;
   /** 换气位置 */
   breathPosition?: SymbolPosition;
-  /** 歌词位置 */
+  /** 歌词位置（第一行） */
   lyricPosition?: SymbolPosition;
+  /** 多行歌词每行位置 */
+  lyricPositions?: SymbolPosition[];
 }
 
 /** 小节布局 */
@@ -224,6 +231,10 @@ export interface MeasureLayout {
   notes: NoteLayout[];
   /** 反复跳跃记号位置 */
   repeatEndingPosition?: SymbolPosition;
+  /** 前奏左括号位置 */
+  bracketLeft?: SymbolPosition;
+  /** 前奏右括号位置 */
+  bracketRight?: SymbolPosition;
 }
 
 /** 行布局 */

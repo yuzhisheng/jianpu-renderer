@@ -12,9 +12,13 @@ interface ToolbarProps {
   onToggleEditor: () => void;
   isDarkTheme: boolean;
   onToggleTheme: () => void;
+  noteSpacing: number;
+  rowGap: number;
+  onNoteSpacingChange: (v: number) => void;
+  onRowGapChange: (v: number) => void;
 }
 
-export default function Toolbar({ onExampleSelect, onExport, onZoomIn, onZoomOut, zoom, isValid, showEditor, onToggleEditor, isDarkTheme, onToggleTheme }: ToolbarProps) {
+export default function Toolbar({ onExampleSelect, onExport, onZoomIn, onZoomOut, zoom, isValid, showEditor, onToggleEditor, isDarkTheme, onToggleTheme, noteSpacing, rowGap, onNoteSpacingChange, onRowGapChange }: ToolbarProps) {
   const bg = isDarkTheme ? 'bg-dark-900' : 'bg-white';
   const border = isDarkTheme ? 'border-gray-800' : 'border-gray-200';
   const text = isDarkTheme ? 'text-gray-200' : 'text-gray-800';
@@ -88,6 +92,26 @@ export default function Toolbar({ onExampleSelect, onExport, onZoomIn, onZoomOut
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
+        </div>
+
+        {/* 音符间距 */}
+        <div className="flex items-center gap-1">
+          <span className={`text-[10px] w-5 text-center ${subText}`}>音距</span>
+          <input type="range" min="14" max="32" value={noteSpacing}
+            className="w-16 h-1 accent-primary-500 cursor-pointer"
+            onChange={e => onNoteSpacingChange(Number(e.target.value))}
+            title={`音符间距: ${noteSpacing}px`} />
+          <span className={`text-[10px] w-6 ${subText}`}>{noteSpacing}</span>
+        </div>
+
+        {/* 行间距 */}
+        <div className="flex items-center gap-1">
+          <span className={`text-[10px] w-5 text-center ${subText}`}>行距</span>
+          <input type="range" min="4" max="36" value={rowGap}
+            className="w-16 h-1 accent-primary-500 cursor-pointer"
+            onChange={e => onRowGapChange(Number(e.target.value))}
+            title={`行间距: ${rowGap}px`} />
+          <span className={`text-[10px] w-6 ${subText}`}>{rowGap}</span>
         </div>
 
         {/* 导出按钮 */}

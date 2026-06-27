@@ -10,9 +10,11 @@ interface PreviewProps {
   theme: RenderTheme;
   onLayoutChange?: (layout: ScoreLayout) => void;
   onNoteClick?: (measureIndex: number, noteIndex: number) => void;
+  noteSpacing?: number;
+  rowGap?: number;
 }
 
-export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClick }: PreviewProps) {
+export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClick, noteSpacing, rowGap }: PreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasKey, setCanvasKey] = useState(0);
   const layoutRef = useRef<ScoreLayout | null>(null);
@@ -20,7 +22,7 @@ export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClic
   const renderScore = useCallback(() => {
     if (!canvasRef.current || !score) return;
 
-    const config: LayoutConfig = { ...DEFAULT_CONFIG };
+    const config: LayoutConfig = { ...DEFAULT_CONFIG, noteWidth: noteSpacing ?? DEFAULT_CONFIG.noteWidth, rowGap: rowGap ?? DEFAULT_CONFIG.rowGap };
     const layout = calculateLayout(score, config);
     layoutRef.current = layout;
 
@@ -28,13 +30,13 @@ export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClic
     render(ctx, layout, score, config, theme);
 
     onLayoutChange?.(layout);
-  }, [score, theme, onLayoutChange]);
+  }, [score, theme, onLayoutChange, noteSpacing, rowGap]);
 
   useEffect(() => {
     if (score) {
       setCanvasKey(k => k + 1);
     }
-  }, [score]);
+  }, [score, noteSpacing, rowGap]);
 
   useEffect(() => {
     renderScore();

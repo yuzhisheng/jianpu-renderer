@@ -129,11 +129,11 @@ function layoutNote(
       }
     }
 
-    // 附点
+    // 附点（紧贴音符右侧）
     const dotCount = note.dot || 0;
     for (let i = 0; i < dotCount; i++) {
       dotPositions.push({
-        x: x + config.noteWidth + 4 + i * (config.accentDotRadius * 2 + 3),
+        x: x + config.noteWidth - 3 + i * (config.accentDotRadius * 2 + 3),
         y: y + config.noteHeight / 2 - config.accentDotRadius,
         width: config.accentDotRadius * 2,
         height: config.accentDotRadius * 2,
@@ -152,31 +152,31 @@ function layoutNote(
     }
 
     // 减时线（比音符宽度略窄，留出左右边距）
-    const ulWidth = config.noteWidth - 6;
     const underlines: { y: number; width: number; xOffset: number }[] = [];
     if (groupInfo && groupInfo.underlineLevel > 0) {
-      // 分组音符：横线从组内第一个音符连接到最后一个音符
+      // 分组音符：横线从组内第一个音符左边缘到最后一个音符右边缘
       for (let i = 0; i < groupInfo.underlineLevel; i++) {
         underlines.push({
           y: y + config.noteHeight + config.underlineOffset + config.underlineGap * i,
-          width: groupInfo.groupWidth - 6,
-          xOffset: (groupInfo.groupStartX - x) + 3,
+          width: groupInfo.groupWidth,
+          xOffset: groupInfo.groupStartX - x,
         });
       }
     } else if (!groupInfo) {
       const levels = getUnderlineLevel(note.duration);
+      // 单个音符：宽度占位用全宽，渲染时按实际数字宽度调整
       for (let i = 0; i < levels; i++) {
         underlines.push({
           y: y + config.noteHeight + config.underlineOffset + config.underlineGap * i,
-          width: ulWidth,
-          xOffset: 3,
+          width: config.noteWidth,
+          xOffset: 0,
         });
       }
     }
 
-    // 技巧符号位置（统一高度，倚音特殊处理）
+    // 技巧符号位置（装饰符号尽量靠近音符顶部但不重叠）
     const techniquePositions: { technique: DiziTechnique; position: SymbolPosition }[] = [];
-    const techYBase = y - (config.techniqueOffset + config.techniqueFontSize);
+    const techYBase = y - config.techniqueFontSize + 4;
     const hasYinyin = note.techniques?.some(t => t.type === 'yinyin') ?? false;
     if (note.techniques) {
       note.techniques.forEach((tech, idx) => {
@@ -299,13 +299,18 @@ function layoutNote(
       width: 16, height: 8,
     } : undefined;
 
-    // 歌词
-    const lyricPosition = note.lyric ? {
-      x: x + config.noteWidth / 2 - note.lyric.length * config.lyricFontSize * 0.5,
-      y: y + config.noteHeight + config.lyricOffset + (groupInfo?.underlineLevel || 0) * config.underlineGap + config.underlineOffset + config.lyricFontSize,
-      width: note.lyric.length * config.lyricFontSize,
+    // 歌词（支持多行）
+    const allLines = note.lyrics || (note.lyric ? [note.lyric] : []);
+    const lineGap = 2;
+    const baseLyricY = y + config.noteHeight + config.lyricOffset
+      + (groupInfo?.underlineLevel || 0) * config.underlineGap + config.underlineOffset;
+    const lyricPositions = allLines.map((line, idx) => ({
+      x: x + config.noteWidth / 2 - line.length * config.lyricFontSize * 0.5,
+      y: baseLyricY + config.lyricFontSize + idx * (config.lyricFontSize + lineGap),
+      width: line.length * config.lyricFontSize,
       height: config.lyricFontSize,
-    } : undefined;
+    }));
+    const lyricPosition = lyricPositions.length > 0 ? lyricPositions[0] : undefined;
 
     return {
       type: 'note',
@@ -335,6 +340,7 @@ function layoutNote(
       staccatoPosition,
       breathPosition,
       lyricPosition,
+      lyricPositions: lyricPositions.length > 1 ? lyricPositions : undefined,
     };
   }
 
@@ -556,7 +562,15 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
     const rowMeasures = score.measures.slice(measureIdx, measureIdx + fitCount);
 
     const measureLayouts: MeasureLayout[] = [];
-    let currentX = cfg.paddingHorizontal;
+    // 所有行统一为前奏左括号预留空间，保证各行第一个音符左对齐
+    const introBracketGap = score.introMeasureCount ? cfg.noteWidth * 0.6 : 0;
+    let currentX = cfg.paddingHorizontal + introBracketGap;
+    let prevBarlineX = currentX; // 追踪上一个小节线位置（用于小房子左端对齐）
+
+    // 如果有小房子（反复跳跃记号），整行往下移给小房子腾空间
+    if (rowMeasures.some(m => m.repeatEnding)) {
+      currentY += 34;
+    }
 
     for (let mi = 0; mi < rowMeasures.length; mi++) {
       const m = rowMeasures[mi];
@@ -607,25 +621,57 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
       }
 
       // 根据音符实际位置修正分组减时线
-      // 只在组内第一个音符上保留 underlines 数组，其他音符清空，
-      // 避免每个音符都重复画同一条横线导致渲染时被按音符右侧边界 clamp 成阶梯状
+      // 每个层级分别计算连续覆盖区间：
+      //   第1层覆盖组内全部短音符；第2/3层只覆盖 level>=2/3 的连续音符
       groups.forEach(g => {
         const first = noteLayouts[g.startIndex];
-        const last = noteLayouts[g.endIndex];
-        if (!first || !last) return;
-        const startX = first.position.x + 3;
-        const endX = last.position.x + last.position.width - 3;
-        const gw = endX - startX;
-        const arr: { y: number; width: number; xOffset: number }[] = [];
+        if (!first) return;
+
+        type UL = {
+          y: number; width: number; xOffset: number;
+          groupFirstCenter: number; groupLastCenter: number;
+          groupFirstPitch: number; groupLastPitch: number;
+        };
+        const arr: UL[] = [];
+
+        // 对每个层级，找出该层级对应的连续音符段
         for (let li = 0; li < g.level; li++) {
-          arr.push({
-            y: currentY + cfg.noteHeight + cfg.underlineOffset + cfg.underlineGap * li,
-            width: gw,
-            xOffset: startX - first.position.x,
-          });
+          const requiredLevel = li + 1;
+          let segStart = -1;
+          for (let ni = g.startIndex; ni <= g.endIndex; ni++) {
+            const item = m.notes[ni];
+            const nLevel = isNote(item) ? getUnderlineLevel(item.duration) : 0;
+            const inSeg = nLevel >= requiredLevel;
+            if (inSeg && segStart < 0) {
+              segStart = ni;
+            }
+            // 段结束：当前音符不在段内，或到达组末尾
+            const isLastInGroup = ni === g.endIndex;
+            if ((!inSeg || isLastInGroup) && segStart >= 0) {
+              const segEnd = inSeg && isLastInGroup ? ni : ni - 1;
+              const sFirst = noteLayouts[segStart];
+              const sLast = noteLayouts[segEnd];
+              if (sFirst && sLast) {
+                const fCenter = sFirst.position.x + sFirst.position.width / 2;
+                const lCenter = sLast.position.x + sLast.position.width / 2;
+                const fPitch = 'pitch' in sFirst.data ? sFirst.data.pitch : -1;
+                const lPitch = 'pitch' in sLast.data ? sLast.data.pitch : -1;
+                arr.push({
+                  y: currentY + cfg.noteHeight + cfg.underlineOffset + cfg.underlineGap * li,
+                  width: lCenter - fCenter,
+                  xOffset: fCenter - first.position.x,
+                  groupFirstCenter: fCenter,
+                  groupLastCenter: lCenter,
+                  groupFirstPitch: fPitch,
+                  groupLastPitch: lPitch,
+                });
+              }
+              segStart = -1;
+            }
+          }
         }
           // 组内只有第一个音符的 underlines 保留有效数据
-        first.underlines = arr;
+        first.underlines = arr as unknown as { y: number; width: number; xOffset: number }[];
         for (let gi = g.startIndex + 1; gi <= g.endIndex; gi++) {
           noteLayouts[gi].underlines = [];
         }
@@ -646,12 +692,29 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         height: cfg.noteHeight + 8,
       };
 
-      // 反复跳跃记号
+      // 反复跳跃记号（小房子左端对齐上一个小节线，右端对齐当前小节线）
       const repeatEndingPos = m.repeatEnding ? {
-        x: mStartX,
-        y: currentY - 24,
-        width: mWidth - cfg.barlineWidth,
-        height: 14,
+        x: prevBarlineX,
+        y: currentY - 34,
+        width: noteX - prevBarlineX,
+        height: 18,
+      } as SymbolPosition : undefined;
+
+      const globalMeasureIdx = measureIdx + mi;
+      const bracketLeft = (score.introMeasureCount && globalMeasureIdx === 0) ? {
+        x: cfg.paddingHorizontal + introBracketGap / 2,
+        y: currentY + cfg.noteHeight / 2,
+        width: cfg.noteWidth,
+        height: cfg.noteHeight,
+      } as SymbolPosition : undefined;
+      const lastNoteX = noteLayouts.length > 0
+        ? noteLayouts[noteLayouts.length - 1].position.x + noteLayouts[noteLayouts.length - 1].position.width
+        : noteX;
+      const bracketRight = (score.introMeasureCount && globalMeasureIdx === score.introMeasureCount - 1) ? {
+        x: lastNoteX + 4,
+        y: currentY + cfg.noteHeight / 2,
+        width: cfg.noteWidth,
+        height: cfg.noteHeight,
       } as SymbolPosition : undefined;
 
       measureLayouts.push({
@@ -660,9 +723,12 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         barlinePosition: barlinePos,
         notes: noteLayouts,
         repeatEndingPosition: repeatEndingPos,
+        bracketLeft,
+        bracketRight,
       });
 
       currentX = noteX + cfg.barlineWidth + 10;
+      prevBarlineX = noteX;
     }
 
     // 计算本行最大高度
@@ -678,7 +744,10 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
           const lastLine = nl.underlines[nl.underlines.length - 1];
           maxBottom = Math.max(maxBottom, lastLine.y + cfg.underlineThickness + 2);
         }
-        if (nl.lyricPosition) {
+        if (nl.lyricPositions && nl.lyricPositions.length > 0) {
+          const last = nl.lyricPositions[nl.lyricPositions.length - 1];
+          maxBottom = Math.max(maxBottom, last.y + last.height + 2);
+        } else if (nl.lyricPosition) {
           maxBottom = Math.max(maxBottom, nl.lyricPosition.y + nl.lyricPosition.height + 2);
         }
       });

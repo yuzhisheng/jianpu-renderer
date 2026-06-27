@@ -10,12 +10,26 @@ import Preview from './components/Preview';
 import Toolbar from './components/Toolbar';
 
 export default function App() {
-  const [jsonValue, setJsonValue] = useState(() => JSON.stringify(moonSong, null, 2));
-  const [score, setScore] = useState<Score | null>(moonSong);
+  // 从 localStorage 恢复主题和示例选择
+  const [isDarkTheme, setIsDarkTheme] = useState(() => {
+    const saved = localStorage.getItem('jianpu-theme');
+    return saved !== null ? saved === 'dark' : true;
+  });
+  const savedExampleKey = localStorage.getItem('jianpu-example') || 'moon';
+  const savedExample = examples[savedExampleKey] || examples['moon'];
+  const [jsonValue, setJsonValue] = useState(() => JSON.stringify(savedExample.data, null, 2));
+  const [score, setScore] = useState<Score | null>(savedExample.data);
   const [zoom, setZoom] = useState(1);
   const [isValid, setIsValid] = useState(true);
   const [showEditor, setShowEditor] = useState(true);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [noteSpacing, setNoteSpacing] = useState(() => {
+    const s = localStorage.getItem('jianpu-noteSpacing');
+    return s !== null ? Number(s) : 22;
+  });
+  const [rowGap, setRowGap] = useState(() => {
+    const s = localStorage.getItem('jianpu-rowGap');
+    return s !== null ? Number(s) : 14;
+  });
   const canvasLayoutRef = useRef<ScoreLayout | null>(null);
   const editorRef = useRef<EditorHandle>(null);
   const noteLineMapRef = useRef<Map<string, number>>(new Map());
@@ -109,6 +123,7 @@ export default function App() {
       setScore(example.data);
       setIsValid(true);
       buildNoteLineMap(json);
+      localStorage.setItem('jianpu-example', key);
     }
   }, [buildNoteLineMap]);
 
@@ -137,7 +152,21 @@ export default function App() {
   }, []);
 
   const handleToggleTheme = useCallback(() => {
-    setIsDarkTheme(v => !v);
+    setIsDarkTheme(v => {
+      const next = !v;
+      localStorage.setItem('jianpu-theme', next ? 'dark' : 'light');
+      return next;
+    });
+  }, []);
+
+  const handleNoteSpacingChange = useCallback((v: number) => {
+    setNoteSpacing(v);
+    localStorage.setItem('jianpu-noteSpacing', String(v));
+  }, []);
+
+  const handleRowGapChange = useCallback((v: number) => {
+    setRowGap(v);
+    localStorage.setItem('jianpu-rowGap', String(v));
   }, []);
 
   const handleNoteClick = useCallback((measureIndex: number, noteIndex: number) => {
@@ -166,6 +195,10 @@ export default function App() {
         onToggleEditor={handleToggleEditor}
         isDarkTheme={isDarkTheme}
         onToggleTheme={handleToggleTheme}
+        noteSpacing={noteSpacing}
+        rowGap={rowGap}
+        onNoteSpacingChange={handleNoteSpacingChange}
+        onRowGapChange={handleRowGapChange}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -192,7 +225,7 @@ export default function App() {
             <span className="ml-auto text-[10px]" style={{color: isDarkTheme ? '#4b5563' : '#d1d5db'}}>{Math.round(zoom * 100)}%</span>
           </div>
           <div className="pt-7 h-full">
-            <Preview score={score} zoom={zoom} theme={theme} onLayoutChange={handleLayoutChange} onNoteClick={handleNoteClick} />
+            <Preview score={score} zoom={zoom} theme={theme} onLayoutChange={handleLayoutChange} onNoteClick={handleNoteClick} noteSpacing={noteSpacing} rowGap={rowGap} />
           </div>
         </div>
       </div>

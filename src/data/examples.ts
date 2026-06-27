@@ -353,52 +353,76 @@ export const moonSong: Score = {
   key: 'C',
   timeSignature: { numerator: 4, denominator: 4 },
   tempo: 76,
+  introMeasureCount: 2,
   measures: [
-    // 你 问 我 爱  你 有 多 深
+    // ===== 前奏 =====
+    {
+      notes: [
+        { pitch: 5, duration: 0.5 },
+        { pitch: 3, duration: 0.5 },
+        { pitch: 2, duration: 0.5 },
+        { pitch: 1, duration: 0.5 },
+        { pitch: 5, duration: 1 },
+        { pitch: 3, duration: 0.5 },
+        { pitch: 0, duration: 0.5 },
+      ],
+    },
+    {
+      notes: [
+        { pitch: 6, octave: -1, duration: 1 },
+        { pitch: 1, duration: 1 },
+        { pitch: 2, duration: 0.5 },
+        { pitch: 3, duration: 0.5, techniques: [{ type: 'boyin' }] },
+        { pitch: 5, duration: 0.5 },
+        { pitch: 6, duration: 0.5 },
+      ],
+    },
+
+    // ===== A段：主歌 =====
+    // 你问 我爱你 有多深
     {
       notes: [
         { pitch: 5, duration: 0.5, lyric: '你' },
         { pitch: 3, duration: 0.5, lyric: '问' },
         { pitch: 2, duration: 0.25, lyric: '我' },
-        { pitch: 1, duration: 0.25, lyric: '爱' },
-        { pitch: 6, octave: -1, duration: 0.5, lyric: '你' },
-        { pitch: 6, octave: -1, duration: 0.25 },
-        { pitch: 5, duration: 0.25 },
+        { pitch: 1, duration: 0.25, lyric: '爱', slurId: 's1' },
+        { pitch: 6, octave: -1, duration: 0.5, lyric: '你', slurId: 's1' },
+        { pitch: 6, octave: -1, duration: 0.5 },
         { pitch: 3, duration: 0.5, lyric: '有' },
-        { pitch: 2, duration: 0.25 },
-        { pitch: 1, duration: 0.25, lyric: '多' },
+        { pitch: 2, duration: 0.5 },
+        { pitch: 1, duration: 0.5, lyric: '多' },
       ],
     },
     {
       notes: [
         { pitch: 6, octave: -1, duration: 1, dot: 1, lyric: '深' },
-        { pitch: 6, octave: -1, duration: 0.25 },
-        { pitch: 1, duration: 0.25 },
+        { pitch: 6, octave: -1, duration: 0.5 },
+        { pitch: 1, duration: 0.5 },
         { pitch: 2, duration: 0.5, lyric: '我' },
-        { pitch: 3, duration: 0.25, lyric: '爱' },
-        { pitch: 5, duration: 0.25 },
+        { pitch: 3, duration: 0.5, lyric: '爱' },
+        { type: 'dash', duration: 0.5 },
       ],
     },
-    // 我 爱 你  有 几 分
+    // 我爱你有几分
     {
       notes: [
         { pitch: 6, duration: 0.5, lyric: '我' },
-        { pitch: 5, duration: 0.5, lyric: '爱' },
-        { pitch: 6, duration: 0.5, lyric: '你' },
+        { pitch: 5, duration: 0.5, lyric: '爱', slurId: 's2' },
+        { pitch: 6, duration: 1, lyric: '你', slurId: 's2' },
         { pitch: 5, duration: 0.5, lyric: '有' },
-        { pitch: 3, duration: 0.5, lyric: '几' },
-        { pitch: 2, duration: 0.5, lyric: '分' },
+        { pitch: 3, duration: 0.5, lyric: '几', slurId: 's3' },
+        { pitch: 2, duration: 1, lyric: '分', slurId: 's3' },
       ],
     },
-    // 我 的 情 也 真  我 的 爱 也 真
+    // 我的情也真  我的爱
     {
       notes: [
         { pitch: 1, duration: 0.5, lyric: '我' },
         { pitch: 2, duration: 0.25, lyric: '的' },
         { pitch: 3, duration: 0.25 },
-        { pitch: 5, duration: 0.5, lyric: '情' },
+        { pitch: 5, duration: 0.5, lyric: '情', techniques: [{ type: 'boyin' }] },
         { pitch: 6, duration: 0.5, lyric: '也' },
-        { pitch: 5, duration: 0.5, lyric: '真' },
+        { pitch: 5, duration: 1, lyric: '真' },
         { pitch: 3, duration: 0.5, lyric: '我' },
         { pitch: 2, duration: 0.5, lyric: '的' },
       ],
@@ -407,22 +431,22 @@ export const moonSong: Score = {
       notes: [
         { pitch: 1, duration: 0.5, lyric: '爱' },
         { pitch: 6, octave: -1, duration: 0.5, lyric: '也' },
-        { pitch: 1, duration: 0.5, lyric: '真' },
+        { pitch: 1, duration: 1, lyric: '真' },
         { pitch: 3, duration: 0.5 },
         { pitch: 3, duration: 0.5 },
         { pitch: 5, duration: 0.5 },
         { pitch: 6, duration: 0.5 },
       ],
     },
-    // 月 亮 代 表  我 的 心
+    // 月亮代表我的心
     {
       notes: [
-        { pitch: 1, octave: 1, duration: 0.5, lyric: '月' },
-        { pitch: 6, duration: 0.5, lyric: '亮' },
-        { pitch: 5, duration: 0.5, lyric: '代' },
-        { pitch: 3, duration: 0.5, lyric: '表' },
-        { pitch: 5, duration: 0.5, lyric: '我' },
-        { pitch: 3, duration: 0.5, lyric: '的' },
+        { pitch: 1, octave: 1, duration: 0.5, lyric: '月', slurId: 's4' },
+        { pitch: 6, duration: 0.5, lyric: '亮', slurId: 's4' },
+        { pitch: 5, duration: 0.5, lyric: '代', slurId: 's5' },
+        { pitch: 3, duration: 0.5, lyric: '表', slurId: 's5' },
+        { pitch: 5, duration: 0.5, lyric: '我', slurId: 's6' },
+        { pitch: 3, duration: 0.5, lyric: '的', slurId: 's6' },
         { pitch: 2, duration: 0.5, lyric: '心' },
         { pitch: 1, duration: 0.5 },
       ],
@@ -430,13 +454,15 @@ export const moonSong: Score = {
     {
       notes: [
         { pitch: 1, duration: 1 },
-        { pitch: 5, duration: 0.5 },
+        { pitch: 5, duration: 1 },
         { pitch: 3, duration: 0.5 },
-        { pitch: 2, duration: 0.5, lyric: '—' },
-        { pitch: 1, duration: 0.5 },
+        { pitch: 2, duration: 1, lyric: '—' },
+        { pitch: 0, duration: 0.5 },
       ],
     },
-    // 轻 轻 的 一 个 吻
+
+    // ===== B段：过渡 =====
+    // 轻轻地一个吻
     {
       notes: [
         { pitch: 6, octave: -1, duration: 0.5, lyric: '轻' },
@@ -444,29 +470,29 @@ export const moonSong: Score = {
         { pitch: 2, duration: 0.25 },
         { pitch: 3, duration: 0.5, lyric: '的' },
         { pitch: 5, duration: 0.5, lyric: '一' },
-        { pitch: 6, duration: 0.5, lyric: '个' },
-        { pitch: 1, octave: 1, duration: 0.5, lyric: '吻' },
+        { pitch: 6, duration: 1, lyric: '个' },
+        { pitch: 1, octave: 1, duration: 1, lyric: '吻' },
       ],
     },
-    // 已 经 打 动 我 的 心
+    // 已经打动我的心
     {
       notes: [
         { pitch: 6, duration: 0.5, lyric: '已' },
-        { pitch: 5, duration: 0.5, lyric: '经' },
-        { pitch: 3, duration: 0.5, lyric: '打' },
+        { pitch: 5, duration: 0.5, lyric: '经', slurId: 's7' },
+        { pitch: 3, duration: 0.5, lyric: '打', slurId: 's7' },
         { pitch: 2, duration: 0.5, lyric: '动' },
         { pitch: 1, duration: 0.5, lyric: '我' },
         { pitch: 2, duration: 0.25, lyric: '的' },
         { pitch: 3, duration: 0.25 },
-        { pitch: 5, duration: 0.5, lyric: '心' },
+        { pitch: 5, duration: 1, lyric: '心' },
       ],
     },
-    // 深 深 的 一 段 情
+    // 深深的一段情
     {
       notes: [
         { pitch: 6, duration: 0.5, lyric: '深' },
-        { pitch: 5, duration: 0.5, lyric: '深' },
-        { pitch: 3, duration: 0.5, lyric: '的' },
+        { pitch: 5, duration: 0.5, lyric: '深', slurId: 's8' },
+        { pitch: 3, duration: 0.5, lyric: '的', slurId: 's8' },
         { pitch: 2, duration: 0.5, lyric: '一' },
         { pitch: 1, duration: 0.5, lyric: '段' },
         { pitch: 6, octave: -1, duration: 0.5, lyric: '情' },
@@ -474,15 +500,15 @@ export const moonSong: Score = {
         { pitch: 2, duration: 0.5 },
       ],
     },
-    // 教 我 思 念 到 如 今
+    // 教我思念到如今
     {
       notes: [
         { pitch: 3, duration: 0.5, lyric: '教' },
-        { pitch: 5, duration: 0.5, lyric: '我' },
-        { pitch: 6, duration: 0.5, lyric: '思' },
+        { pitch: 5, duration: 0.5, lyric: '我', slurId: 's9' },
+        { pitch: 6, duration: 0.5, lyric: '思', slurId: 's9' },
         { pitch: 5, duration: 0.5, lyric: '念' },
-        { pitch: 6, duration: 0.5, lyric: '到' },
-        { pitch: 5, duration: 0.5, lyric: '如' },
+        { pitch: 6, duration: 0.5, lyric: '到', slurId: 's10' },
+        { pitch: 5, duration: 0.5, lyric: '如', slurId: 's10' },
         { pitch: 3, duration: 0.5, lyric: '今' },
         { pitch: 2, duration: 0.5 },
       ],
@@ -490,25 +516,28 @@ export const moonSong: Score = {
     {
       notes: [
         { pitch: 2, duration: 1 },
-        { pitch: 3, duration: 0.5 },
+        { pitch: 3, duration: 1 },
         { pitch: 5, duration: 0.5 },
         { pitch: 6, duration: 0.5, lyric: '月' },
-        { pitch: 1, octave: 1, duration: 0.5, lyric: '亮' },
+        { pitch: 1, octave: 1, duration: 1, lyric: '亮' },
       ],
     },
-    // 月 亮 代 表 我 的 心（副歌）
+
+    // ===== C段：副歌（带反复和小房子） =====
     {
       notes: [
-        { pitch: 6, duration: 0.5, lyric: '代' },
-        { pitch: 5, duration: 0.5, lyric: '表' },
-        { pitch: 3, duration: 0.5, lyric: '我' },
-        { pitch: 2, duration: 0.5, lyric: '的' },
+        { pitch: 6, duration: 0.5, lyric: '代', slurId: 's11' },
+        { pitch: 5, duration: 0.5, lyric: '表', slurId: 's11' },
+        { pitch: 3, duration: 0.5, lyric: '我', slurId: 's12' },
+        { pitch: 2, duration: 0.5, lyric: '的', slurId: 's12' },
         { pitch: 1, duration: 0.5, lyric: '心' },
         { pitch: 3, duration: 0.5 },
         { pitch: 5, duration: 0.5, lyric: '永' },
         { pitch: 6, duration: 0.5, lyric: '远' },
       ],
+      barline: 'repeat-start',
     },
+    // 小房子 1.
     {
       notes: [
         { pitch: 1, octave: 1, duration: 0.5, lyric: '不' },
@@ -516,8 +545,31 @@ export const moonSong: Score = {
         { pitch: 5, duration: 0.5, lyric: '的' },
         { pitch: 3, duration: 0.25 },
         { pitch: 2, duration: 0.25 },
-        { pitch: 1, duration: 2, dot: 1 },
+        { pitch: 1, duration: 2 },
       ],
+      repeatEnding: { numbers: [1] },
+    },
+    // 衔接段
+    {
+      notes: [
+        { pitch: 5, duration: 0.5, lyric: '你' },
+        { pitch: 3, duration: 0.5, lyric: '的' },
+        { pitch: 2, duration: 0.5, lyric: '心' },
+        { pitch: 1, duration: 1.5 },
+        { pitch: 6, octave: -1, duration: 1 },
+      ],
+    },
+    // 小房子 2.
+    {
+      notes: [
+        { pitch: 1, octave: 1, duration: 0.5, lyric: '不' },
+        { pitch: 6, duration: 0.5, lyric: '变' },
+        { pitch: 5, duration: 0.5, lyric: '的' },
+        { pitch: 3, duration: 0.25 },
+        { pitch: 2, duration: 0.25 },
+        { pitch: 1, duration: 2 },
+      ],
+      repeatEnding: { numbers: [2] },
       barline: 'end',
     },
   ],
