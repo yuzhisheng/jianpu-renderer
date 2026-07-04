@@ -80,9 +80,15 @@ function toYolo(bb, imgW, imgH) {
 
 function collectAnnotations(score, layout, imgW, imgH) {
   const anns = [];
+  const MIN_W = 8, MIN_H = 8;  // 最小宽高，确保细线条在 640px 训练中可见
   const push = (cl, x, y, w, h) => {
     if (w <= 0 || h <= 0) return;
-    anns.push(`${cl} ${toYolo({x,y,w,h}, imgW, imgH).join(' ')}`);
+    // 居中扩展，确保 >= MIN_W/MIN_H
+    const cw = Math.max(w, MIN_W);
+    const ch = Math.max(h, MIN_H);
+    const dx = (cw - w) / 2;
+    const dy = (ch - h) / 2;
+    anns.push(`${cl} ${toYolo({x: x - dx, y: y - dy, w: cw, h: ch}, imgW, imgH).join(' ')}`);
   };
 
   let globalMeasureIdx = 0;

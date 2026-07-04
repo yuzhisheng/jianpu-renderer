@@ -1,0 +1,11 @@
+# Python 后端依赖 - 简谱图片识别服务
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.19
+pydantic==2.10.3
+pillow==11.0.0
+opencv-python-headless==4.10.0.84
+numpy==1.26.4
+ultralytics==8.3.40
+torch==2.2.2
+torchvision==0.17.2

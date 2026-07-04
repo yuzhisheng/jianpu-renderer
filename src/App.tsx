@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Code, Sun } from 'lucide-react';
+import { Code, Sun, ScanLine } from 'lucide-react';
 import type { Score, ScoreLayout } from './types';
 import type { RenderTheme } from './engine';
 import type { EditorHandle } from './components/Editor';
@@ -9,6 +9,7 @@ import Editor from './components/Editor';
 import Preview from './components/Preview';
 import Toolbar from './components/Toolbar';
 import TrainingViewer from './components/TrainingViewer';
+import RecognizeView from './components/RecognizeView';
 
 export default function App() {
   // 从 localStorage 恢复主题和示例选择
@@ -24,6 +25,7 @@ export default function App() {
   const [isValid, setIsValid] = useState(true);
   const [showEditor, setShowEditor] = useState(true);
   const [showTraining, setShowTraining] = useState(false);
+  const [showRecognize, setShowRecognize] = useState(false);
   const [noteSpacing, setNoteSpacing] = useState(() => {
     const s = localStorage.getItem('jianpu-noteSpacing');
     return s !== null ? Number(s) : 22;
@@ -170,6 +172,10 @@ export default function App() {
     setShowTraining(v => !v);
   }, []);
 
+  const handleToggleRecognize = useCallback(() => {
+    setShowRecognize(v => !v);
+  }, []);
+
   const handleRowGapChange = useCallback((v: number) => {
     setRowGap(v);
     localStorage.setItem('jianpu-rowGap', String(v));
@@ -199,6 +205,16 @@ export default function App() {
           <TrainingViewer />
         </div>
       </div>
+    );
+  }
+
+  if (showRecognize) {
+    return (
+      <RecognizeView
+        isDarkTheme={isDarkTheme}
+        onToggleTheme={handleToggleTheme}
+        onBack={handleToggleRecognize}
+      />
     );
   }
 
@@ -243,6 +259,9 @@ export default function App() {
           <div className={`absolute top-0 left-0 right-0 h-7 flex items-center px-3 z-10 border-b ${editorHeaderBg} ${editorHeaderBorder}`}>
             <span className="text-[10px] font-medium uppercase tracking-wider" style={{color: isDarkTheme ? '#6b7280' : '#9ca3af'}}>Preview</span>
             <button onClick={handleToggleTraining} className="mx-2 text-[10px] px-2 py-0.5 rounded bg-blue-500 text-white hover:bg-blue-600">训练素材</button>
+            <button onClick={handleToggleRecognize} className="mx-1 text-[10px] px-2 py-0.5 rounded bg-purple-500 text-white hover:bg-purple-600 flex items-center gap-1">
+              <ScanLine size={10} /> 图片识别
+            </button>
             <span className="ml-auto text-[10px]" style={{color: isDarkTheme ? '#4b5563' : '#d1d5db'}}>{Math.round(zoom * 100)}%</span>
           </div>
           <div className="pt-7 h-full">
