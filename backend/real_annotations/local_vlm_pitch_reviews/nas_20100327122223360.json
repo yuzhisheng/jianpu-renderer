@@ -1,0 +1,609 @@
+{
+  "annotation_id": "nas_20100327122223360",
+  "model": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
+  "label_grade": "silver_local_vlm_pitch_skeleton",
+  "status": "complete",
+  "rows": [
+    {
+      "source_row": 1,
+      "image": "rows/nas_20100327122223360/row_01.png",
+      "content_type": "lyrics",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 4.18,
+      "raw_response": "{\"content_type\":\"lyrics\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    },
+    {
+      "source_row": 2,
+      "image": "rows/nas_20100327122223360/row_02.png",
+      "content_type": "metadata",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 2.92,
+      "raw_response": "{\n  \"content_type\": \"metadata\",\n  \"voices\": [],\n  \"confidence\": 1,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 3,
+      "image": "rows/nas_20100327122223360/row_03.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "-",
+            "-",
+            "P7",
+            "P1",
+            "P7",
+            "P6",
+            "B|",
+            "P6",
+            "-",
+            "-",
+            "P1",
+            "B|",
+            "P7",
+            "P1",
+            "P7",
+            "P6",
+            "P5",
+            "P6",
+            "P7",
+            "P1",
+            "P7",
+            "B|",
+            "P6",
+            "-",
+            "-",
+            "R0",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.9,
+      "uncertainties": [],
+      "generation_seconds": 8.02,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \"-\",\n        \"-\",\n        \"7\",\n        \"1\",\n        \"7\",\n        \"6\",\n        \"|\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"i\",\n        \"|\",\n        \"7\",\n        \".\",\n        \"i\",\n        \"7\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"7\",\n        \"1\",\n        \"7\",\n        \"|\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"0\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.9,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 4,
+      "image": "rows/nas_20100327122223360/row_04.png",
+      "generation_seconds": 10.14,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"7\",\n        \".\",\n        \"1\",\n        \"7\",\n        \".\",\n        \"6\",\n        \"5\",\n        \".\",\n        \"6\",\n        \"7\",\n        \".\",\n        \"1\",\n        \".\",\n        \"7\",\n        \"|\",\n        \"6\",\n        \".\",\n        \"-\",\n        \"5\",\n        \".\",\n        \"6\",\n        \"7\",\n        \".\",\n        \"1\",\n        \".\",\n        \"7\",\n        \"|\",\n        \"6\",\n        \".\",\n        \"-\",\n        \"-\",\n        \"0\",\n        \")\",\n        \"|:\",\n        \"1\",\n        \".\",\n        \"2\",\n        \"7\",\n        \".\",\n        \"6\",\n        \"3\",\n        \"-\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P7",
+            "P1",
+            "P7",
+            "P6",
+            "P5",
+            "P6",
+            "P7",
+            "P1",
+            "P7",
+            "B|",
+            "P6",
+            "-",
+            "P5",
+            "P6",
+            "P7",
+            "P1",
+            "P7",
+            "B|",
+            "P6",
+            "-",
+            "-",
+            "R0",
+            "B|:",
+            "P1",
+            "P2",
+            "P7",
+            "P6",
+            "P3",
+            "-",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": []
+    },
+    {
+      "source_row": 5,
+      "image": "rows/nas_20100327122223360/row_05.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "P3",
+            "P2",
+            "P7",
+            "P6",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": [],
+      "generation_seconds": 5.11,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \".\",\n        \"3\",\n        \"2\",\n        \"7\",\n        \".\",\n        \"6\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 6,
+      "image": "rows/nas_20100327122223360/row_06.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "P5",
+            "P3",
+            "P6",
+            "P1",
+            "-",
+            "P7",
+            "P5",
+            "P3",
+            "P5",
+            "P2",
+            "P7",
+            "B|",
+            "P6",
+            "P1",
+            "P6",
+            "-",
+            "-",
+            "P1",
+            "-",
+            "-",
+            "P7",
+            "P6",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": [],
+      "generation_seconds": 8.0,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"3\",\n        \".5\",\n        \"3\",\n        \".6\",\n        \"1\",\n        \"-\",\n        \"V\",\n        \"7\",\n        \"5\",\n        \"3\",\n        \".5\",\n        \"2\",\n        \".7\",\n        \"|\",\n        \"6\",\n        \".1\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"V\",\n        \"1\",\n        \"-\",\n        \"-\",\n        \"7\",\n        \".6\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 7,
+      "image": "rows/nas_20100327122223360/row_07.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P3",
+            "P2",
+            "-",
+            "P3",
+            "P6",
+            "-",
+            "P6",
+            "P5",
+            "P3",
+            "P2",
+            "P2",
+            "P1",
+            "-",
+            "-",
+            "P7",
+            "P6",
+            "P5",
+            "P6",
+            "P1",
+            "P7",
+            "P6"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 7.77,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"2\",\n        \"3\",\n        \"2\",\n        \"-\",\n        \"3\",\n        \"6\",\n        \"-\",\n        \"6\",\n        \".\",\n        \"5\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"1\",\n        \"-\",\n        \"-\",\n        \"7\",\n        \".\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"1\",\n        \"7\",\n        \".\",\n        \"6\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 8,
+      "image": "rows/nas_20100327122223360/row_08.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P3",
+            "P5",
+            "P6",
+            "P1",
+            "-",
+            "P7",
+            "P5",
+            "P3",
+            "P5",
+            "P2",
+            "P7",
+            "P6",
+            "P1",
+            "P6",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 6.41,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"2.\",\n        \"3\",\n        \"5\",\n        \"6\",\n        \"1\",\n        \"-\",\n        \"7\",\n        \"5\",\n        \"3.\",\n        \"5\",\n        \"2\",\n        \"7\",\n        \"6\",\n        \"1\",\n        \"6\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 9,
+      "image": "rows/nas_20100327122223360/row_09.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P7",
+            "P6",
+            "R0",
+            "R0",
+            "B:|",
+            "P6",
+            "-",
+            "-",
+            "P5",
+            "P6",
+            "B|",
+            "P1",
+            "-",
+            "-",
+            "P1",
+            "B|",
+            "P7",
+            "P6",
+            "P6",
+            "P7",
+            "P6",
+            "P5",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 7.84,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"7\",\n        \"6\",\n        \"0\",\n        \"0\",\n        \")\",\n        \":\",\n        \"|\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"5\",\n        \"6\",\n        \"|\",\n        \"i\",\n        \"-\",\n        \"-\",\n        \"i\",\n        \"|\",\n        \"7\",\n        \".\",\n        \"6\",\n        \"6\",\n        \".\",\n        \"7\",\n        \"6\",\n        \"5\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 10,
+      "image": "rows/nas_20100327122223360/row_10.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "-",
+            "-",
+            "P3",
+            "P5",
+            "B|",
+            "P5",
+            "-",
+            "-",
+            "P3",
+            "B|",
+            "P2",
+            "P3",
+            "P5",
+            "P3",
+            "B|",
+            "P2",
+            "-",
+            "P3",
+            "P2",
+            "P3",
+            "P5",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 7.77,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"3\",\n        \"-\",\n        \"-\",\n        \"3\",\n        \"5\",\n        \"|\",\n        \"5\",\n        \"-\",\n        \"-\",\n        \"3\",\n        \"|\",\n        \"2\",\n        \".\",\n        \"3\",\n        \"5\",\n        \".\",\n        \"3\",\n        \"|\",\n        \"2\",\n        \"-\",\n        \"3\",\n        \".\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 11,
+      "image": "rows/nas_20100327122223360/row_11.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "-",
+            "-",
+            "P7",
+            "P6",
+            "B|",
+            "P2",
+            "P2",
+            "-",
+            "P7",
+            "P6",
+            "B|",
+            "P2",
+            "P3",
+            "P5",
+            "-",
+            "P5",
+            "P6",
+            "B|",
+            "P1",
+            "-",
+            "P7",
+            "P6",
+            "P2",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 7.73,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \"-\",\n        \"-\",\n        \"7\",\n        \"6\",\n        \"|\",\n        \"2\",\n        \"2\",\n        \"-\",\n        \"7\",\n        \"6\",\n        \"|\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"-\",\n        \"5\",\n        \"6\",\n        \"|\",\n        \"1\",\n        \"-\",\n        \"7\",\n        \"6\",\n        \"2\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 12,
+      "image": "rows/nas_20100327122223360/row_12.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "-",
+            "-",
+            "P7",
+            "P6",
+            "P2",
+            "P2",
+            "-",
+            "P7",
+            "P6",
+            "P2",
+            "P3",
+            "P5",
+            "-",
+            "P5",
+            "P6",
+            "P1",
+            "-",
+            "P7",
+            "P6",
+            "P5"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 7.39,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"-\",\n        \"-\",\n        \"7\",\n        \"6\",\n        \"2\",\n        \"2\",\n        \"-\",\n        \"7\",\n        \"6\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"-\",\n        \"5\",\n        \"6\",\n        \"1\",\n        \"-\",\n        \"7\",\n        \"6\",\n        \"5\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 13,
+      "image": "rows/nas_20100327122223360/row_13.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "-",
+            "-",
+            "R0",
+            "B|",
+            "P1",
+            "-",
+            "-",
+            "P7",
+            "P1",
+            "P7",
+            "P6",
+            "B|",
+            "P6",
+            "-",
+            "-",
+            "P1",
+            "B|",
+            "P7",
+            "P6",
+            "P5",
+            "P6",
+            "P7",
+            "P1",
+            "P7"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 7.73,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"-\",\n        \"-\",\n        \"0\",\n        \"|\",\n        \"1\",\n        \"-\",\n        \"-\",\n        \"7\",\n        \"1\",\n        \"7\",\n        \"6\",\n        \"|\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"1\",\n        \"|\",\n        \"7\",\n        \".\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"7\",\n        \"1\",\n        \"7\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 14,
+      "image": "rows/nas_20100327122223360/row_14.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "-",
+            "-",
+            "R0",
+            "B|",
+            "P1",
+            "-",
+            "-",
+            "P7",
+            "P1",
+            "P7",
+            "P6",
+            "B|",
+            "P6",
+            "-",
+            "-",
+            "P1",
+            "B|",
+            "P7",
+            "P6",
+            "B|",
+            "P5",
+            "P6",
+            "P6",
+            "P5",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 8.13,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"-\",\n        \"-\",\n        \"0\",\n        \"|\",\n        \"i\",\n        \"-\",\n        \"-\",\n        \"7\",\n        \"i\",\n        \"7\",\n        \"6\",\n        \"|\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"i\",\n        \"|\",\n        \"7\",\n        \".\",\n        \"6\",\n        \"|\",\n        \"5\",\n        \"6\",\n        \"6\",\n        \"5\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 15,
+      "image": "rows/nas_20100327122223360/row_15.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "-",
+            "-",
+            "P6",
+            "P3",
+            "B|",
+            "P2",
+            "P2",
+            "-",
+            "P6",
+            "P2",
+            "B|",
+            "P1",
+            "P1",
+            "-",
+            "P7",
+            "P6",
+            "B|",
+            "P5",
+            "P6",
+            "P5",
+            "P6",
+            "P7",
+            "P1",
+            "P7"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 8.7,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P3\",\n        \"-\",\n        \"-\",\n        \"P6\",\n        \"P3\",\n        \"B|\",\n        \"P2\",\n        \"P2\",\n        \"-\",\n        \"P6\",\n        \"P2\",\n        \"B|\",\n        \"P1\",\n        \"P1\",\n        \"-\",\n        \"P7\",\n        \"P6\",\n        \"B|\",\n        \"P5\",\n        \"P6\",\n        \"P5\",\n        \"P6\",\n        \"P7\",\n        \"P1\",\n        \"P7\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 16,
+      "image": "rows/nas_20100327122223360/row_16.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "-",
+            "P6",
+            "P3",
+            "B|",
+            "P2",
+            "P2",
+            "-",
+            "P6",
+            "P2",
+            "B|",
+            "P1",
+            "P1",
+            "-",
+            "P7",
+            "P6",
+            "B|",
+            "P5",
+            "P6",
+            "P5",
+            "P6",
+            "P7",
+            "P1",
+            "P7"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 7.75,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"-\",\n        \"6\",\n        \"3\",\n        \"|\",\n        \"2\",\n        \"2\",\n        \"-\",\n        \"6\",\n        \"2\",\n        \"|\",\n        \"1\",\n        \"1\",\n        \"-\",\n        \"7\",\n        \"6\",\n        \"|\",\n        \"5\",\n        \".\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"7\",\n        \"1\",\n        \"7\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 17,
+      "image": "rows/nas_20100327122223360/row_17.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "R0",
+            "B|",
+            "P5",
+            "P3",
+            "R0",
+            "R0",
+            "B|",
+            "P7",
+            "P6",
+            "R0",
+            "R0",
+            "B|",
+            "P1",
+            "-",
+            "P2",
+            "-",
+            "P7",
+            "-",
+            "P6",
+            "P3",
+            "-",
+            "R0"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": [],
+      "generation_seconds": 7.63,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P6\",\n        \"R0\",\n        \"B|\",\n        \"5\",\n        \"3\",\n        \"0\",\n        \"0\",\n        \"B|\",\n        \"7\",\n        \"6\",\n        \"0\",\n        \"0\",\n        \"B|\",\n        \"1\",\n        \"-\",\n        \"2\",\n        \"-\",\n        \"7\",\n        \"-\",\n        \"6\",\n        \"3\",\n        \"-\",\n        \"R0\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}"
+    }
+  ]
+}

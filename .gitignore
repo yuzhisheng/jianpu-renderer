@@ -5,15 +5,30 @@ dist-ssr
 public/training/
 
 # Python
+backend/.venv/
+backend/.venv-vlm/
+backend/.cache/
+backend/real_annotations/images/
+backend/real_annotations/rows/
+backend/real_annotations/overlays/
+backend/real_annotations/labels/
+backend/real_annotations/predictions/
+backend/eval_outputs/
+backend/jianpu_synthetic_transformer_dataset/
+backend/jianpu_transformer_dataset/
+backend/pitch_silver_dataset/
+backend/real_data/
 __pycache__/
 *.pyc
 *.pyo
+*.bak
 
 # 训练产物（太大）
 backend/weights/
 runs/
 *.pt
 *.npz
+references/
 
 # YOLO 缓存
 *.cache

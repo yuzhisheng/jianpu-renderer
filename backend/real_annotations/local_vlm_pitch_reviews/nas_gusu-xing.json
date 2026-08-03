@@ -1,0 +1,399 @@
+{
+  "annotation_id": "nas_gusu-xing",
+  "model": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
+  "label_grade": "silver_local_vlm_pitch_skeleton",
+  "status": "complete",
+  "rows": [
+    {
+      "source_row": 1,
+      "image": "rows/nas_gusu-xing/row_01.png",
+      "content_type": "metadata",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 7.93,
+      "raw_response": "{\n  \"content_type\": \"metadata\",\n  \"voices\": [],\n  \"confidence\": 1,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 2,
+      "image": "rows/nas_gusu-xing/row_02.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "-",
+            "P2",
+            "P3",
+            "B|",
+            "P5",
+            "P5",
+            "P5",
+            "B|",
+            "P2",
+            "-",
+            "P2",
+            "-",
+            "P2",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 14.19,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P1\",\n        \"-\",\n        \"P2\",\n        \"P3\",\n        \"B|\",\n        \"P5\",\n        \"P5\",\n        \"P5\",\n        \"B|\",\n        \"P2\",\n        \"-\",\n        \"P2\",\n        \"-\",\n        \"P2\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 3,
+      "image": "rows/nas_gusu-xing/row_03.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P5",
+            "P2",
+            "P3",
+            "P1",
+            "P2",
+            "P6",
+            "P1",
+            "P5",
+            "P6",
+            "P3",
+            "P5",
+            "P2",
+            "P3",
+            "P1",
+            "P2",
+            "P6",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 10.45,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"5\",\n        \"2\",\n        \"3\",\n        \"1\",\n        \"2\",\n        \"6\",\n        \"1\",\n        \"5\",\n        \"6\",\n        \"3\",\n        \"5\",\n        \"2\",\n        \"3\",\n        \"1\",\n        \"2\",\n        \"6\",\n        \"1\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 4,
+      "image": "rows/nas_gusu-xing/row_04.png",
+      "generation_seconds": 8.77,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P3\",\n        \"P3-\",\n        \"P5\",\n        \"P6\",\n        \"B|\",\n        \"P2\",\n        \"-\",\n        \"-\",\n        \"B|\",\n        \"P6-\",\n        \"P5\",\n        \"B|\",\n        \"P1\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.9,\n  \"uncertainties\": []\n}",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "P3",
+            "-",
+            "P5",
+            "P6",
+            "B|",
+            "P2",
+            "-",
+            "-",
+            "B|",
+            "P6",
+            "-",
+            "P5",
+            "B|",
+            "P1",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.9,
+      "uncertainties": []
+    },
+    {
+      "source_row": 5,
+      "image": "rows/nas_gusu-xing/row_05.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P1",
+            "P1",
+            "P2",
+            "P7",
+            "P6",
+            "P5",
+            "B|",
+            "P3",
+            "P3",
+            "P2",
+            "B|",
+            "P2",
+            "P1",
+            "P2",
+            "P3",
+            "P2",
+            "P5",
+            "P7",
+            "B|",
+            "P6",
+            "P6",
+            "P5",
+            "B|",
+            "P5",
+            "P2",
+            "P3",
+            "P1",
+            "P1",
+            "P7",
+            "P6",
+            "P5"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 15.6,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P2\",\n        \"P1\",\n        \"P1\",\n        \"P2\",\n        \"P7\",\n        \"P6\",\n        \"P5\",\n        \"B|\",\n        \"P3\",\n        \"P3\",\n        \"P2\",\n        \"B|\",\n        \"P2\",\n        \"P1\",\n        \"P2\",\n        \"P3\",\n        \"P2\",\n        \"P5\",\n        \"P7\",\n        \"B|\",\n        \"P6\",\n        \"P6\",\n        \"P5\",\n        \"B|\",\n        \"P5\",\n        \"P2\",\n        \"P3\",\n        \"P1\",\n        \"P1\",\n        \"P7\",\n        \"P6\",\n        \"P5\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 6,
+      "image": "rows/nas_gusu-xing/row_06.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "P5",
+            "P5",
+            "P6",
+            "P1",
+            "P2",
+            "P6",
+            "P6",
+            "P5",
+            "P1",
+            "P6",
+            "P2",
+            "P4",
+            "P3",
+            "P3",
+            "P2",
+            "P3",
+            "P5",
+            "P6",
+            "P1",
+            "P2",
+            "P3",
+            "P6",
+            "P5",
+            "P3",
+            "P1",
+            "P6",
+            "P5",
+            "P3"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 11.53,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"3\",\n        \"5\",\n        \"5\",\n        \"6\",\n        \"1\",\n        \"2\",\n        \"6\",\n        \"6\",\n        \"5\",\n        \"1\",\n        \"6\",\n        \"2\",\n        \"4\",\n        \"3\",\n        \"3\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"6\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"6\",\n        \"5\",\n        \"3\",\n        \"1\",\n        \"6\",\n        \"5\",\n        \"3\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 7,
+      "image": "rows/nas_gusu-xing/row_07.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P2",
+            "P1",
+            "P3",
+            "P7",
+            "P6",
+            "P1",
+            "P5",
+            "P6",
+            "P5",
+            "P3",
+            "P2",
+            "P2",
+            "P1",
+            "P2",
+            "P3",
+            "P5",
+            "P6",
+            "P5",
+            "P1",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 11.07,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P2\",\n        \"P2\",\n        \"P1\",\n        \"P3\",\n        \"P7\",\n        \"P6\",\n        \"P1\",\n        \"P5\",\n        \"P6\",\n        \"P5\",\n        \"P3\",\n        \"P2\",\n        \"P2\",\n        \"P1\",\n        \"P2\",\n        \"P3\",\n        \"P5\",\n        \"P6\",\n        \"P5\",\n        \"P1\",\n        \"P1\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 8,
+      "image": "rows/nas_gusu-xing/row_08.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P3",
+            "P1",
+            "P1",
+            "P2",
+            "P3",
+            "P2",
+            "P1",
+            "P2",
+            "P3",
+            "P6",
+            "P5",
+            "P3",
+            "P2",
+            "P3",
+            "P5",
+            "P7",
+            "P6",
+            "P6",
+            "P6",
+            "P5",
+            "P6",
+            "P1",
+            "P2",
+            "P6",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 12.26,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P2\",\n        \"P3\",\n        \"P1\",\n        \"P1\",\n        \"P2\",\n        \"P3\",\n        \"P2\",\n        \"P1\",\n        \"P2\",\n        \"P3\",\n        \"P6\",\n        \"P5\",\n        \"P3\",\n        \"P2\",\n        \"P3\",\n        \"P5\",\n        \"P7\",\n        \"P6\",\n        \"P6\",\n        \"P6\",\n        \"P5\",\n        \"P6\",\n        \"P1\",\n        \"P2\",\n        \"P6\",\n        \"P1\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 9,
+      "image": "rows/nas_gusu-xing/row_09.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P5",
+            "P3",
+            "P2",
+            "P3",
+            "P5",
+            "P3",
+            "P5",
+            "P1",
+            "P6",
+            "P6",
+            "P5",
+            "P1",
+            "P1",
+            "P2",
+            "P4",
+            "P3",
+            "P3",
+            "P3",
+            "P2",
+            "P3",
+            "P7",
+            "P6",
+            "P1",
+            "P5",
+            "P6",
+            "P3",
+            "P5",
+            "P2",
+            "P2",
+            "P2",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 12.36,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"5\",\n        \"3\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"3\",\n        \"5\",\n        \"1\",\n        \"6\",\n        \"6\",\n        \"5\",\n        \"1\",\n        \"1\",\n        \"2\",\n        \"4\",\n        \"3\",\n        \"3\",\n        \"3\",\n        \"2\",\n        \"3\",\n        \"7\",\n        \"6\",\n        \"1\",\n        \"5\",\n        \"6\",\n        \"3\",\n        \"5\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"1\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 10,
+      "image": "rows/nas_gusu-xing/row_10.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P5",
+            "P3",
+            "P6",
+            "P5",
+            "P1",
+            "P2",
+            "P3",
+            "P5",
+            "P6",
+            "P3",
+            "P2",
+            "P5",
+            "P3",
+            "P5",
+            "P6",
+            "P1",
+            "P6",
+            "P1",
+            "P3",
+            "P2",
+            "P3",
+            "P1",
+            "P1",
+            "R0",
+            "P3",
+            "P2",
+            "P3",
+            "P2",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": [],
+      "generation_seconds": 12.19,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"2\",\n        \"5\",\n        \"3\",\n        \"6\",\n        \"5\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"6\",\n        \"3\",\n        \"2\",\n        \"5\",\n        \"3\",\n        \"5\",\n        \"6\",\n        \"i\",\n        \"6\",\n        \"i\",\n        \"3\",\n        \"2\",\n        \"3\",\n        \"i\",\n        \"i\",\n        \"0\",\n        \"3\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"i\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 11,
+      "image": "rows/nas_gusu-xing/row_11.png",
+      "content_type": "metadata",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 3.2,
+      "raw_response": "{\"content_type\":\"metadata\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    },
+    {
+      "source_row": 12,
+      "image": "rows/nas_gusu-xing/row_12.png",
+      "content_type": "metadata",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 2.74,
+      "raw_response": "{\"content_type\":\"metadata\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    }
+  ]
+}

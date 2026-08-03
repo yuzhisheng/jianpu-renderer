@@ -5,6 +5,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { createCanvas, Path2D } = require('@napi-rs/canvas');
 
 globalThis.Path2D = Path2D;
@@ -80,6 +81,7 @@ function toYolo(bb, imgW, imgH) {
 
 function collectAnnotations(score, layout, imgW, imgH) {
   const anns = [];
+  const seen = new Set();
   const MIN_W = 8, MIN_H = 8;  // 最小宽高，确保细线条在 640px 训练中可见
   const push = (cl, x, y, w, h) => {
     if (w <= 0 || h <= 0) return;
@@ -88,7 +90,11 @@ function collectAnnotations(score, layout, imgW, imgH) {
     const ch = Math.max(h, MIN_H);
     const dx = (cw - w) / 2;
     const dy = (ch - h) / 2;
-    anns.push(`${cl} ${toYolo({x: x - dx, y: y - dy, w: cw, h: ch}, imgW, imgH).join(' ')}`);
+    const normalized = toYolo({x: x - dx, y: y - dy, w: cw, h: ch}, imgW, imgH);
+    const key = `${cl}:${normalized.map(v => v.toFixed(6)).join(':')}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    anns.push(`${cl} ${normalized.join(' ')}`);
   };
 
   let globalMeasureIdx = 0;
@@ -137,7 +143,16 @@ function collectAnnotations(score, layout, imgW, imgH) {
               if (te > xStart) xStart = te + 4;
             }
           }
-          push(cls, xStart, y1, x2 - xStart, h);
+          if (endM.position.y === measure.position.y || x2 > xStart) {
+            push(cls, xStart, y1, x2 - xStart, h);
+          } else {
+            // Hairpin crosses a rendered line. A single bounding box would span
+            // unrelated notation; label the visible segment on each line.
+            push(cls, xStart, y1, imgW - bwTheme.paddingHorizontal - xStart, h);
+            const nextX = endM.position.x;
+            const nextY = endM.position.y + endM.position.height + 6;
+            push(cls, nextX, nextY, x2 - nextX, h);
+          }
         }
       }
 
@@ -185,9 +200,19 @@ function collectAnnotations(score, layout, imgW, imgH) {
         // === 减时线 ===
         let ulIdx = 0;
         for (const ul of (nl.underlines || [])) {
-          const sx = nl.position.x + (ul.xOffset || 0);
-          if (ul.width > 0) {
-            push(ulIdx === 0 ? CLASS.UNDERLINE_1 : CLASS.UNDERLINE_2, sx, ul.y, ul.width, 1.5);
+          const ext = ul;
+          // Grouped single-note segments intentionally have width=0 in layout;
+          // the renderer expands them to the digit width using the stored
+          // centers. Labels must follow what is actually drawn.
+          let sx = nl.position.x + (ul.xOffset || 0);
+          let sw = ul.width;
+          if (ext.groupFirstCenter !== undefined) {
+            sx = ext.groupFirstCenter - 5;
+            sw = Math.max(10, ext.groupLastCenter - ext.groupFirstCenter + 10);
+          }
+          if (sw > 0) {
+            const level = ext.underlineLevel || (ulIdx + 1);
+            push(level === 1 ? CLASS.UNDERLINE_1 : CLASS.UNDERLINE_2, sx, ul.y, sw, 1.5);
           }
           ulIdx++;
         }
@@ -345,6 +370,18 @@ for (const file of files) {
 }
 console.log(`\nDone! ${count} PNGs + labels → ${trainDir}/`);
 
+// 生成稳定且互斥的训练/验证清单。旧版本 train 和 val 都指向同一目录，
+// 会让 mAP 看起来很好，却无法衡量对未见乐谱的泛化能力。
+const trainImages = [];
+const valImages = [];
+for (const file of files) {
+  const imagePath = path.resolve(trainDir, file.replace('.json', '.png'));
+  const bucket = crypto.createHash('sha1').update(file).digest()[0];
+  (bucket < 51 ? valImages : trainImages).push(imagePath); // ~20% validation
+}
+fs.writeFileSync(`${trainDir}/train.txt`, trainImages.join('\n') + '\n');
+fs.writeFileSync(`${trainDir}/val.txt`, valImages.join('\n') + '\n');
+
 // 生成 YOLOv8 的 data.yaml
 const classNames = [
   'pitch_1','pitch_2','pitch_3','pitch_4','pitch_5','pitch_6','pitch_7','rest',
@@ -356,11 +393,11 @@ const classNames = [
 ];
 const yaml = `# YOLOv8 training data config
 path: ${path.resolve(trainDir)}
-train: .
-val: .
+train: train.txt
+val: val.txt
 
 nc: ${classNames.length}
 names: ${JSON.stringify(classNames)}
 `;
 fs.writeFileSync(`${trainDir}/data.yaml`, yaml);
-console.log(`✓ data.yaml (${classNames.length} classes)`);
+console.log(`✓ data.yaml (${classNames.length} classes, train=${trainImages.length}, val=${valImages.length})`);

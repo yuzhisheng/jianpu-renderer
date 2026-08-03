@@ -1,0 +1,2 @@
+# Independent Apple-Silicon environment for local visual annotation.
+mlx-vlm==0.6.6

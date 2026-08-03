@@ -28,6 +28,7 @@ from model.tokenizer import (
     encode_score, encode_score_with_dynamics, encode_measure, encode_note,
     token_to_id, LYRIC_START, LYRIC_END, LYRIC_BASE,
 )
+from model.spatial_tokens import detections_to_tokens
 
 # === 类别名 (与 generate_training_pngs.cjs 一致) ===
 YOLO_CLASS_NAMES = [
@@ -93,55 +94,12 @@ def dets_to_tokens(dets, img_w: int, img_h: int, add_row_sep: bool = True):
     2. 每行按 cx 排序
     3. 每个检测框 → token
     """
-    if not dets:
-        return ["<BOS>", "<EOS>"]
-
-    # === 反归一化 ===
-    boxes = []
-    for cls_id, cx, cy, w, h in dets:
-        x_px = cx * img_w
-        y_px = cy * img_h
-        boxes.append({
-            "cls": cls_id,
-            "cx": x_px,
-            "cy": y_px,
-            "w": w * img_w,
-            "h": h * img_h,
-        })
-
-    # === 按 cy 聚类分行 (自适应阈值: 高度中位数的 1.5 倍) ===
-    boxes.sort(key=lambda b: b["cy"])
-    heights = [b["h"] for b in boxes]
-    median_h = sorted(heights)[len(heights) // 2] if heights else 20
-    row_thresh = max(median_h * 1.5, 15)
-
-    rows: list = []
-    for b in boxes:
-        placed = False
-        for row in rows:
-            row_cy = sum(r["cy"] for r in row) / len(row)
-            if abs(b["cy"] - row_cy) < row_thresh:
-                row.append(b)
-                placed = True
-                break
-        if not placed:
-            rows.append([b])
-
-    # === 每行内按 cx 排序 + token 化 ===
-    tokens = ["<BOS>"]
-    for row_idx, row in enumerate(rows):
-        if row_idx > 0 and add_row_sep:
-            tokens.append("<ROW>")
-        row.sort(key=lambda b: b["cx"])
-        for b in row:
-            tok = yolo_box_to_token(b)
-            if tok:
-                if isinstance(tok, list):
-                    tokens.extend(tok)
-                else:
-                    tokens.append(tok)
-    tokens.append("<EOS>")
-    return tokens
+    pixel_dets = [
+        (cls_id, cx * img_w, cy * img_h, w * img_w, h * img_h, 1.0)
+        for cls_id, cx, cy, w, h in dets
+    ]
+    tokens = detections_to_tokens(pixel_dets)
+    return tokens if add_row_sep else [token for token in tokens if token != "<ROW>"]
 
 
 def yolo_box_to_token(box) -> Union[str, list, None]:

@@ -86,6 +86,10 @@ export interface Note {
   tenuto?: boolean;
   /** 延长记号（自由延长） */
   fermata?: boolean;
+  /** 顿音/跳音标记 */
+  staccato?: boolean;
+  /** 换气标记 */
+  breathMark?: boolean;
   /** 力度突变标记 (sf/sfp/fp) */
   forceAccent?: 'sf' | 'sfp' | 'fp';
   /** 力度标记 (pp/p/mp/mf/f/ff 等)，显示在音符下方 */

@@ -1,0 +1,299 @@
+{
+  "annotation_id": "nas_zanghuayin_jp_sgb",
+  "status": "pending_vlm_review",
+  "label_grade": "silver_detector",
+  "source_image": "/Volumes/jianpu/images/zanghuayin_jp_sgb.jpg",
+  "split": "train_silver",
+  "rows": [
+    {
+      "row": 1,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_01.png",
+      "crop_box": [
+        0,
+        913,
+        4961,
+        1209
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P6",
+        "#",
+        "_",
+        "=",
+        "=",
+        "TEN",
+        "TEN",
+        "TEN",
+        "P6",
+        "=",
+        "=",
+        "=",
+        "P6",
+        "_",
+        "_",
+        "=",
+        "=",
+        "=",
+        "P6",
+        "_",
+        "_",
+        "_",
+        "_",
+        "=",
+        "=",
+        "=",
+        "=",
+        "=",
+        "=",
+        "=",
+        "=",
+        "=",
+        "TEN",
+        "TEN",
+        "TEN",
+        "B||",
+        "P6",
+        "_",
+        "=",
+        "=",
+        "TEN"
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 2,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_02.png",
+      "crop_box": [
+        0,
+        1312,
+        4961,
+        1553
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P6",
+        "P4",
+        "P4",
+        "P4",
+        "sf",
+        "P4",
+        "_",
+        "FER"
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 3,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_03.png",
+      "crop_box": [
+        0,
+        1775,
+        4961,
+        1958
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P6",
+        "P6",
+        "_",
+        "TEN",
+        "TEN",
+        "P6",
+        "sf",
+        "P6",
+        "TEN",
+        "TEN",
+        "TEN",
+        "P4",
+        "P4",
+        "P6",
+        "_",
+        "P6",
+        "TEN",
+        "sf",
+        "P6",
+        "_",
+        "P4",
+        "_",
+        "_"
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 4,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_04.png",
+      "crop_box": [
+        0,
+        3586,
+        4961,
+        3820
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P4",
+        "R0",
+        "P4",
+        "P2",
+        "P4",
+        "_",
+        "_",
+        "sf",
+        "P4",
+        "_"
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 5,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_05.png",
+      "crop_box": [
+        0,
+        4539,
+        4961,
+        4696
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P6",
+        "P6",
+        "P4",
+        "P4",
+        "P4",
+        "P4",
+        "P6",
+        "_",
+        "=",
+        "P6",
+        "_",
+        "=",
+        "=",
+        "=",
+        "=",
+        "="
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 6,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_06.png",
+      "crop_box": [
+        0,
+        4696,
+        4961,
+        4908
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P7",
+        "sf",
+        "P4",
+        "P2",
+        "P4",
+        "_",
+        "P4",
+        "P4",
+        "P6",
+        "P7",
+        "P4",
+        "P1",
+        "P2"
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 7,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_07.png",
+      "crop_box": [
+        0,
+        4972,
+        4961,
+        5152
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P6",
+        "sf",
+        "P6",
+        "P6",
+        "P6",
+        "P6",
+        "P6",
+        "P6",
+        "B|"
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 8,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_08.png",
+      "crop_box": [
+        0,
+        5768,
+        4961,
+        5999
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P4",
+        "sf",
+        "P4",
+        "P4",
+        "P2",
+        "sf",
+        "P6",
+        "P4",
+        "P6",
+        "P7",
+        "P4",
+        "_",
+        "P7",
+        "P2",
+        "P4",
+        "P4"
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 9,
+      "image": "rows/nas_zanghuayin_jp_sgb/row_09.png",
+      "crop_box": [
+        0,
+        6190,
+        4961,
+        6400
+      ],
+      "content_type": null,
+      "detector_tokens": [
+        "P6",
+        "P4",
+        "P7",
+        "B||",
+        "P6",
+        "P4",
+        "P4",
+        "P4",
+        "P7"
+      ],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    }
+  ],
+  "row_crop_policy": "hybrid_projection_detector_v2"
+}

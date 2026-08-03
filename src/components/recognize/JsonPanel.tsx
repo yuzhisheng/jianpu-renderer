@@ -17,7 +17,7 @@ export default function JsonPanel({ score, isLoading, errorMessage, isDarkTheme 
 
   // 渲染
   useEffect(() => {
-    if (!score || !canvasRef.current) return;
+    if (isLoading || !score || !canvasRef.current) return;
     try {
       const config = { ...DEFAULT_CONFIG, canvasWidth: 900 };
       const layout = calculateLayout(score as any, config as any);
@@ -29,7 +29,9 @@ export default function JsonPanel({ score, isLoading, errorMessage, isDarkTheme 
     } catch (e) {
       console.error('渲染失败', e);
     }
-  }, [score, isDarkTheme]);
+  // The canvas is not mounted while loading. Include isLoading so the score is
+  // rendered after the loading placeholder is replaced by the real canvas.
+  }, [score, isDarkTheme, isLoading]);
 
   const handleCopy = useCallback(async () => {
     if (!score) return;

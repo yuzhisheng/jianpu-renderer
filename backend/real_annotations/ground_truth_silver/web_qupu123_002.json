@@ -1,0 +1,970 @@
+{
+  "title": "昆仑道",
+  "key": "Gb",
+  "timeSignature": {
+    "numerator": 4,
+    "denominator": 4
+  },
+  "measures": [
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 1.0
+        },
+        {
+          "pitch": 7,
+          "duration": 1.0,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0
+        },
+        {
+          "pitch": 4,
+          "duration": 1.0,
+          "accidental": "sharp"
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 1,
+          "duration": 1.0
+        },
+        {
+          "pitch": 2,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "pitch": 1,
+          "duration": 1.0
+        },
+        {
+          "pitch": 2,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 7,
+          "duration": 1.0,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 0.5
+        },
+        {
+          "pitch": 6,
+          "duration": 0.25
+        },
+        {
+          "pitch": 7,
+          "duration": 0.25
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 7,
+          "duration": 0.25
+        },
+        {
+          "pitch": 1,
+          "duration": 0.25,
+          "octave": 1
+        },
+        {
+          "pitch": 7,
+          "duration": 0.25
+        },
+        {
+          "pitch": 6,
+          "duration": 0.25
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 5,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 5,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "octave": 1
+        },
+        {
+          "pitch": 7,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 0.25
+        },
+        {
+          "pitch": 3,
+          "duration": 0.25
+        },
+        {
+          "pitch": 6,
+          "duration": 0.25
+        },
+        {
+          "pitch": 7,
+          "duration": 0.25
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 1.0,
+          "octave": 1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 7,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "octave": 1
+        },
+        {
+          "pitch": 7,
+          "duration": 0.5
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 0,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        },
+        {
+          "pitch": 7,
+          "duration": 0.5,
+          "octave": -1
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 7,
+          "duration": 1.0,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "accidental": "sharp"
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "accidental": "sharp"
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 7,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 1.0,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 7,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 1.0,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "double"
+    }
+  ],
+  "tempo": 100,
+  "_annotation": {
+    "grade": "silver_vlm_pass_1",
+    "reviewer": "vision_language_model_pass_1",
+    "source_review": "/Users/collin/Documents/hdjianpu/jianpu-renderer/backend/real_annotations/vlm_reviews/web_qupu123_002.json",
+    "minimum_row_confidence": 0.93,
+    "uncertainties": [
+      "成组减时线按每个被覆盖音符展开，需二次框级复核",
+      "首小节四个快速音的双减时线需框级复核",
+      "跨多个音符的单减时线已展开"
+    ]
+  }
+}

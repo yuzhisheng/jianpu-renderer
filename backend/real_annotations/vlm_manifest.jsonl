@@ -1,0 +1,2 @@
+{"annotation_id": "web_qupu123_002", "score": "ground_truth_silver/web_qupu123_002.json", "score_rows": 7, "measures": 40, "minimum_row_confidence": 0.93, "status": "reviewed_once"}
+{"annotation_id": "web_qupu123_004", "score": "ground_truth_silver/web_qupu123_004.json", "score_rows": 7, "measures": 27, "minimum_row_confidence": 0.88, "status": "reviewed_once"}

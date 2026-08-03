@@ -6,6 +6,7 @@ import ImageUploader from './recognize/ImageUploader';
 import JsonPanel from './recognize/JsonPanel';
 
 type Layout = 'horizontal' | 'vertical';
+type RecognizerMode = 'accurate' | 'fast';
 
 interface RecognizeViewProps {
   isDarkTheme: boolean;
@@ -20,14 +21,20 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [result, setResult] = useState<RecognizeResponse | null>(null);
-  const [health, setHealth] = useState<{ yolo_loaded: boolean; transformer_loaded: boolean } | null>(null);
+  const [health, setHealth] = useState<{
+    yolo_loaded: boolean;
+    transformer_loaded: boolean;
+    accurate_vlm_available?: boolean;
+  } | null>(null);
+  const [recognizerMode, setRecognizerMode] = useState<RecognizerMode>('accurate');
   const [progress, setProgress] = useState<string>('');
+  const recognitionActiveRef = useRef(false);
 
   // 健康检查
   useEffect(() => {
     checkHealth().then(setHealth).catch(e => {
       console.error('health check failed', e);
-      setHealth({ yolo_loaded: false, transformer_loaded: false });
+      setHealth({ yolo_loaded: false, transformer_loaded: false, accurate_vlm_available: false });
     });
   }, []);
 
@@ -36,16 +43,6 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-  }, [previewUrl]);
-
-  const handleFile = useCallback((f: File) => {
-    setFile(f);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(URL.createObjectURL(f));
-    setResult(null);
-    setErrorMsg(null);
-    // 自动开始识别
-    runRecognize(f);
   }, [previewUrl]);
 
   const handleClear = useCallback(() => {
@@ -58,26 +55,47 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
   }, [previewUrl]);
 
   const runRecognize = useCallback(async (f: File) => {
+    // File/drop events can fire twice before React commits isLoading. Keep a
+    // synchronous guard so one user action launches at most one VLM process.
+    if (recognitionActiveRef.current) return;
+    recognitionActiveRef.current = true;
     setIsLoading(true);
     setErrorMsg(null);
     setResult(null);
     setProgress('上传图片…');
+    const timers: ReturnType<typeof setTimeout>[] = [];
     try {
-      // 模拟步骤
-      const t1 = setTimeout(() => setProgress('YOLOv8 检测中…'), 200);
-      const t2 = setTimeout(() => setProgress('Transformer 拼装中…'), 800);
-      const resp = await recognizeImage(f, { conf: 0.25, useTransformer: true });
-      clearTimeout(t1);
-      clearTimeout(t2);
+      timers.push(setTimeout(() => setProgress(
+        recognizerMode === 'accurate' ? '正在切分谱行…' : 'YOLO 检测中…'), 200));
+      timers.push(setTimeout(() => setProgress(
+        recognizerMode === 'accurate' ? '本地视觉大模型正在识别音符、节奏和连线（约 3–6 分钟）…' : '几何拼装中…'), 800));
+      const resp = await recognizeImage(f, {
+        conf: recognizerMode === 'accurate' ? 0.12 : 0.20,
+        useTransformer: false,
+        recognizer: recognizerMode,
+      });
       setProgress('');
       setResult(resp);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      setErrorMsg(e?.message || String(e));
+      setErrorMsg(e instanceof Error ? e.message : String(e));
     } finally {
+      timers.forEach(clearTimeout);
+      recognitionActiveRef.current = false;
+      setProgress('');
       setIsLoading(false);
     }
-  }, []);
+  }, [recognizerMode]);
+
+  const handleFile = useCallback((f: File) => {
+    setFile(f);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(URL.createObjectURL(f));
+    setResult(null);
+    setErrorMsg(null);
+    // 自动开始识别
+    runRecognize(f);
+  }, [previewUrl, runRecognize]);
 
   const handleRetry = useCallback(() => {
     if (file) runRecognize(file);
@@ -108,6 +126,25 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
         <h1 className="text-sm font-semibold" style={{ color: isDarkTheme ? '#fff' : '#111' }}>
           图片简谱识别
         </h1>
+        <div
+          className="flex items-center rounded p-0.5 text-[11px]"
+          style={{ backgroundColor: isDarkTheme ? '#1e1e1e' : '#f3f4f6' }}
+        >
+          <button
+            onClick={() => setRecognizerMode('accurate')}
+            className={`px-2 py-1 rounded ${recognizerMode === 'accurate' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+            title="本地视觉大模型，优先保证音高骨架准确"
+          >
+            精确模式
+          </button>
+          <button
+            onClick={() => setRecognizerMode('fast')}
+            className={`px-2 py-1 rounded ${recognizerMode === 'fast' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+            title="YOLO 几何拼装，速度快但准确率较低"
+          >
+            快速模式
+          </button>
+        </div>
         {/* 布局切换 */}
         <div
           className="flex items-center rounded p-0.5"
@@ -144,10 +181,10 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
             </span>
             <span
               className="flex items-center gap-1"
-              style={{ color: health.transformer_loaded ? '#10b981' : '#f59e0b' }}
+              style={{ color: health.accurate_vlm_available ? '#10b981' : '#f59e0b' }}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${health.transformer_loaded ? 'bg-green-500' : 'bg-yellow-500'}`} />
-              Transformer
+              <span className={`w-1.5 h-1.5 rounded-full ${health.accurate_vlm_available ? 'bg-green-500' : 'bg-yellow-500'}`} />
+              {health.accurate_vlm_available ? '本地 VLM' : 'VLM 不可用'}
             </span>
           </div>
         )}
@@ -226,7 +263,10 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
             <span>识别结果</span>
             {result && (
               <span style={{ color: isDarkTheme ? '#6b7280' : '#9ca3af' }}>
-                · {result.num_detections} 检测 · {result.inference_ms.toFixed(0)}ms
+                · {result.recognizer === 'accurate' ? '精确模式' : '快速模式'}
+                · {result.inference_ms < 10000
+                  ? `${result.inference_ms.toFixed(0)}ms`
+                  : `${(result.inference_ms / 1000).toFixed(1)}s`}
               </span>
             )}
             {file && !isLoading && (
@@ -238,6 +278,21 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
               </button>
             )}
           </div>
+          {result?.warnings?.map((warning, index) => (
+            <div
+              key={index}
+              className="px-3 py-1 text-[11px] text-amber-700 bg-amber-50 border-b border-amber-100"
+            >
+              {warning}
+            </div>
+          ))}
+          {result?.symbol_summary && (
+            <div className="px-3 py-1 text-[11px] text-blue-700 bg-blue-50 border-b border-blue-100">
+              {result.symbol_summary.notes} 音符 · {result.symbol_summary.eighth_notes} 八分 · {result.symbol_summary.sixteenth_notes} 十六分
+              {result.symbol_summary.thirty_second_notes ? ` · ${result.symbol_summary.thirty_second_notes} 三十二分` : ''}
+              {' · '}{result.symbol_summary.slurs} 圆滑线 · {result.symbol_summary.triplets} 三连音 · {result.symbol_summary.octave_marks} 八度标记
+            </div>
+          )}
           <div className="h-[calc(100%-1.75rem)]">
             <JsonPanel
               score={score}
