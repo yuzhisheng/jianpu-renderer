@@ -203,11 +203,11 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
             [("triplet", 0, 2), ("triplet", 3, 5), ("slur", 6, 10)],
         )
 
-    def test_production_policy_drops_unverified_tie_and_slur(self):
+    def test_production_policy_keeps_geometry_verified_tie_and_slur(self):
         self.assertEqual(
             self.recognizer._production_relations(
                 [("slur", 0, 1), ("tie", 2, 3), ("triplet", 4, 6)]),
-            [("triplet", 4, 6)],
+            [("slur", 0, 1), ("tie", 2, 3), ("triplet", 4, 6)],
         )
 
     def test_triplet_requires_small_three_above_span(self):
@@ -217,6 +217,74 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
         detections = [(2, 40, 32, 7, 11, .4)]
         self.assertTrue(self.recognizer._triplet_marker_visible(
             0, 2, positions, detections, 60, 20))
+
+    def test_pixel_arch_recovers_slur_endpoints(self):
+        image = Image.new("RGB", (120, 100), "white")
+        draw = ImageDraw.Draw(image)
+        draw.arc((20, 15, 80, 48), 180, 360, fill="black", width=3)
+        relations = self.recognizer._visual_curve_relations(
+            image, [0, 0, 120, 100], ["P1", "P2", "P3"],
+            [20.0, 50.0, 80.0], [], 70, 20)
+        self.assertEqual(relations, [("slur", 0, 2)])
+
+    def test_pixel_parentheses_attach_to_nearest_inside_notes(self):
+        image = Image.new("RGB", (160, 100), "white")
+        draw = ImageDraw.Draw(image)
+        draw.arc((20, 20, 42, 80), 90, 270, fill="black", width=4)
+        draw.arc((118, 20, 140, 80), 270, 90, fill="black", width=4)
+        markers = self.recognizer._visual_parentheses(
+            image, [0, 0, 160, 100], [55.0, 80.0, 105.0], 50, 30)
+        self.assertEqual(markers, [("left", 0), ("right", 2)])
+
+    def test_repeat_ending_span_must_match_two_barlines(self):
+        image = Image.new("RGB", (180, 110), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line((40, 15, 120, 15), fill="black", width=3)
+        draw.line((40, 15, 40, 35), fill="black", width=3)
+        endings = self.recognizer._visual_repeat_endings(
+            image, [0, 0, 180, 110], 70, 20,
+            [("B|", 40.0), ("B:|", 120.0)])
+        self.assertEqual(endings, [(1, [1])])
+
+    def test_repeat_endings_are_injected_inside_target_measure(self):
+        tokens = self.recognizer._inject_repeat_endings(
+            ["P1", "B|", "P2", "P3", "B:|"], [(1, [2, 3])])
+        self.assertEqual(tokens,
+                         ["P1", "B|", "R2", "R3", "P2", "P3", "B:|"])
+
+    def test_parentheses_are_written_to_score_notes(self):
+        score = parse_tokens_to_score(["P1", "P2", "P3"])
+        self.recognizer._decorate_parentheses(
+            score, [("left", 0), ("right", 2)])
+        notes = score["measures"][0]["notes"]
+        self.assertTrue(notes[0]["parenthesisLeft"])
+        self.assertTrue(notes[2]["parenthesisRight"])
+
+    def test_text_layers_align_lyrics_and_local_time_signature(self):
+        score = parse_tokens_to_score(["P1", "P2", "B|", "P3", "P5"])
+        self.recognizer._decorate_text_layers(
+            score,
+            [(0, [["我", "的", "心", ""], ["你", "的", "梦", ""]])],
+            [(2, 2, 4)],
+        )
+        first = score["measures"][0]["notes"]
+        second = score["measures"][1]["notes"]
+        self.assertEqual(first[0]["lyrics"], ["我", "你"])
+        self.assertEqual(first[1]["lyrics"], ["的", "的"])
+        self.assertEqual(second[0]["lyrics"], ["心", "梦"])
+        self.assertEqual(score["measures"][1]["timeSignature"],
+                         {"numerator": 2, "denominator": 4})
+
+    def test_grace_note_ornament_is_written_to_target_note(self):
+        score = parse_tokens_to_score(["P1", "P2", "P3"])
+        self.recognizer._decorate_ornaments(score, [
+            (1, {"type": "yinyin", "grace_notes": [5, 6]}),
+        ])
+        notes = score["measures"][0]["notes"]
+        self.assertNotIn("techniques", notes[0])
+        self.assertEqual(notes[1]["techniques"], [{
+            "type": "yinyin", "graceNotes": [5, 6], "graceOctave": 0,
+        }])
 
 
 if __name__ == "__main__":

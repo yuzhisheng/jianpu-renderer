@@ -80,6 +80,10 @@ export interface Note {
   slurId?: string;
   /** 三连音组 ID */
   tripletId?: string;
+  /** 该音符前绘制左圆括号（可跨小节成组） */
+  parenthesisLeft?: boolean;
+  /** 该音符后绘制右圆括号（可跨小节成组） */
+  parenthesisRight?: boolean;
   /** 重音标记 */
   accent?: boolean;
   /** 保持音标记 */
@@ -107,6 +111,9 @@ export interface Dash {
   duration: number;
   /** 连音线 ID */
   tieId?: string;
+  /** 分组圆括号也可落在增时线两侧 */
+  parenthesisLeft?: boolean;
+  parenthesisRight?: boolean;
 }
 
 /** 小节线类型 */
@@ -126,6 +133,8 @@ export interface Measure {
   barline?: BarlineType;
   /** 反复跳跃记号 */
   repeatEnding?: RepeatEnding;
+  /** 本小节起始处的局部拍号变更 */
+  timeSignature?: TimeSignature;
   /** 渐强/渐弱标记 */
   dynamics?: { type: 'crescendo' | 'descrescendo'; endMeasureIndex?: number };
 }
@@ -210,6 +219,9 @@ export interface NoteLayout {
   tripletId?: string;
   tripletStart?: boolean;
   tripletEnd?: boolean;
+  /** 通用分组圆括号位置 */
+  parenthesisLeftPosition?: SymbolPosition;
+  parenthesisRightPosition?: SymbolPosition;
   /** 重音位置 */
   accentPosition?: SymbolPosition;
   /** 保持音位置 */
@@ -240,6 +252,8 @@ export interface MeasureLayout {
   notes: NoteLayout[];
   /** 反复跳跃记号位置 */
   repeatEndingPosition?: SymbolPosition;
+  /** 小节起始处的局部拍号 */
+  timeSignaturePosition?: SymbolPosition;
   /** 前奏左括号位置 */
   bracketLeft?: SymbolPosition;
   /** 前奏右括号位置 */

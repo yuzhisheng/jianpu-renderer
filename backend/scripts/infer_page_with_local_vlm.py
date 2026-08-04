@@ -30,6 +30,30 @@ GLYPH_PROMPT = """图中是一行从左到右等间距排列的简谱字形单�
 必须按可见顺序输出，不能根据旋律补写、合并或重排。严格只返回JSON：{"symbols":["5","-","X"]}。
 """
 
+METADATA_PROMPT = """你是中文简谱页眉标注器。只读取图片中明确可见的歌曲标题、调号、初始拍号、速度和速度文字。
+严格只返回JSON，不要Markdown：
+{"title":"","key":"","time_signature":{"numerator":4,"denominator":4},"tempo":null,"tempo_text":""}
+规则：key只写等号右边，例如1=♭E写♭E；没有把握的字段用空字符串或null；不要把词曲作者、软件声明当标题。
+"""
+
+METER_PROMPT = """你是简谱局部拍号标注器。图中主旋律共有{note_count}个大号数字音符（增时横线不计数）。
+严格只返回JSON，不要Markdown：
+{{"time_signatures":[{{"before_note":0,"numerator":2,"denominator":4}}]}}
+规则：
+1. 局部拍号只记录谱行内明确可见的上下分数，并用before_note指向它后面的第一个大号音符；没有局部拍号返回空数组。
+2. 小房子编号、歌词行号和倚音小数字不是拍号。不要猜。
+"""
+
+LYRIC_LINE_PROMPT = """图中只有一条中文简谱歌词。请从左到右完整转写所有歌词文字。
+严格只返回JSON，不要Markdown：{"text":"我的心爱在天边，天边有一片"}
+去掉开头的歌词段落编号“1.”“2.”“3.”和字符间空格；保留逗号、句号；不要抄写谱面数字或根据歌曲常识补字。
+"""
+
+GRACE_NOTE_PROMPT = """图中是简谱倚音记号的局部放大图。只读取双横线上方明显可见的一个或两个小号数字，
+按从左到右顺序返回；圆点、横线、弧线和右侧的大号主音都不要读取。
+严格只返回JSON，不要Markdown：{"grace_notes":[1,2]}。数字只能是1到7；看不清返回空数组，禁止猜测。
+"""
+
 
 def layout_bands(image: Image.Image):
     """Return horizontal ink bands without relying on detector classes."""
@@ -118,6 +142,65 @@ def count_digits_near_baseline(image: Image.Image, baseline: float):
     typical_height = float(np.median([item[1] for item in candidates]))
     radius = max(9.0, typical_height * 0.48)
     return sum(abs(center_y - baseline) <= radius for center_y, _ in candidates)
+
+
+def grace_note_candidates(page: Image.Image, crop_box, row):
+    """Locate the distinctive double rule below one/two small grace digits."""
+    voice = row.get("voices", [{}])[0]
+    note_boxes = [geometry.get("box") for token, geometry in zip(
+        voice.get("tokens", []), voice.get("token_geometry", []))
+        if (token.startswith("P") or token == "R0")
+        and isinstance(geometry, dict)
+        and isinstance(geometry.get("box"), list)
+        and len(geometry["box"]) >= 4]
+    if not note_boxes:
+        return []
+    top, bottom = int(crop_box[1]), int(crop_box[3])
+    note_height = float(np.median([box[3] for box in note_boxes]))
+    baseline = float(np.median([box[1] for box in note_boxes]))
+    binary = (np.asarray(page.convert("L"))[top:bottom, :] < 150).astype(np.uint8)
+    count, _, stats, centroids = cv2.connectedComponentsWithStats(binary, 8)
+    lines = []
+    for component in range(1, count):
+        x, _, width, height, _ = map(int, stats[component])
+        center_y = float(centroids[component][1] + top)
+        if (note_height * 0.35 <= width <= note_height * 1.7
+                and height <= max(5, note_height * 0.15)
+                and width / max(1, height) >= 5.0
+                and baseline - note_height * 0.48 <= center_y
+                <= baseline - note_height * 0.05):
+            lines.append((x, x + width, center_y))
+
+    candidates = []
+    used = set()
+    for first_index, first in enumerate(lines):
+        for second_index, second in enumerate(lines[first_index + 1:], first_index + 1):
+            if first_index in used or second_index in used:
+                continue
+            if (abs(first[0] - second[0]) > 2
+                    or abs(first[1] - second[1]) > 2
+                    or not 3 <= abs(first[2] - second[2]) <= note_height * 0.25):
+                continue
+            left, right = min(first[0], second[0]), max(first[1], second[1])
+            center_x = (left + right) / 2
+            following = [note_index for note_index, box in enumerate(note_boxes)
+                         if float(box[0]) - float(box[2]) / 2 > right - 2]
+            if not following:
+                continue
+            note_index = min(following, key=lambda value: float(note_boxes[value][0]))
+            if float(note_boxes[note_index][0]) - center_x > note_height * 1.85:
+                continue
+            line_y = min(first[2], second[2])
+            crop = [
+                max(0, int(left - 5)),
+                max(top, int(line_y - note_height * 1.35)),
+                min(page.width, int(right + 5)),
+                min(bottom, int(line_y - 2)),
+            ]
+            if crop[2] > crop[0] and crop[3] > crop[1]:
+                candidates.append((note_index, crop))
+                used.update((first_index, second_index))
+    return candidates
 
 
 def split_near_whitespace(image: Image.Image, baseline: float):
@@ -269,6 +352,217 @@ def classify_score_glyphs(
                 f"localized glyph classification: {original_count}->{classified_count}, "
                 f"visual estimate {estimated}")
     return rows
+
+
+def read_text_layers(
+    page, bands, rows, model, processor, config, max_tokens, batch_size,
+):
+    """Read metadata and lyric alignment without perturbing pitch decoding."""
+    score_indices = [index for index, row in enumerate(rows)
+                     if row.get("content_type") == "score" and row.get("voices")]
+    first_score_top = bands[score_indices[0]][0] if score_indices else round(page.height * 0.25)
+    metadata_image = fixed_canvas(page.crop((0, 0, page.width, max(32, first_score_top))))
+    metadata_prompt = apply_chat_template(
+        processor, config, METADATA_PROMPT, num_images=1, thinking_mode="disabled")
+    metadata = {}
+    try:
+        raw = generate(
+            model, processor, metadata_prompt, image=metadata_image,
+            max_tokens=min(max_tokens, 256), temperature=0.0, verbose=False,
+        ).text
+        metadata = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
+    except Exception as exc:
+        metadata = {"uncertainty": f"metadata pass failed: {exc}"}
+
+    lyric_prompt = apply_chat_template(
+        processor, config, LYRIC_LINE_PROMPT,
+        num_images=1, thinking_mode="disabled")
+    grace_prompt = apply_chat_template(
+        processor, config, GRACE_NOTE_PROMPT,
+        num_images=1, thinking_mode="disabled")
+    tasks = []
+    lyric_line_counts = {index: 0 for index in score_indices}
+    for index in score_indices:
+        rows[index]["text_layer"] = {
+            "lyric_lines": [], "lyric_boxes": [], "time_signatures": [],
+            "ornaments": [],
+        }
+
+    for index in score_indices:
+        note_count = pitch_count(rows[index])
+        if note_count <= 0:
+            continue
+        top, bottom = bands[index]
+        meter_prompt = apply_chat_template(
+            processor, config, METER_PROMPT.format(
+                note_count=note_count, last_note=note_count - 1),
+            num_images=1, thinking_mode="disabled")
+        tasks.append(("meter", index, 0,
+                      fixed_canvas(page.crop((0, top, page.width, bottom))),
+                      meter_prompt, note_count, None))
+        for note_index, grace_box in grace_note_candidates(
+                page, [0, top, page.width, bottom], rows[index]):
+            tasks.append((
+                "grace", index, note_index,
+                fixed_canvas(page.crop(tuple(grace_box)), width=400, height=240),
+                grace_prompt, note_count, grace_box,
+            ))
+
+        voice = rows[index].get("voices", [{}])[0]
+        note_boxes = [geometry.get("box") for token, geometry in zip(
+            voice.get("tokens", []), voice.get("token_geometry", []))
+            if (token.startswith("P") or token == "R0")
+            and isinstance(geometry, dict) and isinstance(geometry.get("box"), list)]
+        if not note_boxes:
+            continue
+        baseline = float(np.median([box[1] for box in note_boxes])) - top
+        note_height = float(np.median([box[3] for box in note_boxes]))
+        row_image = page.crop((0, top, page.width, bottom))
+        gray = np.asarray(row_image.convert("L"))
+        region_top = max(0, int(baseline + note_height * 1.55))
+        binary = (gray[region_top:, :] < 150).astype(np.uint8)
+        active = np.flatnonzero(binary.sum(axis=1) >= max(6, round(page.width * 0.003)))
+        line_groups = []
+        for y in active.tolist():
+            if line_groups and y <= line_groups[-1][-1] + 3:
+                line_groups[-1].append(y)
+            else:
+                line_groups.append([y])
+        line_groups = [group for group in line_groups
+                       if note_height * 0.65 <= group[-1] - group[0] + 1
+                       <= note_height * 1.75
+                       and group[-1] < binary.shape[0] - 3]
+        for group in line_groups:
+            y0 = max(0, region_top + group[0] - 8)
+            y1 = min(row_image.height, region_top + group[-1] + 9)
+            line_crop = row_image.crop((0, y0, row_image.width, y1))
+            line_index = lyric_line_counts[index]
+            lyric_line_counts[index] += 1
+            tasks.append(("lyric", index, line_index,
+                          fixed_canvas(line_crop, height=200), lyric_prompt, note_count,
+                          [0, top + y0, page.width, top + y1]))
+
+    # A page segmenter may put the lyric baseline in its own band instead of
+    # keeping it inside the preceding score crop.  Such a band still belongs to
+    # the closest score row above it; otherwise an entire lyric phrase silently
+    # disappears from the structured score.
+    for index, row in enumerate(rows):
+        if row.get("content_type") != "lyrics":
+            continue
+        target = next((score_index for score_index in reversed(score_indices)
+                       if score_index < index), None)
+        if target is None:
+            continue
+        # Do not bridge across a later score row when malformed/reordered input
+        # contains several independent page regions.
+        if any(score_index for score_index in score_indices
+               if target < score_index < index):
+            continue
+        note_count = pitch_count(rows[target])
+        if note_count <= 0:
+            continue
+        top, bottom = bands[index]
+        row_image = page.crop((0, top, page.width, bottom))
+        gray = np.asarray(row_image.convert("L"))
+        binary = (gray < 150).astype(np.uint8)
+        active = np.flatnonzero(binary.sum(axis=1) >= max(6, round(page.width * 0.003)))
+        line_groups = []
+        for y in active.tolist():
+            if line_groups and y <= line_groups[-1][-1] + 3:
+                line_groups[-1].append(y)
+            else:
+                line_groups.append([y])
+
+        voice = rows[target].get("voices", [{}])[0]
+        heights = [float(geometry["box"][3]) for token, geometry in zip(
+            voice.get("tokens", []), voice.get("token_geometry", []))
+            if (token.startswith("P") or token == "R0")
+            and isinstance(geometry, dict)
+            and isinstance(geometry.get("box"), list)
+            and len(geometry["box"]) >= 4]
+        reference_height = float(np.median(heights)) if heights else max(16.0, bottom - top)
+        line_groups = [group for group in line_groups
+                       if reference_height * 0.65 <= group[-1] - group[0] + 1
+                       <= reference_height * 1.75
+                       and group[-1] < binary.shape[0] - 3]
+        for group in line_groups:
+            y0 = max(0, group[0] - 8)
+            y1 = min(row_image.height, group[-1] + 9)
+            line_index = lyric_line_counts[target]
+            lyric_line_counts[target] += 1
+            tasks.append(("lyric", target, line_index,
+                          fixed_canvas(row_image.crop((0, y0, row_image.width, y1)),
+                                       height=200),
+                          lyric_prompt, note_count,
+                          [0, top + y0, page.width, top + y1]))
+
+    for start in range(0, len(tasks), batch_size):
+        batch = tasks[start:start + batch_size]
+        try:
+            response = batch_generate(
+                model, processor, images=[item[3] for item in batch],
+                prompts=[item[4] for item in batch], max_tokens=min(max_tokens, 512),
+                temperature=0.0, verbose=False, group_by_shape=True,
+            )
+            texts = response.texts
+        except Exception:
+            texts = [
+                generate(
+                    model, processor, item[4], image=item[3],
+                    max_tokens=min(max_tokens, 512), temperature=0.0, verbose=False,
+                ).text
+                for item in batch
+            ]
+        for (kind, index, line_index, _, _, note_count, source_box), raw in zip(batch, texts):
+            try:
+                layer = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
+                if kind == "grace":
+                    grace_notes = layer.get("grace_notes", [])
+                    if (isinstance(grace_notes, list)
+                            and 1 <= len(grace_notes) <= 2
+                            and all(isinstance(value, int) and 1 <= value <= 7
+                                    for value in grace_notes)):
+                        rows[index]["text_layer"]["ornaments"].append({
+                            "type": "yinyin", "note": line_index,
+                            "grace_notes": grace_notes,
+                        })
+                    continue
+                if kind == "lyric":
+                    text = layer.get("text")
+                    if isinstance(text, str) and text.strip():
+                        text = "".join(text.split()).replace(",", "，").replace(".", "。")
+                        for prefix in ("D。S。", "DS。", "D。S", "DS"):
+                            if text.startswith(prefix):
+                                text = text[len(prefix):]
+                                break
+                        if any(marker in text for marker in
+                               ("本谱", "声明", "软件制作", "中国曲谱网", "上传")):
+                            continue
+                        rows[index]["text_layer"]["lyric_lines"].append(
+                            (line_index, text, source_box))
+                    continue
+                signatures = []
+                for signature in layer.get("time_signatures", []):
+                    if (isinstance(signature, dict)
+                            and isinstance(signature.get("before_note"), int)
+                            and 0 <= signature["before_note"] < note_count
+                            and isinstance(signature.get("numerator"), int)
+                            and isinstance(signature.get("denominator"), int)):
+                        signatures.append(signature)
+                rows[index]["text_layer"]["time_signatures"] = signatures
+            except Exception as exc:
+                rows[index].setdefault("uncertainties", []).append(
+                    f"text layer failed: {exc}")
+    for index in score_indices:
+        lines = rows[index]["text_layer"].get("lyric_lines", [])
+        ordered = sorted(lines)
+        rows[index]["text_layer"]["lyric_lines"] = [
+            text for _, text, _ in ordered
+        ]
+        rows[index]["text_layer"]["lyric_boxes"] = [
+            box for _, _, box in ordered
+        ]
+    return metadata, rows
     original_count = sum(
         token.startswith("P") or token == "R0" for token in original)
     if len(replacement_notes) != original_count:
@@ -475,6 +769,7 @@ def retry_underread_rows(page, bands, rows, model, processor, prompt, max_tokens
 def infer(
     image_path: Path, model_name: str, batch_size: int, max_tokens: int,
     only_band: int = 0, bands_override=None, skip_relations: bool = False,
+    text_layers: bool = False,
 ):
     started = time.perf_counter()
     with Image.open(image_path) as opened:
@@ -579,10 +874,16 @@ def infer(
     rows = retry_underread_rows(
         page, bands, rows, model, processor, prompt, max_tokens)
 
+    metadata = {}
+    if text_layers:
+        metadata, rows = read_text_layers(
+            page, bands, rows, model, processor, config, max_tokens, batch_size)
+
     return {
         "model": model_name,
         "page_size": list(page.size),
         "rows": rows,
+        "metadata": metadata,
         "elapsed_seconds": round(time.perf_counter() - started, 2),
     }
 
@@ -596,13 +897,14 @@ def main():
     parser.add_argument("--only-band", type=int, default=0)
     parser.add_argument("--bands-json", default=None)
     parser.add_argument("--skip-relations", action="store_true")
+    parser.add_argument("--text-layers", action="store_true")
     args = parser.parse_args()
     bands_override = None
     if args.bands_json:
         bands_override = json.loads(Path(args.bands_json).read_text())
     payload = infer(
         Path(args.image), args.model, args.batch_size, args.max_tokens,
-        args.only_band, bands_override, args.skip_relations)
+        args.only_band, bands_override, args.skip_relations, args.text_layers)
     print(RESULT_PREFIX + json.dumps(payload, ensure_ascii=False), flush=True)
 
 

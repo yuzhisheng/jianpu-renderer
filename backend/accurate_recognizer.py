@@ -26,8 +26,8 @@ ANCHOR_CLASSES = frozenset(range(8))
 UNDERLINE_CLASSES = {9: "_", 10: "="}
 NOTE_MODIFIER_CLASSES = {11: ".", 12: "^", 13: "v", 14: "#", 15: "b", 16: "n"}
 SKELETON_WARNING = (
-    "已融合谱行、小节线、减时线和像素复核的八度/附点；三连音需同时检出小3，"
-    "圆滑线/延音线因误检率较高暂不自动输出，歌词仍建议人工复核。"
+    "已融合谱行、小节线、减时线、弧线端点、小房子和分组括号的像素复核；"
+    "极淡或跨行的关系符号及歌词仍建议人工复核。"
 )
 LOGGER = logging.getLogger("jianpu-accurate-recognizer")
 
@@ -116,7 +116,8 @@ class AccurateVLMRecognizer:
                     completed = subprocess.run(
                         [str(self.python), str(self.script), str(image_path),
                          "--batch-size", "4", "--max-tokens", "512",
-                         "--bands-json", str(bands_path), "--skip-relations"],
+                         "--bands-json", str(bands_path), "--skip-relations",
+                         "--text-layers"],
                         cwd=str(ROOT.parent), env=environment, capture_output=True,
                         text=True, timeout=900, check=False,
                     )
@@ -469,6 +470,11 @@ class AccurateVLMRecognizer:
                 image, crop_box, baseline, note_height, note_count)
         if component_boxes:
             note_positions = [float(box[0]) for box in component_boxes]
+            # Source glyph localization is also the most reliable music
+            # baseline.  Detector clusters sometimes lock onto lyrics/footer
+            # digits, which used to crop away volta lines above the real row.
+            baseline = median(float(box[1]) for box in component_boxes)
+            note_height = median(float(box[3]) for box in component_boxes)
         anchor_width = median(float(item[3]) for item in anchors) if anchors else 16.0
         rhythm_boxes = [
             item for item in row_detections
@@ -643,6 +649,386 @@ class AccurateVLMRecognizer:
         return result
 
     @staticmethod
+    def _visual_curve_relations(
+        image: Image.Image, crop_box: Sequence[int], pitch_tokens: List[str],
+        note_positions: List[float], row_detections: List[Sequence[float]],
+        baseline: float, note_height: float,
+    ):
+        """Recover printed arches from pixels and bind them to note endpoints.
+
+        The current detector often classifies the digit itself as class 22/23.
+        A real arch is instead a wide, sparse connected component whose two
+        ends sit lower than its middle.  That shape test also rejects volta
+        brackets and reduction lines before endpoint classification.
+        """
+        if len(note_positions) < 2:
+            return []
+        top, bottom = int(crop_box[1]), int(crop_box[3])
+        band_top = max(top, int(baseline - note_height * 2.7))
+        band_bottom = min(bottom, int(baseline - note_height * 0.55))
+        if band_bottom - band_top < 5:
+            return []
+        gray = np.asarray(image.convert("L"))[band_top:band_bottom, :]
+        binary = (gray < 150).astype(np.uint8)
+        count, labels, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+        relations = []
+        for component in range(1, count):
+            x, y, width, height, area = map(int, stats[component])
+            density = area / max(1, width * height)
+            if (width < note_height * 1.25 or height < max(4, note_height * 0.18)
+                    or density < 0.055 or density > 0.34):
+                continue
+            mask = labels[y:y + height, x:x + width] == component
+            profile = []
+            for column in range(width):
+                ys = np.flatnonzero(mask[:, column])
+                if ys.size:
+                    profile.append(float(np.mean(ys)))
+            if len(profile) < width * 0.55:
+                continue
+            edge_count = max(2, int(len(profile) * 0.18))
+            edge_y = float(np.mean(profile[:edge_count] + profile[-edge_count:]))
+            middle = len(profile) // 2
+            middle_y = float(np.mean(profile[
+                max(0, middle - edge_count // 2):middle + edge_count // 2 + 1]))
+            if edge_y - middle_y < max(3.0, height * 0.18):
+                continue
+
+            pad = note_height * 0.32
+            left, right = x - pad, x + width + pad
+            covered = [index for index, position in enumerate(note_positions)
+                       if left <= position <= right]
+            if len(covered) < 2:
+                nearest = sorted(range(len(note_positions)),
+                                 key=lambda index: abs(note_positions[index] - (x + width / 2)))[:2]
+                covered = sorted(nearest)
+            if len(covered) < 2:
+                continue
+            start, end = covered[0], covered[-1]
+            # Do not stretch a small ornament component to remote notes.
+            if (abs(note_positions[start] - x) > note_height * 1.7
+                    or abs(note_positions[end] - (x + width)) > note_height * 1.7):
+                continue
+            kind = ("triplet" if end - start == 2 and
+                    AccurateVLMRecognizer._triplet_marker_visible(
+                        start, end, note_positions, row_detections,
+                        baseline, note_height)
+                    else "tie" if pitch_tokens[start] == pitch_tokens[end]
+                    else "slur")
+            relation = (kind, start, end)
+            if relation not in relations:
+                relations.append(relation)
+        return relations
+
+    @staticmethod
+    def _visual_parentheses(
+        image: Image.Image, crop_box: Sequence[int], note_positions: List[float],
+        baseline: float, note_height: float,
+    ):
+        """Find tall narrow '(' / ')' components and attach them to notes."""
+        if not note_positions:
+            return []
+        top, bottom = int(crop_box[1]), int(crop_box[3])
+        band_top = max(top, int(baseline - note_height * 0.9))
+        band_bottom = min(bottom, int(baseline + note_height * 0.9))
+        gray = np.asarray(image.convert("L"))[band_top:band_bottom, :]
+        binary = (gray < 150).astype(np.uint8)
+        count, labels, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+        markers = []
+        for component in range(1, count):
+            x, y, width, height, area = map(int, stats[component])
+            density = area / max(1, width * height)
+            if not (note_height * 0.20 <= width <= note_height * 0.72
+                    and note_height * 1.20 <= height <= note_height * 1.85
+                    and 0.10 <= density <= 0.42):
+                continue
+            mask = labels[y:y + height, x:x + width] == component
+            means = []
+            for low, high in ((0, height // 3), (height // 3, 2 * height // 3),
+                              (2 * height // 3, height)):
+                _, xs = np.where(mask[low:high])
+                means.append(float(np.mean(xs)) if xs.size else width / 2)
+            edge_mean = (means[0] + means[2]) / 2
+            if abs(means[1] - edge_mean) < width * 0.13:
+                continue
+            center_x = x + width / 2
+            if means[1] < edge_mean:
+                candidates = [index for index, position in enumerate(note_positions)
+                              if position > center_x]
+                if not candidates:
+                    continue
+                note_index = min(candidates, key=lambda index: note_positions[index])
+                side = "left"
+            else:
+                candidates = [index for index, position in enumerate(note_positions)
+                              if position < center_x]
+                if not candidates:
+                    continue
+                note_index = max(candidates, key=lambda index: note_positions[index])
+                side = "right"
+            # A parenthesis may sit outside an inline time signature or after
+            # several augmentation dashes, so its nearest inside item is not
+            # always immediately adjacent in pixels.
+            if abs(note_positions[note_index] - center_x) > note_height * 3.5:
+                continue
+            marker = (side, note_index)
+            if marker not in markers:
+                markers.append(marker)
+        return markers
+
+    @staticmethod
+    def _visual_lyric_slots(
+        image: Image.Image, crop_box: Sequence[int], note_positions: List[float],
+        baseline: float, note_height: float, lyric_lines, lyric_boxes=None,
+    ):
+        """Align VLM-transcribed lyric rows with glyph x coordinates."""
+        clean_lines = []
+        for line_index, line in enumerate(lyric_lines):
+            if not isinstance(line, str) or not line.strip():
+                continue
+            text = "".join(line.split()).replace(",", "，").replace(".", "。")
+            for prefix in ("D。S。", "DS。", "D。S", "DS"):
+                if text.startswith(prefix):
+                    text = text[len(prefix):]
+                    break
+            if (not text or any(marker in text for marker in
+                                ("本谱", "声明", "软件制作", "中国曲谱网", "上传"))):
+                continue
+            source_box = (lyric_boxes[line_index]
+                          if isinstance(lyric_boxes, list)
+                          and line_index < len(lyric_boxes) else None)
+            clean_lines.append((text, source_box))
+        if not note_positions or not clean_lines:
+            return []
+
+        page_gray = np.asarray(image.convert("L"))
+        regions = []
+        if all(isinstance(box, list) and len(box) == 4 for _, box in clean_lines):
+            for text, box in clean_lines:
+                left = max(0, int(box[0]))
+                top = max(0, int(box[1]))
+                right = min(image.width, int(box[2]))
+                bottom = min(image.height, int(box[3]))
+                if right > left and bottom > top:
+                    regions.append((text, (page_gray[top:bottom, left:right] < 150)
+                                    .astype(np.uint8), left))
+        else:
+            top, bottom = int(crop_box[1]), int(crop_box[3])
+            region_top = max(top, int(baseline + note_height * 1.55))
+            if bottom - region_top < note_height * 0.6:
+                return []
+            binary = (page_gray[region_top:bottom, :] < 150).astype(np.uint8)
+            row_threshold = max(6, round(image.width * 0.003))
+            active_rows = np.flatnonzero(binary.sum(axis=1) >= row_threshold)
+            row_groups = []
+            for y in active_rows.tolist():
+                if row_groups and y <= row_groups[-1][-1] + 3:
+                    row_groups[-1].append(y)
+                else:
+                    row_groups.append([y])
+            row_groups = [group for group in row_groups
+                          if note_height * 0.65 <= group[-1] - group[0] + 1
+                          <= note_height * 1.75
+                          and group[-1] < binary.shape[0] - 3]
+            for (text, _), group in zip(clean_lines, row_groups):
+                low = max(0, group[0] - 2)
+                high = min(binary.shape[0], group[-1] + 3)
+                regions.append((text, binary[low:high], 0))
+        if not regions:
+            return []
+
+        result = []
+        for text, binary, x_offset in regions:
+            active_columns = np.flatnonzero(binary.sum(axis=0) >= 2)
+            column_groups = []
+            max_internal_gap = max(4, round(note_height * 0.16))
+            for x in active_columns.tolist():
+                if column_groups and x <= column_groups[-1][-1] + max_internal_gap:
+                    column_groups[-1].append(x)
+                else:
+                    column_groups.append([x])
+            boxes = [(group_x[0], group_x[-1]) for group_x in column_groups
+                     if group_x[-1] - group_x[0] + 1 >= note_height * 0.10]
+            characters = list(text)
+            # Printed verse numbers are extra leftmost components which the
+            # text prompt intentionally omits.
+            if len(boxes) > len(characters):
+                boxes = boxes[-len(characters):]
+            if not boxes or not characters:
+                continue
+            if len(boxes) != len(characters):
+                # Preserve order under mild segmentation mismatch by sampling
+                # the observed horizontal extent, rather than shifting every
+                # later syllable by one note.
+                centers = np.linspace(
+                    (boxes[0][0] + boxes[0][1]) / 2,
+                    (boxes[-1][0] + boxes[-1][1]) / 2,
+                    len(characters)).tolist()
+            else:
+                centers = [(left + right) / 2 for left, right in boxes]
+            centers = [center + x_offset for center in centers]
+            slots = [""] * len(note_positions)
+            previous_index = None
+            for character, center_x in zip(characters, centers):
+                if character in "，。！？；：、,.!?;:" and previous_index is not None:
+                    slots[previous_index] += character
+                    continue
+                note_index = min(range(len(note_positions)),
+                                 key=lambda index: abs(note_positions[index] - center_x))
+                if abs(note_positions[note_index] - center_x) > note_height * 1.7:
+                    continue
+                slots[note_index] = (slots[note_index] + character)
+                previous_index = note_index
+            if any(slots):
+                result.append(slots)
+        return result
+
+    @staticmethod
+    def _time_signature_visible(
+        image: Image.Image, crop_box: Sequence[int], note_x: float,
+        baseline: float, note_height: float,
+    ) -> bool:
+        """Require the short fraction rule immediately before a claimed meter."""
+        top, bottom = int(crop_box[1]), int(crop_box[3])
+        left = max(0, int(note_x - note_height * 4.0))
+        right = max(left + 1, int(note_x - note_height * 0.35))
+        y0 = max(top, int(baseline - note_height * 0.35))
+        y1 = min(bottom, int(baseline + note_height * 0.35))
+        binary = (np.asarray(image.convert("L"))[y0:y1, left:right] < 150).astype(np.uint8)
+        count, _, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+        return any(
+            note_height * 0.55 <= int(stats[index][2]) <= note_height * 1.55
+            and int(stats[index][3]) <= max(7, note_height * 0.22)
+            and int(stats[index][2]) / max(1, int(stats[index][3])) >= 3.0
+            for index in range(1, count)
+        )
+
+    @staticmethod
+    def _visual_time_signatures(
+        image: Image.Image, crop_box: Sequence[int], note_positions: List[float],
+        baseline: float, note_height: float, claimed_signatures,
+    ):
+        """Locate every stacked meter fraction and bind it to the next note."""
+        valid = [item for item in claimed_signatures if isinstance(item, dict)
+                 and isinstance(item.get("numerator"), int)
+                 and isinstance(item.get("denominator"), int)]
+        if not valid or not note_positions:
+            return []
+        top, bottom = int(crop_box[1]), int(crop_box[3])
+        y0 = max(top, int(baseline - note_height * 0.40))
+        y1 = min(bottom, int(baseline + note_height * 0.40))
+        binary = (np.asarray(image.convert("L"))[y0:y1, :] < 150).astype(np.uint8)
+        count, _, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+        centers = []
+        for index in range(1, count):
+            x, _, width, height, _ = map(int, stats[index])
+            if (note_height * 1.0 <= width <= note_height * 1.55
+                    and height <= max(7, note_height * 0.20)
+                    and width / max(1, height) >= 5.0):
+                centers.append(x + width / 2)
+        result = []
+        for meter_index, center_x in enumerate(sorted(centers)):
+            candidates = [index for index, note_x in enumerate(note_positions)
+                          if note_x > center_x]
+            if not candidates:
+                continue
+            before_note = min(candidates, key=lambda index: note_positions[index])
+            if note_positions[before_note] - center_x > note_height * 3.5:
+                continue
+            signature = valid[min(meter_index, len(valid) - 1)]
+            marker = (before_note, signature["numerator"], signature["denominator"])
+            if marker not in result:
+                result.append(marker)
+        return result
+
+    @staticmethod
+    def _visual_repeat_endings(
+        image: Image.Image, crop_box: Sequence[int], baseline: float,
+        note_height: float, bars: List[tuple[str, float]],
+    ):
+        """Locate volta brackets by matching their horizontal span to bars."""
+        if len(bars) < 2:
+            return []
+        top, bottom = int(crop_box[1]), int(crop_box[3])
+        band_top = max(top, int(baseline - note_height * 3.0))
+        band_bottom = min(bottom, int(baseline - note_height * 0.7))
+        gray = np.asarray(image.convert("L"))[band_top:band_bottom, :]
+        binary = (gray < 160).astype(np.uint8)
+        kernel_width = max(12, int(note_height * 4.0))
+        horizontal = cv2.morphologyEx(
+            binary, cv2.MORPH_OPEN,
+            cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_width, 1)))
+        count, _, stats, _ = cv2.connectedComponentsWithStats(horizontal, 8)
+        candidates = []
+        bar_x = [float(item[1]) for item in bars]
+        for component in range(1, count):
+            x, y, width, height, _ = map(int, stats[component])
+            if width < note_height * 4.0 or height > max(6, note_height * 0.25):
+                continue
+            right = x + width
+            left_index = min(range(len(bar_x)), key=lambda index: abs(bar_x[index] - x))
+            right_index = min(range(len(bar_x)), key=lambda index: abs(bar_x[index] - right))
+            if (right_index <= left_index
+                    or abs(bar_x[left_index] - x) > note_height * 0.75
+                    or abs(bar_x[right_index] - right) > note_height * 0.75):
+                continue
+            candidates.append((x, y + band_top, width, left_index + 1))
+
+        endings = []
+        for ordinal, (x, line_y, width, measure_index) in enumerate(sorted(candidates)):
+            # Count printed ending digits just inside the bracket.  The exact
+            # glyph classifier is unnecessary here: ordering supplies 1/2 and
+            # two visible glyphs on the second bracket represent "2.3.".
+            roi_left = int(x + note_height * 0.25)
+            roi_right = int(min(image.width, x + note_height * 2.8))
+            roi_top = max(top, int(line_y - note_height * 0.15))
+            roi_bottom = min(bottom, int(line_y + note_height * 1.25))
+            roi = (np.asarray(image.convert("L"))[roi_top:roi_bottom,
+                                                   roi_left:roi_right] < 150).astype(np.uint8)
+            glyph_count, _, glyph_stats, _ = cv2.connectedComponentsWithStats(roi, 8)
+            digits = []
+            for glyph in range(1, glyph_count):
+                glyph_x, _, glyph_width, glyph_height, glyph_area = map(
+                    int, glyph_stats[glyph])
+                density = glyph_area / max(1, glyph_width * glyph_height)
+                if (note_height * 0.32 <= glyph_height <= note_height * 0.95
+                        and note_height * 0.12 <= glyph_width <= note_height
+                        and 0.10 <= density <= 0.75):
+                    # The scanned italic ending font has stable width ratios:
+                    # 1 is narrow, 2 is broad, and 3 lies between them.  This
+                    # tiny OCR rule distinguishes "1.", "2.3." and later "3."
+                    # without another expensive VLM request.
+                    ratio = glyph_width / max(1, glyph_height)
+                    value = 1 if ratio < 0.72 else 2 if ratio > 0.82 else 3
+                    digits.append((glyph_x, value))
+            numbers = []
+            for _, value in sorted(digits):
+                if value not in numbers:
+                    numbers.append(value)
+            if not numbers:
+                numbers = [ordinal + 1]
+            endings.append((measure_index, numbers))
+        return endings
+
+    @staticmethod
+    def _inject_repeat_endings(tokens: List[str], endings):
+        if not endings:
+            return tokens
+        by_measure = {index: numbers for index, numbers in endings}
+        output = []
+        measure_index = 0
+        inserted = set()
+        for token in tokens:
+            if (measure_index in by_measure and measure_index not in inserted
+                    and (token.startswith("P") or token in {"R0", "-"})):
+                output.extend(f"R{number}" for number in by_measure[measure_index])
+                inserted.add(measure_index)
+            output.append(token)
+            if token in BAR_CLASSES.values():
+                measure_index += 1
+        return output
+
+    @staticmethod
     def _curve_relations(
         pitch_tokens: List[str], note_positions: List[float],
         row_detections: List[Sequence[float]], baseline: float, note_height: float,
@@ -706,6 +1092,68 @@ class AccurateVLMRecognizer:
             notes[end][field] = relation_id
 
     @staticmethod
+    def _decorate_parentheses(score: Dict[str, Any], markers):
+        notes = [item for measure in score.get("measures", [])
+                 for item in measure.get("notes", [])]
+        for side, note_index in markers:
+            if 0 <= note_index < len(notes):
+                notes[note_index]["parenthesisLeft" if side == "left"
+                                  else "parenthesisRight"] = True
+
+    @staticmethod
+    def _decorate_text_layers(score: Dict[str, Any], lyric_layers, time_signatures):
+        pitch_notes = [item for measure in score.get("measures", [])
+                       for item in measure.get("notes", []) if "pitch" in item]
+        for note_offset, lines in lyric_layers:
+            if not isinstance(lines, list):
+                continue
+            for local_index in range(max((len(line) for line in lines
+                                          if isinstance(line, list)), default=0)):
+                values = []
+                for line in lines:
+                    if not isinstance(line, list) or local_index >= len(line):
+                        continue
+                    value = line[local_index]
+                    if isinstance(value, str) and value.strip():
+                        values.append(value.strip())
+                global_index = note_offset + local_index
+                if values and 0 <= global_index < len(pitch_notes):
+                    pitch_notes[global_index]["lyrics"] = values
+
+        note_to_measure = []
+        for measure_index, measure in enumerate(score.get("measures", [])):
+            note_to_measure.extend(
+                measure_index for item in measure.get("notes", []) if "pitch" in item)
+        for note_index, numerator, denominator in time_signatures:
+            if (0 <= note_index < len(note_to_measure)
+                    and numerator > 0 and denominator > 0):
+                score["measures"][note_to_measure[note_index]]["timeSignature"] = {
+                    "numerator": numerator, "denominator": denominator,
+                }
+
+    @staticmethod
+    def _decorate_ornaments(score: Dict[str, Any], ornaments):
+        notes = [item for measure in score.get("measures", [])
+                 for item in measure.get("notes", []) if "pitch" in item]
+        for note_index, ornament in ornaments:
+            if not (0 <= note_index < len(notes) and isinstance(ornament, dict)):
+                continue
+            if ornament.get("type") != "yinyin":
+                continue
+            grace_notes = ornament.get("grace_notes", [])
+            if (not isinstance(grace_notes, list)
+                    or not 1 <= len(grace_notes) <= 2
+                    or not all(isinstance(value, int) and 1 <= value <= 7
+                               for value in grace_notes)):
+                continue
+            technique = {
+                "type": "yinyin", "graceNotes": grace_notes, "graceOctave": 0,
+            }
+            techniques = notes[note_index].setdefault("techniques", [])
+            if technique not in techniques:
+                techniques.append(technique)
+
+    @staticmethod
     def _normalize_relation_types(relations):
         """Recover repeated three-note tuplets that a VLM calls short slurs.
 
@@ -728,8 +1176,14 @@ class AccurateVLMRecognizer:
 
     @classmethod
     def _production_relations(cls, relations):
-        normalized = cls._normalize_relation_types(relations)
-        return [relation for relation in normalized if relation[0] == "triplet"]
+        # Geometry-validated ties/slurs are safe to keep.  Preserve the explicit
+        # type here; changing every repeated three-note slur into a tuplet loses
+        # legitimate phrase arcs when no printed 3 is present.
+        result = []
+        for relation in relations:
+            if relation not in result:
+                result.append(relation)
+        return result
 
     @staticmethod
     def _triplet_marker_visible(
@@ -753,12 +1207,17 @@ class AccurateVLMRecognizer:
         tokens: List[str] = []
         confidences = []
         relations = []
+        parentheses = []
+        lyric_layers = []
+        time_signatures = []
+        ornaments = []
         note_offset = 0
+        item_offset = 0
         for row in payload.get("rows", []):
             if row.get("content_type") != "score":
                 continue
             confidences.append(float(row.get("confidence", 0.0)))
-            for voice in row.get("voices", []):
+            for voice_index, voice in enumerate(row.get("voices", [])):
                 original_tokens = list(voice.get("tokens", []))
                 original_geometry = voice.get("token_geometry")
                 if (isinstance(original_geometry, list)
@@ -771,9 +1230,13 @@ class AccurateVLMRecognizer:
                     voice_tokens = [token for token in original_tokens if token != "?"]
                     token_geometry = None
                 preferred_note_boxes = []
+                preferred_item_boxes = []
                 if token_geometry:
                     for token, geometry in zip(voice_tokens, token_geometry):
                         box = geometry.get("box") if isinstance(geometry, dict) else None
+                        if ((token.startswith("P") or token in {"R0", "-"})
+                                and isinstance(box, list) and len(box) == 4):
+                            preferred_item_boxes.append(box)
                         if ((token.startswith("P") or token == "R0")
                                 and isinstance(box, list) and len(box) == 4):
                             preferred_note_boxes.append(box)
@@ -796,19 +1259,59 @@ class AccurateVLMRecognizer:
                             row_relations.append((kind, start, end))
                 else:
                     row_relations = []
-                # Precision-first production policy: generic VLM/YOLO arcs
-                # frequently confuse tuplets, phrase arcs and ornament curves.
-                # Do not emit tie/slur until an endpoint model is calibrated.
+                row_relations.extend(self._visual_curve_relations(
+                    image, row["crop_box"], pitch_tokens, positions,
+                    row_detections, baseline, note_height))
                 row_relations = self._production_relations(row_relations)
                 row_relations = [
                     relation for relation in row_relations
-                    if self._triplet_marker_visible(
+                    if relation[0] != "triplet" or self._triplet_marker_visible(
                         relation[1], relation[2], positions, row_detections,
                         baseline, note_height)
                 ]
                 for kind, start, end in row_relations:
                     relations.append((kind, note_offset + start, note_offset + end))
+                row_items = [token for token in merged
+                             if token.startswith("P") or token in {"R0", "-"}]
+                if len(preferred_item_boxes) == len(row_items):
+                    item_positions = [float(box[0]) for box in preferred_item_boxes]
+                    item_markers = self._visual_parentheses(
+                        image, row["crop_box"], item_positions, baseline, note_height)
+                else:
+                    pitch_to_item = [index for index, token in enumerate(row_items)
+                                     if token.startswith("P") or token == "R0"]
+                    item_markers = [
+                        (side, pitch_to_item[index])
+                        for side, index in self._visual_parentheses(
+                            image, row["crop_box"], positions, baseline, note_height)
+                        if index < len(pitch_to_item)
+                    ]
+                for side, item_index in item_markers:
+                    parentheses.append((side, item_offset + item_index))
+                if voice_index == 0:
+                    text_layer = row.get("text_layer", {})
+                    if isinstance(text_layer, dict):
+                        lyric_layers.append((note_offset, self._visual_lyric_slots(
+                            image, row["crop_box"], positions, baseline, note_height,
+                            text_layer.get("lyric_lines", []),
+                            text_layer.get("lyric_boxes", []))))
+                        for before_note, numerator, denominator in self._visual_time_signatures(
+                                image, row["crop_box"], positions, baseline, note_height,
+                                text_layer.get("time_signatures", [])):
+                            time_signatures.append((
+                                note_offset + before_note, numerator, denominator))
+                        for ornament in text_layer.get("ornaments", []):
+                            if (isinstance(ornament, dict)
+                                    and isinstance(ornament.get("note"), int)
+                                    and 0 <= ornament["note"] < len(pitch_tokens)):
+                                ornaments.append((note_offset + ornament["note"], ornament))
                 note_offset += len(pitch_tokens)
+                item_offset += len(row_items)
+                pixel_bars = self._pixel_bars(
+                    image, row["crop_box"], baseline, note_height)
+                decorated = self._inject_repeat_endings(
+                    decorated, self._visual_repeat_endings(
+                        image, row["crop_box"], baseline, note_height, pixel_bars))
                 tokens.extend(decorated)
                 if decorated and not any(token.startswith("B") for token in decorated[-2:]):
                     tokens.append("B|")
@@ -817,9 +1320,33 @@ class AccurateVLMRecognizer:
             raise RuntimeError("本地视觉大模型没有在图片中找到数字简谱")
         score = parse_tokens_to_score(tokens)
         self._decorate_relations(score, relations)
-        score["title"] = "识别结果（音高骨架）"
+        self._decorate_parentheses(score, parentheses)
+        self._decorate_text_layers(score, lyric_layers, time_signatures)
+        self._decorate_ornaments(score, ornaments)
+        metadata = payload.get("metadata", {})
+        if isinstance(metadata, dict):
+            title = metadata.get("title")
+            key = metadata.get("key")
+            signature = metadata.get("time_signature")
+            tempo = metadata.get("tempo")
+            tempo_text = metadata.get("tempo_text")
+            if isinstance(title, str) and title.strip():
+                score["title"] = title.strip()
+            if isinstance(key, str) and key.strip():
+                score["key"] = key.strip()
+            if (isinstance(signature, dict)
+                    and isinstance(signature.get("numerator"), int)
+                    and isinstance(signature.get("denominator"), int)):
+                score["timeSignature"] = signature
+            if isinstance(tempo, int) and tempo > 0:
+                score["tempo"] = tempo
+            if isinstance(tempo_text, str) and tempo_text.strip():
+                score["tempoText"] = tempo_text.strip()
+        score.setdefault("title", "识别结果")
         score_notes = [item for measure in score.get("measures", [])
                        for item in measure.get("notes", []) if "pitch" in item]
+        score_items = [item for measure in score.get("measures", [])
+                       for item in measure.get("notes", [])]
         symbol_summary = {
             "notes": len(score_notes),
             "eighth_notes": sum(note.get("duration") == 0.5 for note in score_notes),
@@ -830,6 +1357,17 @@ class AccurateVLMRecognizer:
             "ties": len({note["tieId"] for note in score_notes if note.get("tieId")}),
             "slurs": len({note["slurId"] for note in score_notes if note.get("slurId")}),
             "triplets": len({note["tripletId"] for note in score_notes if note.get("tripletId")}),
+            "parentheses": sum(bool(item.get("parenthesisLeft"))
+                               + bool(item.get("parenthesisRight")) for item in score_items),
+            "repeat_endings": sum(bool(measure.get("repeatEnding"))
+                                  for measure in score.get("measures", [])),
+            "lyric_syllables": sum(len(note.get("lyrics", [])) for note in score_notes),
+            "local_time_signatures": sum(bool(measure.get("timeSignature"))
+                                         for measure in score.get("measures", [])),
+            "grace_notes": sum(
+                any(technique.get("type") == "yinyin"
+                    for technique in note.get("techniques", []))
+                for note in score_notes),
         }
         return {
             "score": score,

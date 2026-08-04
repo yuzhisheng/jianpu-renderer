@@ -764,6 +764,31 @@ function drawRepeatEnding(ctx: CanvasRenderingContext2D, numbers: number[], pos:
   ctx.fillText(text, textX, bracketTop);
 }
 
+/** 绘制谱行中的局部拍号 */
+function drawInlineTimeSignature(
+  ctx: CanvasRenderingContext2D,
+  signature: { numerator: number; denominator: number },
+  pos: SymbolPosition,
+  config: LayoutConfig,
+  theme: RenderTheme,
+) {
+  const fontSize = Math.max(10, config.noteHeight * 0.46);
+  const centerX = pos.x + pos.width / 2;
+  const lineY = pos.y + pos.height / 2;
+  ctx.fillStyle = theme.symbolColor;
+  ctx.strokeStyle = theme.symbolColor;
+  ctx.font = `bold ${fontSize}px "Noto Sans", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(signature.numerator), centerX, lineY - fontSize * 0.56);
+  ctx.fillText(String(signature.denominator), centerX, lineY + fontSize * 0.56);
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(pos.x + 2, lineY);
+  ctx.lineTo(pos.x + pos.width - 2, lineY);
+  ctx.stroke();
+}
+
 /** 绘制标题和元信息 */
 function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { title?: string; key: string; timeSignature: { numerator: number; denominator: number }; tempo?: number; tempoText?: string }, config: LayoutConfig, theme: RenderTheme) {
   if (layout.titlePosition && score.title) {
@@ -859,6 +884,11 @@ export function render(
         drawRepeatEnding(ctx, measure.data.repeatEnding.numbers, measure.repeatEndingPosition, config, theme, isLast);
       }
 
+      if (measure.timeSignaturePosition && measure.data.timeSignature) {
+        drawInlineTimeSignature(ctx, measure.data.timeSignature,
+          measure.timeSignaturePosition, config, theme);
+      }
+
       // 前奏括号（像音符一样占位，pos.x/pos.y 即中心点）
       // 括号高度略大于音符，垂直中心与音符数字中心精确对齐
       if (measure.bracketLeft || measure.bracketRight) {
@@ -876,6 +906,11 @@ export function render(
         const noteLayout = measure.notes[ni];
         const nextNoteLayout = ni + 1 < measure.notes.length ? measure.notes[ni + 1] : undefined;
         const data = noteLayout.data;
+        const bracketSize = config.noteHeight * 1.15;
+        if (noteLayout.parenthesisLeftPosition) {
+          drawSymbol(ctx, 41, noteLayout.parenthesisLeftPosition.x,
+            noteLayout.parenthesisLeftPosition.y, bracketSize, theme.symbolColor);
+        }
         if (isNoteType(data)) {
           drawNoteNumber(ctx, data, noteLayout.position, config, theme);
           drawOctaveDots(ctx, noteLayout.upperDotPositions, theme);
@@ -886,6 +921,10 @@ export function render(
           }
         } else {
           drawDash(ctx, noteLayout.position, config, theme);
+        }
+        if (noteLayout.parenthesisRightPosition) {
+          drawSymbol(ctx, 42, noteLayout.parenthesisRightPosition.x,
+            noteLayout.parenthesisRightPosition.y, bracketSize, theme.symbolColor);
         }
         drawUnderlines(ctx, noteLayout, config, theme);
 

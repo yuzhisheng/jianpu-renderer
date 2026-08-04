@@ -103,6 +103,19 @@ function layoutNote(
   const upperDots: SymbolPosition[] = [];
   const lowerDots: SymbolPosition[] = [];
   const dotPositions: SymbolPosition[] = [];
+  const parenthesisSize = config.noteHeight * 1.15;
+  const parenthesisLeftPosition = item.parenthesisLeft ? {
+    x: x - config.noteWidth * 0.34,
+    y: y + config.noteHeight / 2,
+    width: parenthesisSize,
+    height: parenthesisSize,
+  } : undefined;
+  const parenthesisRightPosition = item.parenthesisRight ? {
+    x: x + config.noteWidth * 1.06,
+    y: y + config.noteHeight / 2,
+    width: parenthesisSize,
+    height: parenthesisSize,
+  } : undefined;
 
   if (isNote(item)) {
     const note = item;
@@ -342,6 +355,8 @@ function layoutNote(
       tripletId: note.tripletId,
       tripletStart: !!note.tripletId,
       tripletEnd: !!note.tripletId,
+      parenthesisLeftPosition,
+      parenthesisRightPosition,
       accentPosition,
       tenutoPosition,
       fermataPosition,
@@ -367,6 +382,8 @@ function layoutNote(
     dashLinePositions: [],
     techniquePositions: [],
     tieId: item.tieId,
+    parenthesisLeftPosition,
+    parenthesisRightPosition,
   };
 }
 
@@ -467,6 +484,8 @@ function fitMeasuresInRow(
     const dashCount = m.notes.filter(n => !isNote(n)).length;
     let mWidth = 0;
     m.notes.forEach(n => {
+      if (n.parenthesisLeft) mWidth += config.noteWidth * 0.45;
+      if (n.parenthesisRight) mWidth += config.noteWidth * 0.45;
       if (isNote(n)) {
         mWidth += getNoteSpacing(n.duration, config);
         if ((n.dot || 0) > 0) {
@@ -479,6 +498,7 @@ function fitMeasuresInRow(
         mWidth += config.noteWidth;
       }
     });
+    if (m.timeSignature) mWidth += config.noteWidth * 1.15;
     mWidth += config.barlineWidth;
     if (count > 0) mWidth += config.measureGap;
     if (width + mWidth > availWidth && count > 0) break;
@@ -566,13 +586,19 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
       // 分析减时线分组（按拍号划界）
       const groups = analyzeUnderlineGroups(
         m.notes,
-        score.timeSignature.numerator,
-        4 / score.timeSignature.denominator,
+        (m.timeSignature || score.timeSignature).numerator,
+        4 / (m.timeSignature || score.timeSignature).denominator,
       );
 
       // 计算小节宽度
       let mWidth = m.notes.length * cfg.noteWidth;
       m.notes.forEach(n => {
+        if (n.parenthesisLeft) {
+          mWidth += cfg.noteWidth * 0.45;
+        }
+        if (n.parenthesisRight) {
+          mWidth += cfg.noteWidth * 0.45;
+        }
         if (isNote(n) && (n.dot || 0) > 0) {
           mWidth += (n.dot || 0) * (cfg.accentDotRadius * 2 + 12);
         }
@@ -581,13 +607,24 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         }
       });
       mWidth += cfg.barlineWidth;
+      if (m.timeSignature) mWidth += cfg.noteWidth * 1.15;
 
       // 音符布局
       const noteLayouts: NoteLayout[] = [];
-      let noteX = mStartX;
+      const timeSignaturePosition = m.timeSignature ? {
+        x: mStartX,
+        y: currentY - 3,
+        width: cfg.noteWidth * 0.85,
+        height: cfg.noteHeight + 6,
+      } as SymbolPosition : undefined;
+      let noteX = mStartX + (m.timeSignature ? cfg.noteWidth * 1.15 : 0);
 
       for (let ni = 0; ni < m.notes.length; ni++) {
         const item = m.notes[ni];
+
+        if (item.parenthesisLeft) {
+          noteX += cfg.noteWidth * 0.45;
+        }
 
         // 查找是否属于某个减时线分组
         const group = groups.find(g => ni >= g.startIndex && ni <= g.endIndex);
@@ -603,6 +640,9 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         }
         if (isNote(item) && item.accidental) {
           advanceX += 10;
+        }
+        if (item.parenthesisRight) {
+          advanceX += cfg.noteWidth * 0.45;
         }
         noteX += advanceX;
       }
@@ -712,6 +752,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         barlinePosition: barlinePos,
         notes: noteLayouts,
         repeatEndingPosition: repeatEndingPos,
+        timeSignaturePosition,
         bracketLeft,
         bracketRight,
       });
