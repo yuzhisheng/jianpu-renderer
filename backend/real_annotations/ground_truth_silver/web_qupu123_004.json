@@ -1,0 +1,772 @@
+{
+  "title": "Canto Della Terra",
+  "key": "C",
+  "timeSignature": {
+    "numerator": 4,
+    "denominator": 4
+  },
+  "measures": [
+    {
+      "notes": [
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "octave": -1
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0,
+          "dot": 1
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "octave": -1
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5,
+          "octave": -1
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 5,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 0.25
+        },
+        {
+          "pitch": 6,
+          "duration": 0.25,
+          "octave": -1
+        },
+        {
+          "pitch": 1,
+          "duration": 0.25
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5,
+          "octave": -1
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5,
+          "octave": -1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 5,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0,
+          "octave": -1
+        },
+        {
+          "pitch": 0,
+          "duration": 0.25
+        },
+        {
+          "pitch": 6,
+          "duration": 0.25,
+          "octave": -1
+        },
+        {
+          "pitch": 7,
+          "duration": 0.25,
+          "octave": -1
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 4,
+          "duration": 1.0
+        },
+        {
+          "pitch": 4,
+          "duration": 1.0
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        },
+        {
+          "pitch": 4,
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 0.25
+        },
+        {
+          "pitch": 3,
+          "duration": 0.25
+        },
+        {
+          "pitch": 4,
+          "duration": 0.25
+        },
+        {
+          "pitch": 3,
+          "duration": 0.25
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "pitch": 6,
+          "duration": 1.0
+        },
+        {
+          "pitch": 6,
+          "duration": 1.0
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "octave": 1,
+          "dot": 1
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "octave": 1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "pitch": 2,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "octave": 1
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 5,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 0.25
+        },
+        {
+          "pitch": 4,
+          "duration": 0.25
+        },
+        {
+          "pitch": 3,
+          "duration": 0.25
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "pitch": 6,
+          "duration": 1.0
+        },
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "dot": 1
+        },
+        {
+          "pitch": 5,
+          "duration": 0.25
+        },
+        {
+          "pitch": 4,
+          "duration": 0.25
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        },
+        {
+          "pitch": 4,
+          "duration": 0.5
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "octave": 1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 4,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 1.0,
+          "octave": 1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "octave": 1,
+          "dot": 1
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "octave": 1
+        },
+        {
+          "pitch": 1,
+          "duration": 0.5,
+          "octave": 1
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 4,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 4,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5
+        },
+        {
+          "pitch": 4,
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        },
+        {
+          "pitch": 4,
+          "duration": 0.5
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "octave": 1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 4,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 5,
+          "duration": 1.0,
+          "octave": 1
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "octave": 1,
+          "dot": 1
+        },
+        {
+          "pitch": 4,
+          "duration": 0.5
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 5,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 6,
+          "duration": 1.0,
+          "dot": 1
+        },
+        {
+          "pitch": 4,
+          "duration": 0.5,
+          "octave": 1
+        },
+        {
+          "pitch": 3,
+          "duration": 0.5,
+          "octave": 1
+        },
+        {
+          "pitch": 2,
+          "duration": 0.5,
+          "octave": 1
+        },
+        {
+          "pitch": 6,
+          "duration": 0.5
+        },
+        {
+          "pitch": 4,
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 3,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 2,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 5,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 4,
+          "duration": 1.0
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 7,
+          "duration": 1.0,
+          "accidental": "flat"
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        }
+      ],
+      "barline": "single"
+    },
+    {
+      "notes": [
+        {
+          "pitch": 1,
+          "duration": 1.0,
+          "octave": 1
+        },
+        {
+          "type": "dash",
+          "duration": 0.5
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        },
+        {
+          "pitch": 0,
+          "duration": 1.0
+        }
+      ],
+      "barline": "single"
+    }
+  ],
+  "_annotation": {
+    "grade": "silver_vlm_pass_1",
+    "reviewer": "vision_language_model_pass_1",
+    "source_review": "/Users/collin/Documents/hdjianpu/jianpu-renderer/backend/real_annotations/vlm_reviews/web_qupu123_004.json",
+    "minimum_row_confidence": 0.88,
+    "uncertainties": [
+      "低音点与双减时线在纹理背景上需二次框级复核",
+      "成组减时线已按覆盖音符展开",
+      "第一小节连音线不计入 Score 字段",
+      "行内出现2/4与4/4拍号切换，当前 Score schema 只能保留页级拍号",
+      "V形演奏标记未编码",
+      "V形演奏标记未编码",
+      "两处V形演奏标记未编码"
+    ]
+  }
+}

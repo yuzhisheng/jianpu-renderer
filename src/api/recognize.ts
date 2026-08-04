@@ -16,13 +16,33 @@ export interface RecognizeResponse {
   inference_ms: number;
   src_tokens: string[];
   tgt_tokens: string[];
+  recognizer: 'accurate' | 'fast' | 'visual';
+  confidence?: number | null;
+  warnings?: string[];
+  row_results?: unknown[];
+  symbol_summary?: {
+    notes: number;
+    eighth_notes: number;
+    sixteenth_notes: number;
+    thirty_second_notes?: number;
+    octave_marks: number;
+    augmentation_dots: number;
+    ties: number;
+    slurs: number;
+    triplets: number;
+  };
 }
 
 const DEFAULT_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8000';
 
 export async function recognizeImage(
   file: File,
-  options: { conf?: number; useTransformer?: boolean; apiBase?: string } = {},
+  options: {
+    conf?: number;
+    useTransformer?: boolean;
+    recognizer?: 'accurate' | 'fast' | 'visual';
+    apiBase?: string;
+  } = {},
 ): Promise<RecognizeResponse> {
   const base = options.apiBase || DEFAULT_BASE;
   const form = new FormData();
@@ -33,6 +53,7 @@ export async function recognizeImage(
   if (options.useTransformer !== undefined) {
     params.append('use_transformer', String(options.useTransformer));
   }
+  if (options.recognizer) params.append('recognizer', options.recognizer);
 
   const url = `${base}/recognize${params.toString() ? '?' + params.toString() : ''}`;
   const resp = await fetch(url, {
@@ -42,7 +63,14 @@ export async function recognizeImage(
 
   if (!resp.ok) {
     const text = await resp.text();
-    throw new Error(`后端错误 ${resp.status}: ${text}`);
+    let detail = text;
+    try {
+      const payload = JSON.parse(text);
+      if (typeof payload?.detail === 'string') detail = payload.detail;
+    } catch {
+      // Preserve a non-JSON response, but never expose a JSON traceback wrapper.
+    }
+    throw new Error(detail || `识别请求失败（HTTP ${resp.status}）`);
   }
   return resp.json();
 }
@@ -51,6 +79,8 @@ export async function checkHealth(apiBase?: string): Promise<{
   status: string;
   yolo_loaded: boolean;
   transformer_loaded: boolean;
+  visual_transformer_loaded?: boolean;
+  accurate_vlm_available?: boolean;
 }> {
   const base = apiBase || DEFAULT_BASE;
   const resp = await fetch(`${base}/health`);

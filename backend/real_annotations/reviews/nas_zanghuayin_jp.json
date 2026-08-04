@@ -1,0 +1,54 @@
+{
+  "annotation_id": "nas_zanghuayin_jp",
+  "status": "excluded_non_jianpu",
+  "label_grade": "silver_detector",
+  "source_image": "/Volumes/jianpu/images/zanghuayin_jp.jpg",
+  "split": "excluded",
+  "rows": [
+    {
+      "row": 1,
+      "image": "rows/nas_zanghuayin_jp/row_01.png",
+      "crop_box": [
+        0,
+        4,
+        1444,
+        272
+      ],
+      "content_type": null,
+      "detector_tokens": [],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 2,
+      "image": "rows/nas_zanghuayin_jp/row_02.png",
+      "crop_box": [
+        0,
+        277,
+        1444,
+        494
+      ],
+      "content_type": null,
+      "detector_tokens": [],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    },
+    {
+      "row": 3,
+      "image": "rows/nas_zanghuayin_jp/row_03.png",
+      "crop_box": [
+        0,
+        513,
+        1444,
+        547
+      ],
+      "content_type": null,
+      "detector_tokens": [],
+      "vlm_tokens": null,
+      "review_confidence": null,
+      "uncertainties": []
+    }
+  ]
+}

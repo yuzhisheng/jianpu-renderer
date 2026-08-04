@@ -1,0 +1,442 @@
+{
+  "annotation_id": "nas_hongdou_jp",
+  "model": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
+  "label_grade": "silver_local_vlm_pitch_skeleton",
+  "status": "complete",
+  "rows": [
+    {
+      "source_row": 1,
+      "image": "rows/nas_hongdou_jp/row_01.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "R0",
+            "?",
+            "P1",
+            "?",
+            "P5",
+            "P2",
+            "P5",
+            "P3",
+            "P3",
+            "?",
+            "P2",
+            "P5",
+            "P2",
+            "P1",
+            "P1",
+            "?",
+            "P6",
+            "P7"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [
+        "out-of-range numeric token preserved as ?: 67",
+        "out-of-range numeric token preserved as ?: 65",
+        "out-of-range numeric token preserved as ?: 32",
+        "out-of-range numeric token preserved as ?: 61"
+      ],
+      "generation_seconds": 7.23,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"R0\",\n        \"67\",\n        \"1\",\n        \"65\",\n        \"5\",\n        \"2\",\n        \"5\",\n        \"3\",\n        \"3\",\n        \"32\",\n        \"2\",\n        \"5\",\n        \"2\",\n        \"1\",\n        \"1\",\n        \"61\",\n        \"6\",\n        \"7\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 2,
+      "image": "rows/nas_hongdou_jp/row_02.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "-",
+            "P2",
+            "P5",
+            "P6",
+            "B|:",
+            "P2",
+            "P1",
+            "P2",
+            "P2",
+            "P1",
+            "P2",
+            "P5",
+            "P6",
+            "B|",
+            "P2",
+            "P1",
+            "P2",
+            "P2",
+            "P3",
+            "P2",
+            "P5",
+            "P6"
+          ]
+        }
+      ],
+      "confidence": 0.8,
+      "uncertainties": [],
+      "generation_seconds": 8.78,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"i\",\n        \"-\",\n        \"2\",\n        \")\",\n        \"5\",\n        \"_\",\n        \"6\",\n        \"B|:\",\n        \"2\",\n        \"1\",\n        \"_\",\n        \"2\",\n        \"_\",\n        \"2\",\n        \"1\",\n        \".\",\n        \"2\",\n        \"5\",\n        \"_\",\n        \"6\",\n        \"|\",\n        \"2\",\n        \"1\",\n        \"_\",\n        \"2\",\n        \"_\",\n        \"2\",\n        \"3\",\n        \".\",\n        \"2\",\n        \"5\",\n        \"_\",\n        \"6\"\n      ]\n    }\n  ],\n  \"confidence\": 0.8,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 3,
+      "image": "rows/nas_hongdou_jp/row_03.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P1",
+            "P1",
+            "P1",
+            "P6",
+            "P2",
+            "P3",
+            "P2",
+            "P1",
+            "P2",
+            "P1",
+            "P1",
+            "P1",
+            "P5",
+            "P6",
+            "P5",
+            "P5",
+            "P6",
+            "B|",
+            "P2",
+            "P1",
+            "P2",
+            "P2",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 8.67,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"2\",\n        \"1\",\n        \"1\",\n        \"1\",\n        \"6\",\n        \".\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"1\",\n        \".\",\n        \"2\",\n        \"1\",\n        \"1\",\n        \"1\",\n        \"5\",\n        \"6\",\n        \"5\",\n        \".\",\n        \"5\",\n        \"6\",\n        \"|\",\n        \"2\",\n        \"1\",\n        \"2\",\n        \"2\",\n        \"1\",\n        \".\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 4,
+      "image": "rows/nas_hongdou_jp/row_04.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P5",
+            "P6",
+            "B|",
+            "P2",
+            "P1",
+            "P2",
+            "P2",
+            "P3",
+            "P2",
+            "P2",
+            "P5",
+            "P6",
+            "B|",
+            "P2",
+            "P1",
+            "P1",
+            "P1",
+            "P6",
+            "P2",
+            "P3",
+            "P2",
+            "P1",
+            "P1",
+            "B|",
+            "P6",
+            "P5",
+            "P5"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 8.65,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"2\",\n        \"5\",\n        \"6\",\n        \"B|\",\n        \"2\",\n        \"1\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"5\",\n        \"6\",\n        \"B|\",\n        \"2\",\n        \"1\",\n        \"1\",\n        \"1\",\n        \"6\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"1\",\n        \"1\",\n        \"B|\",\n        \"6\",\n        \"5\",\n        \"5\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 5,
+      "image": "rows/nas_hongdou_jp/row_05.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P5",
+            "P2",
+            "P3",
+            "P2",
+            "P2",
+            "P1",
+            "P2",
+            "P5",
+            "P1",
+            "P2",
+            "P3",
+            "P3",
+            "P3",
+            "P2",
+            "P2",
+            "P1",
+            "P3",
+            "P1",
+            "P7",
+            "P6",
+            "P3",
+            "P3",
+            "P7",
+            "P6",
+            "P5"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 8.01,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"5\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"1\",\n        \"2\",\n        \"5\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"3\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"1\",\n        \"3\",\n        \"1\",\n        \"7\",\n        \"6\",\n        \"3\",\n        \"3\",\n        \"7\",\n        \"6\",\n        \"5\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 6,
+      "image": "rows/nas_hongdou_jp/row_06.png",
+      "content_type": "lyrics",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 2.56,
+      "raw_response": "{\"content_type\":\"lyrics\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    },
+    {
+      "source_row": 7,
+      "image": "rows/nas_hongdou_jp/row_07.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "P6",
+            "P5",
+            "P4",
+            "P5",
+            "P3",
+            "P2",
+            "P1",
+            "P2",
+            "B|",
+            "P2",
+            "P2",
+            "P6",
+            "P3",
+            "P2",
+            "P2",
+            "P1",
+            "P2",
+            "P5",
+            "B|",
+            "P1",
+            "P2",
+            "P3",
+            "P3",
+            "P3",
+            "P2",
+            "P2",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 8.44,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"6\",\n        \"5\",\n        \"4\",\n        \"5\",\n        \"3\",\n        \"2\",\n        \"1\",\n        \"2\",\n        \"B|\",\n        \"2\",\n        \"2\",\n        \"6\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"1\",\n        \"2\",\n        \"5\",\n        \"B|\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"3\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"1\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 8,
+      "image": "rows/nas_hongdou_jp/row_08.png",
+      "content_type": "lyrics",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 2.39,
+      "raw_response": "{\"content_type\":\"lyrics\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    },
+    {
+      "source_row": 9,
+      "image": "rows/nas_hongdou_jp/row_09.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "P1",
+            "P7",
+            "P1",
+            "P6",
+            "P6",
+            "P3",
+            "P2",
+            "P6",
+            "P7",
+            "P5",
+            "P3",
+            "P6",
+            "P3",
+            "P2",
+            "P1",
+            "P2",
+            "P2",
+            "P6",
+            "P6",
+            "?",
+            "P2",
+            "P3",
+            "R0",
+            "P2",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [
+        "out-of-range numeric token preserved as ?: 52"
+      ],
+      "generation_seconds": 8.01,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"3\",\n        \"i\",\n        \"7\",\n        \"i\",\n        \"6\",\n        \"6\",\n        \"3\",\n        \"2\",\n        \"6\",\n        \"7\",\n        \"5\",\n        \"3\",\n        \"6\",\n        \"3\",\n        \"2\",\n        \"1\",\n        \"2\",\n        \"2\",\n        \"6\",\n        \"6\",\n        \"52\",\n        \"2\",\n        \"3\",\n        \"0\",\n        \"2\",\n        \"1\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 10,
+      "image": "rows/nas_hongdou_jp/row_10.png",
+      "content_type": "lyrics",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 2.38,
+      "raw_response": "{\"content_type\":\"lyrics\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    },
+    {
+      "source_row": 11,
+      "image": "rows/nas_hongdou_jp/row_11.png",
+      "content_type": "metadata",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 2.54,
+      "raw_response": "{\"content_type\":\"metadata\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    },
+    {
+      "source_row": 12,
+      "image": "rows/nas_hongdou_jp/row_12.png",
+      "generation_seconds": 8.65,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \"-\",\n        \"-\",\n        \"-\",\n        \"-\",\n        \"B||\",\n        \"5\",\n        \"6\",\n        \".\",\n        \"6\",\n        \":\",\n        \"|\",\n        \"1\",\n        \"-\",\n        \"(\",\n        \"1\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"5\",\n        \"3\",\n        \"|\",\n        \"2\",\n        \"6\",\n        \"1\",\n        \"1\",\n        \"7\",\n        \"1\",\n        \"7\",\n        \"5\",\n        \"3\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "-",
+            "-",
+            "-",
+            "-",
+            "B||",
+            "P5",
+            "P6",
+            "P6",
+            "B:|",
+            "P1",
+            "-",
+            "P1",
+            "P6",
+            "P5",
+            "P6",
+            "P5",
+            "P3",
+            "B|",
+            "P2",
+            "P6",
+            "P1",
+            "P1",
+            "P7",
+            "P1",
+            "P7",
+            "P5",
+            "P3",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": []
+    },
+    {
+      "source_row": 13,
+      "image": "rows/nas_hongdou_jp/row_13.png",
+      "content_type": "lyrics",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 2.44,
+      "raw_response": "{\"content_type\":\"lyrics\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    },
+    {
+      "source_row": 14,
+      "image": "rows/nas_hongdou_jp/row_14.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "P6",
+            "P7",
+            "P1",
+            "P4",
+            "P3",
+            "P2",
+            "P2",
+            "P3",
+            "P4",
+            "P1",
+            "P2",
+            "P5",
+            "P5",
+            "P1",
+            "P2",
+            "P3",
+            "P3",
+            "P3",
+            "P2",
+            "P2",
+            "P1"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 7.41,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"6\",\n        \"7\",\n        \"i\",\n        \"4\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"4\",\n        \"1\",\n        \"2\",\n        \"5\",\n        \"5\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"3\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"1\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 15,
+      "image": "rows/nas_hongdou_jp/row_15.png",
+      "content_type": "lyrics",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 2.41,
+      "raw_response": "{\"content_type\":\"lyrics\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    }
+  ]
+}

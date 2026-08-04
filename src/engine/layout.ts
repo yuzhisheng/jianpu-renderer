@@ -103,6 +103,19 @@ function layoutNote(
   const upperDots: SymbolPosition[] = [];
   const lowerDots: SymbolPosition[] = [];
   const dotPositions: SymbolPosition[] = [];
+  const parenthesisSize = config.noteHeight * 1.15;
+  const parenthesisLeftPosition = item.parenthesisLeft ? {
+    x: x - config.noteWidth * 0.34,
+    y: y + config.noteHeight / 2,
+    width: parenthesisSize,
+    height: parenthesisSize,
+  } : undefined;
+  const parenthesisRightPosition = item.parenthesisRight ? {
+    x: x + config.noteWidth * 1.06,
+    y: y + config.noteHeight / 2,
+    width: parenthesisSize,
+    height: parenthesisSize,
+  } : undefined;
 
   if (isNote(item)) {
     const note = item;
@@ -175,7 +188,7 @@ function layoutNote(
     }
 
     // 技巧符号位置（装饰符号尽量靠近音符顶部但不重叠）
-    const techniquePositions: { technique: DiziTechnique; position: SymbolPosition }[] = [];
+    const techniquePositions: NoteLayout['techniquePositions'] = [];
     const techYBase = y - config.techniqueFontSize + 4;
     const hasYinyin = note.techniques?.some(t => t.type === 'yinyin') ?? false;
     if (note.techniques) {
@@ -342,6 +355,8 @@ function layoutNote(
       tripletId: note.tripletId,
       tripletStart: !!note.tripletId,
       tripletEnd: !!note.tripletId,
+      parenthesisLeftPosition,
+      parenthesisRightPosition,
       accentPosition,
       tenutoPosition,
       fermataPosition,
@@ -367,6 +382,8 @@ function layoutNote(
     dashLinePositions: [],
     techniquePositions: [],
     tieId: item.tieId,
+    parenthesisLeftPosition,
+    parenthesisRightPosition,
   };
 }
 
@@ -390,79 +407,57 @@ function getTechniqueLabel(tech: DiziTechnique): string {
 }
 
 /** 分析小节中的减时线分组：按拍号划界，同一拍内的所有短音符共享一组 */
-interface UnderlineGroup {
+export interface UnderlineGroup {
   startIndex: number;
   endIndex: number;
   level: number;
 }
 
-function analyzeUnderlineGroups(
+export function analyzeUnderlineGroups(
   notes: (NoteType | Dash)[],
-  beatsPerMeasure: number,
+  _beatsPerMeasure: number,
   beatUnitDuration: number,
 ): UnderlineGroup[] {
   const groups: UnderlineGroup[] = [];
-  // 按拍号切拍：每拍 = beatUnitDuration 时值
-  // 同一拍内所有带减时线的短音符合并为一组，level 取组内最大
-  // Dash（增时线）不参与累计和分组
-  // 大时值音符（duration >= beatUnitDuration）独占对应拍位但不参与减时线分组
-  let i = 0;
-  let beatIdx = 0;
+  const unit = Math.max(beatUnitDuration, 1e-6);
+  let time = 0;
+  let current: (UnderlineGroup & { beatIndex: number }) | undefined;
 
-  while (i < notes.length && beatIdx < beatsPerMeasure) {
-    let acc = 0;
-    let curStart = -1;
-    let curEnd = -1;
-    let curLevel = 0;
+  const finish = () => {
+    if (current) groups.push({
+      startIndex: current.startIndex,
+      endIndex: current.endIndex,
+      level: current.level,
+    });
+    current = undefined;
+  };
 
-    // 在当前拍内累计时值
-    while (acc < beatUnitDuration - 1e-6 && i < notes.length) {
-      const item = notes[i];
-      if (!isNote(item)) {
-        i++;
-        continue;
-      }
-      const noteLevel = getUnderlineLevel(item.duration);
+  notes.forEach((item, index) => {
+    // Dots are rhythmic, not merely decorative: 1 dot = 1.5x, 2 = 1.75x.
+    const dots = isNote(item) ? Math.max(0, item.dot || 0) : 0;
+    const dottedFactor = dots > 0 ? 2 - 1 / (2 ** dots) : 1;
+    const itemDuration = Math.max(0, item.duration * dottedFactor);
+    const beatIndex = Math.floor((time + 1e-7) / unit);
+    const noteLevel = isNote(item) ? getUnderlineLevel(item.duration) : 0;
 
-      if (noteLevel > 0) {
-        // 短音符：参与当前拍组
-        if (curStart < 0) curStart = i;
-        curEnd = i;
-        if (noteLevel > curLevel) curLevel = noteLevel;
-      } else {
-        // 大时值音符（duration >= 0.5，level=0）：独立成"无横线"组，
-        // 但只有当它正好占满当前拍剩余空间时才不影响后面的累计；否则跳过
-      }
-
-      acc += item.duration;
-      i++;
-    }
-
-    if (curStart >= 0) {
-      groups.push({ startIndex: curStart, endIndex: curEnd, level: curLevel });
-    }
-    beatIdx++;
-  }
-
-  // 处理超出所有拍的小节尾部（数据不规范时）
-  // 把剩余的连续短音符合并成最后一个组
-  let curStart = -1;
-  let curEnd = -1;
-  let curLevel = 0;
-  while (i < notes.length) {
-    const item = notes[i];
-    if (!isNote(item)) { i++; continue; }
-    const noteLevel = getUnderlineLevel(item.duration);
     if (noteLevel > 0) {
-      if (curStart < 0) curStart = i;
-      curEnd = i;
-      if (noteLevel > curLevel) curLevel = noteLevel;
+      // Only adjacent short notes beginning in the same beat may share a line.
+      if (!current || current.beatIndex !== beatIndex
+          || current.endIndex !== index - 1) {
+        finish();
+        current = { startIndex: index, endIndex: index, level: noteLevel, beatIndex };
+      } else {
+        current.endIndex = index;
+        current.level = Math.max(current.level, noteLevel);
+      }
+    } else {
+      // Quarter/long notes and augmentation dashes are hard separators and
+      // still advance the clock. Ignoring dashes was the cross-beat bug.
+      finish();
     }
-    i++;
-  }
-  if (curStart >= 0) {
-    groups.push({ startIndex: curStart, endIndex: curEnd, level: curLevel });
-  }
+    time += itemDuration;
+  });
+  finish();
 
   return groups;
 }
@@ -489,6 +484,8 @@ function fitMeasuresInRow(
     const dashCount = m.notes.filter(n => !isNote(n)).length;
     let mWidth = 0;
     m.notes.forEach(n => {
+      if (n.parenthesisLeft) mWidth += config.noteWidth * 0.45;
+      if (n.parenthesisRight) mWidth += config.noteWidth * 0.45;
       if (isNote(n)) {
         mWidth += getNoteSpacing(n.duration, config);
         if ((n.dot || 0) > 0) {
@@ -501,6 +498,7 @@ function fitMeasuresInRow(
         mWidth += config.noteWidth;
       }
     });
+    if (m.timeSignature) mWidth += config.noteWidth * 1.15;
     mWidth += config.barlineWidth;
     if (count > 0) mWidth += config.measureGap;
     if (width + mWidth > availWidth && count > 0) break;
@@ -588,13 +586,19 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
       // 分析减时线分组（按拍号划界）
       const groups = analyzeUnderlineGroups(
         m.notes,
-        score.timeSignature.numerator,
-        4 / score.timeSignature.denominator,
+        (m.timeSignature || score.timeSignature).numerator,
+        4 / (m.timeSignature || score.timeSignature).denominator,
       );
 
       // 计算小节宽度
       let mWidth = m.notes.length * cfg.noteWidth;
       m.notes.forEach(n => {
+        if (n.parenthesisLeft) {
+          mWidth += cfg.noteWidth * 0.45;
+        }
+        if (n.parenthesisRight) {
+          mWidth += cfg.noteWidth * 0.45;
+        }
         if (isNote(n) && (n.dot || 0) > 0) {
           mWidth += (n.dot || 0) * (cfg.accentDotRadius * 2 + 12);
         }
@@ -603,13 +607,24 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         }
       });
       mWidth += cfg.barlineWidth;
+      if (m.timeSignature) mWidth += cfg.noteWidth * 1.15;
 
       // 音符布局
       const noteLayouts: NoteLayout[] = [];
-      let noteX = mStartX;
+      const timeSignaturePosition = m.timeSignature ? {
+        x: mStartX,
+        y: currentY - 3,
+        width: cfg.noteWidth * 0.85,
+        height: cfg.noteHeight + 6,
+      } as SymbolPosition : undefined;
+      let noteX = mStartX + (m.timeSignature ? cfg.noteWidth * 1.15 : 0);
 
       for (let ni = 0; ni < m.notes.length; ni++) {
         const item = m.notes[ni];
+
+        if (item.parenthesisLeft) {
+          noteX += cfg.noteWidth * 0.45;
+        }
 
         // 查找是否属于某个减时线分组
         const group = groups.find(g => ni >= g.startIndex && ni <= g.endIndex);
@@ -626,6 +641,9 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         if (isNote(item) && item.accidental) {
           advanceX += 10;
         }
+        if (item.parenthesisRight) {
+          advanceX += cfg.noteWidth * 0.45;
+        }
         noteX += advanceX;
       }
 
@@ -638,6 +656,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
 
         type UL = {
           y: number; width: number; xOffset: number;
+          underlineLevel: number;
           groupFirstCenter: number; groupLastCenter: number;
           groupFirstPitch: number; groupLastPitch: number;
         };
@@ -669,6 +688,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
                   y: currentY + cfg.noteHeight + cfg.underlineOffset + cfg.underlineGap * li,
                   width: lCenter - fCenter,
                   xOffset: fCenter - first.position.x,
+                  underlineLevel: requiredLevel,
                   groupFirstCenter: fCenter,
                   groupLastCenter: lCenter,
                   groupFirstPitch: fPitch,
@@ -732,6 +752,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         barlinePosition: barlinePos,
         notes: noteLayouts,
         repeatEndingPosition: repeatEndingPos,
+        timeSignaturePosition,
         bracketLeft,
         bracketRight,
       });

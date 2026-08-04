@@ -1,0 +1,383 @@
+{
+  "annotation_id": "nas_tianbian_jp",
+  "model": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
+  "label_grade": "silver_local_vlm_pitch_skeleton",
+  "status": "complete",
+  "rows": [
+    {
+      "source_row": 1,
+      "image": "rows/nas_tianbian_jp/row_01.png",
+      "content_type": "metadata",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 7.03,
+      "raw_response": "{\n  \"content_type\": \"metadata\",\n  \"voices\": [],\n  \"confidence\": 1,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 2,
+      "image": "rows/nas_tianbian_jp/row_02.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "P1",
+            "-",
+            "-",
+            "-",
+            "P1",
+            "P2",
+            "P3",
+            "P5",
+            "P6",
+            "P1",
+            "P6",
+            "P1",
+            "P1",
+            "P1",
+            "P6",
+            "P6",
+            "P5",
+            "P2",
+            "P2",
+            "P3",
+            "-",
+            "-",
+            "-",
+            "R0",
+            "R0",
+            "P2",
+            "P3",
+            "P5",
+            "P6",
+            "P1",
+            "P1",
+            "P2",
+            "P3",
+            "P1",
+            "P2",
+            "P2",
+            "R0"
+          ]
+        }
+      ],
+      "confidence": 0.9,
+      "uncertainties": [
+        "compacted digit run split into pitches: 61"
+      ],
+      "generation_seconds": 10.95,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"61\",\n        \"-\",\n        \"-\",\n        \"-\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"6\",\n        \"1\",\n        \"6\",\n        \"1\",\n        \"i\",\n        \"1\",\n        \"6\",\n        \"6\",\n        \"5\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"-\",\n        \"-\",\n        \"-\",\n        \"0\",\n        \"0\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"6\",\n        \"i\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"i\",\n        \"2\",\n        \"2\",\n        \"0\"\n      ]\n    }\n  ],\n  \"confidence\": 0.9,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 3,
+      "image": "rows/nas_tianbian_jp/row_03.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "P2",
+            "P1",
+            "P2",
+            "P1",
+            "P6",
+            "P2",
+            "P1",
+            "P6",
+            "P1",
+            "-",
+            "-",
+            "P2",
+            "P1",
+            "P6",
+            "P2",
+            "P1",
+            "P6",
+            "P1",
+            "-",
+            "P6",
+            "P5",
+            "P2",
+            "P1",
+            "P6",
+            "P1",
+            "P5",
+            "P3"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 10.05,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"3\",\n        \"2\",\n        \"1\",\n        \"2\",\n        \"1\",\n        \"6\",\n        \"2\",\n        \"1\",\n        \"6\",\n        \"1\",\n        \"-\",\n        \"-\",\n        \"2\",\n        \"1\",\n        \"6\",\n        \"2\",\n        \"1\",\n        \"6\",\n        \"1\",\n        \"-\",\n        \"6\",\n        \"5\",\n        \"2\",\n        \"1\",\n        \"6\",\n        \"1\",\n        \"5\",\n        \"3\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 4,
+      "image": "rows/nas_tianbian_jp/row_04.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "P5",
+            "-",
+            "P3",
+            "P5",
+            "P5",
+            "P6",
+            "B|",
+            "P1",
+            "P2",
+            "P3",
+            "P6",
+            "P5",
+            "B|",
+            "P2",
+            "P3",
+            "B|",
+            "P2",
+            "-",
+            "B|",
+            "P3",
+            "P5",
+            "P5",
+            "P6",
+            "B|",
+            "P5",
+            "P6",
+            "B|",
+            "P6",
+            "P1",
+            "P1",
+            "P2",
+            "P3",
+            "P5",
+            "B|",
+            "P3",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 10.1,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"5\",\n        \"-\",\n        \"3\",\n        \"5\",\n        \"5\",\n        \"6\",\n        \"|\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"6\",\n        \"5\",\n        \"|\",\n        \"2\",\n        \"3\",\n        \"|\",\n        \"2\",\n        \"-\",\n        \"|\",\n        \"3\",\n        \"5\",\n        \"5\",\n        \"6\",\n        \"|\",\n        \"5\",\n        \"6\",\n        \"|\",\n        \"6\",\n        \"1\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"|\",\n        \"3\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 5,
+      "image": "rows/nas_tianbian_jp/row_05.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "?",
+            "B|",
+            "?",
+            "B|",
+            "?",
+            "B|",
+            "?",
+            "B|",
+            "?",
+            "B|",
+            "?",
+            "B|",
+            "?",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.1,
+      "uncertainties": [
+        "?"
+      ],
+      "generation_seconds": 6.93,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"?\",\n        \"B|\",\n        \"?\",\n        \"B|\",\n        \"?\",\n        \"B|\",\n        \"?\",\n        \"B|\",\n        \"?\",\n        \"B|\",\n        \"?\",\n        \"B|\",\n        \"?\",\n        \"B|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.1,\n  \"uncertainties\": [\n    \"?\"\n  ]\n}"
+    },
+    {
+      "source_row": 6,
+      "image": "rows/nas_tianbian_jp/row_06.png",
+      "generation_seconds": 11.64,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"0\",\n        \"2\",\n        \"3\",\n        \"5\",\n        \"|\",\n        \"6\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"^\",\n        \"1\",\n        \"-\",\n        \"|\",\n        \"1\",\n        \"-\",\n        \"|\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"i\",\n        \"|\",\n        \"6\",\n        \"-\",\n        \"|\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"6\",\n        \"|\",\n        \"5\",\n        \"-\",\n        \"|\",\n        \"5\",\n        \"6\",\n        \"1\",\n        \"6\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "R0",
+            "P2",
+            "P3",
+            "P5",
+            "B|",
+            "P6",
+            "P2",
+            "P2",
+            "P3",
+            "P1",
+            "-",
+            "B|",
+            "P1",
+            "-",
+            "B|",
+            "P1",
+            "P2",
+            "P3",
+            "P1",
+            "B|",
+            "P6",
+            "-",
+            "B|",
+            "P1",
+            "P2",
+            "P3",
+            "P6",
+            "B|",
+            "P5",
+            "-",
+            "B|",
+            "P5",
+            "P6",
+            "P1",
+            "P6",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": []
+    },
+    {
+      "source_row": 7,
+      "image": "rows/nas_tianbian_jp/row_07.png",
+      "generation_seconds": 7.05,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \"-\",\n        \"(5612)\",\n        \"|\",\n        \"2\",\n        \"-\",\n        \"|\",\n        \"3\",\n        \"-\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "-",
+            "P5",
+            "P6",
+            "P1",
+            "P2",
+            "B|",
+            "P2",
+            "-",
+            "B|",
+            "P3",
+            "-",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [
+        "compacted digit run split into pitches: (5612)"
+      ]
+    },
+    {
+      "source_row": 8,
+      "image": "rows/nas_tianbian_jp/row_08.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P3",
+            "P5",
+            "-",
+            "P5",
+            "P5",
+            "P6",
+            "P1",
+            "-",
+            "P1",
+            "-",
+            "P2",
+            "P3",
+            "P2",
+            "P3",
+            "P2",
+            "P1",
+            "P1",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 8.57,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"2\",\n        \".\",\n        \"3\",\n        \"5\",\n        \"-\",\n        \"5\",\n        \"5\",\n        \"6\",\n        \"1\",\n        \"-\",\n        \"1\",\n        \"-\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"1\",\n        \"1\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 9,
+      "image": "rows/nas_tianbian_jp/row_09.png",
+      "generation_seconds": 10.79,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \"-\",\n        \"|\",\n        \"1\",\n        \"-\",\n        \"|\",\n        \"6i\",\n        \"2\",\n        \"|\",\n        \"2\",\n        \"-\",\n        \"|\",\n        \"3\",\n        \"-\",\n        \"|\",\n        \"23\",\n        \"232\",\n        \"|\",\n        \"i\",\n        \"-\",\n        \"|\",\n        \"6\",\n        \"-\",\n        \"|\",\n        \"i2i\",\n        \"i\",\n        \"|\",\n        \"i\",\n        \"-\",\n        \"|\",\n        \"i\",\n        \"-\",\n        \"|\",\n        \"i\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "-",
+            "B|",
+            "P1",
+            "-",
+            "B|",
+            "P6",
+            "P1",
+            "P2",
+            "B|",
+            "P2",
+            "-",
+            "B|",
+            "P3",
+            "-",
+            "B|",
+            "P2",
+            "P3",
+            "P2",
+            "P3",
+            "P2",
+            "B|",
+            "P1",
+            "-",
+            "B|",
+            "P6",
+            "-",
+            "B|",
+            "P1",
+            "P2",
+            "P1",
+            "P1",
+            "B|",
+            "P1",
+            "-",
+            "B|",
+            "P1",
+            "-",
+            "B|",
+            "P1",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": [
+        "compacted digit run split into pitches: 6i",
+        "compacted digit run split into pitches: 23",
+        "compacted digit run split into pitches: 232",
+        "compacted digit run split into pitches: i2i"
+      ]
+    }
+  ]
+}

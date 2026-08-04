@@ -1,0 +1,621 @@
+{
+  "annotation_id": "nas_837952642b9584728eb",
+  "model": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
+  "label_grade": "silver_local_vlm_pitch_skeleton",
+  "status": "complete",
+  "rows": [
+    {
+      "source_row": 1,
+      "image": "rows/nas_837952642b9584728eb/row_01.png",
+      "content_type": "lyrics",
+      "voices": [],
+      "confidence": 1,
+      "uncertainties": [],
+      "generation_seconds": 3.57,
+      "raw_response": "{\"content_type\":\"lyrics\",\"voices\":[],\"confidence\":1,\"uncertainties\":[]}"
+    },
+    {
+      "source_row": 2,
+      "image": "rows/nas_837952642b9584728eb/row_02.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "R0",
+            "P5",
+            "P1",
+            "P2",
+            "B|",
+            "P3",
+            "-",
+            "P2",
+            "P3",
+            "B|",
+            "P1",
+            "P6",
+            "P6",
+            "-",
+            "P1",
+            "B|",
+            "P6",
+            "P1",
+            "P5",
+            "P2",
+            "B|",
+            "P3",
+            "-",
+            "-",
+            "P3",
+            "P2"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 13.22,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"R0\",\n        \"P5\",\n        \"P1\",\n        \"P2\",\n        \"B|\",\n        \"P3\",\n        \"-\",\n        \"P2\",\n        \"P3\",\n        \"B|\",\n        \"P1\",\n        \"P6\",\n        \"P6\",\n        \"-\",\n        \"P1\",\n        \"B|\",\n        \"P6\",\n        \"P1\",\n        \"P5\",\n        \"P2\",\n        \"B|\",\n        \"P3\",\n        \"-\",\n        \"-\",\n        \"P3\",\n        \"P2\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 3,
+      "image": "rows/nas_837952642b9584728eb/row_03.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "P1",
+            "P6",
+            "P2",
+            "-",
+            "P3",
+            "P2",
+            "P2",
+            "P1",
+            "-",
+            "P1",
+            "P3",
+            "P2",
+            "P5",
+            "P6",
+            "-",
+            "-",
+            "-",
+            "P6",
+            "-",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 10.57,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \"1\",\n        \"6\",\n        \"2\",\n        \"-\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"1\",\n        \"-\",\n        \"1\",\n        \".\",\n        \"3\",\n        \"2\",\n        \"5\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"-\",\n        \"6\",\n        \"-\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 4,
+      "image": "rows/nas_837952642b9584728eb/row_04.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "P5",
+            "P1",
+            "P3",
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "P1",
+            "P6",
+            "P6",
+            "-",
+            "-",
+            "P1",
+            "P1",
+            "P1",
+            "P6",
+            "P5",
+            "P6",
+            "P3",
+            "P2",
+            "-",
+            "R0",
+            "P1",
+            "P1",
+            "P2"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 12.06,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"3\",\n        \"5\",\n        \"1\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"1\",\n        \"6\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"1\",\n        \"1\",\n        \"1\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"3\",\n        \"2\",\n        \"-\",\n        \"0\",\n        \"1\",\n        \"1\",\n        \"2\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 5,
+      "image": "rows/nas_837952642b9584728eb/row_05.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "P3",
+            "P3",
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "B|",
+            "P1",
+            "P6",
+            "P6",
+            "R0",
+            "P6",
+            "P6",
+            "P1",
+            "B|",
+            "P2",
+            "P2",
+            "P2",
+            "P2",
+            "P2",
+            "P2",
+            "P2",
+            "B|",
+            "P6",
+            "P5",
+            "P5",
+            "R0",
+            "R0"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 14.68,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P3\",\n        \"P3\",\n        \"P3\",\n        \"P2\",\n        \"P2\",\n        \"P2\",\n        \"P3\",\n        \"B|\",\n        \"P1\",\n        \"P6\",\n        \"P6\",\n        \"P0\",\n        \"P6\",\n        \"P6\",\n        \"P1\",\n        \"B|\",\n        \"P2\",\n        \"P2\",\n        \"P2\",\n        \"P2\",\n        \"P2\",\n        \"P2\",\n        \"P2\",\n        \"B|\",\n        \"P6\",\n        \"P5\",\n        \"P5\",\n        \"R0\",\n        \"R0\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 6,
+      "image": "rows/nas_837952642b9584728eb/row_06.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "B|:",
+            "P3",
+            "P5",
+            "P1",
+            "P3",
+            "P2",
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "B|",
+            "P1",
+            "P6",
+            "P6",
+            "-",
+            "-",
+            "B|",
+            "P1",
+            "P1",
+            "P1",
+            "P6",
+            "P5",
+            "P6",
+            "P3",
+            "B|",
+            "P2",
+            "-",
+            "R0",
+            "P1",
+            "P1",
+            "P2",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 13.45,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"B|:\",\n        \"3\",\n        \"5\",\n        \"1\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"|\",\n        \"1\",\n        \"6\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"v\",\n        \"|\",\n        \"1\",\n        \"1\",\n        \"1\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"3\",\n        \"|\",\n        \"2\",\n        \"-\",\n        \"0\",\n        \"1\",\n        \"1\",\n        \"2\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 7,
+      "image": "rows/nas_837952642b9584728eb/row_07.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P3",
+            "P3",
+            "P3",
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "P1",
+            "P6",
+            "P6",
+            "R0",
+            "P6",
+            "P6",
+            "P1",
+            "P5",
+            "P5",
+            "P5",
+            "P3",
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "P2",
+            "P1",
+            "P1",
+            "-",
+            "P1",
+            "P7"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 12.53,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"3\",\n        \"3\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"1\",\n        \"6\",\n        \"6\",\n        \"0\",\n        \"6\",\n        \"6\",\n        \"1\",\n        \"5\",\n        \"5\",\n        \"5\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"1\",\n        \"1\",\n        \"-\",\n        \"1\",\n        \"7\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 8,
+      "image": "rows/nas_837952642b9584728eb/row_08.png",
+      "generation_seconds": 13.31,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \".6\",\n        \".6\",\n        \"1\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"5\",\n        \"5\",\n        \"5'\",\n        \"6\",\n        \"3\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"3\",\n        \"3\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"^2\",\n        \"3\",\n        \"3\",\n        \"-\",\n        \"0\",\n        \".5\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "P6",
+            "P6",
+            "P1",
+            "P2",
+            "P2",
+            "P2",
+            "P2",
+            "P5",
+            "P5",
+            "P5",
+            "P6",
+            "P3",
+            "P1",
+            "P2",
+            "P3",
+            "P3",
+            "P3",
+            "P3",
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "P2",
+            "P2",
+            "P3",
+            "P3",
+            "-",
+            "R0",
+            "P5"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": []
+    },
+    {
+      "source_row": 9,
+      "image": "rows/nas_837952642b9584728eb/row_09.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "-",
+            "-",
+            "-",
+            "P5",
+            "P5",
+            "P5",
+            "P6",
+            "P6",
+            "-",
+            "P6",
+            "-",
+            "-",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 8.94,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"-\",\n        \"-\",\n        \"-\",\n        \"5\",\n        \"5\",\n        \"5\",\n        \"6\",\n        \"6\",\n        \"-\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 10,
+      "image": "rows/nas_837952642b9584728eb/row_10.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "P1",
+            "P6",
+            "P6",
+            "P5",
+            "P6",
+            "P5",
+            "P5",
+            "P1",
+            "P2",
+            "P5",
+            "P3",
+            "P3",
+            "P1",
+            "P1",
+            "P2",
+            "P3",
+            "P3",
+            "P5",
+            "P5",
+            "R0",
+            "P1",
+            "P1",
+            "P6",
+            "P6",
+            "R0"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 12.27,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"1\",\n        \"6\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"5\",\n        \"5\",\n        \"1\",\n        \"2\",\n        \"5\",\n        \"3\",\n        \"3\",\n        \"1\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"3\",\n        \"5\",\n        \"5\",\n        \"0\",\n        \"1\",\n        \"i\",\n        \"6\",\n        \"6\",\n        \"0\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 11,
+      "image": "rows/nas_837952642b9584728eb/row_11.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "P2",
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "P2",
+            "P1",
+            "P6",
+            "P1",
+            "P2",
+            "-",
+            "-",
+            "-",
+            "P3",
+            "P3",
+            "P5",
+            "P5",
+            "P5",
+            "P5",
+            "P6",
+            "P6",
+            "P5",
+            "P3",
+            "P3"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 11.73,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"2\",\n        \"3\",\n        \"2\",\n        \"1\",\n        \"6\",\n        \"1\",\n        \"2\",\n        \"-\",\n        \"-\",\n        \"-\",\n        \"3\",\n        \"3\",\n        \"5\",\n        \"5\",\n        \"5\",\n        \"5\",\n        \"6\",\n        \"6\",\n        \"5\",\n        \"3\",\n        \"3\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 12,
+      "image": "rows/nas_837952642b9584728eb/row_12.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "P1",
+            "P6",
+            "P6",
+            "P5",
+            "P6",
+            "P5",
+            "P5",
+            "P1",
+            "P2",
+            "P5",
+            "P3",
+            "P3",
+            "P1",
+            "P1",
+            "P2",
+            "P3",
+            "P3",
+            "P5",
+            "P5",
+            "P1",
+            "P1",
+            "P1",
+            "P6",
+            "P6"
+          ]
+        }
+      ],
+      "confidence": 0.98,
+      "uncertainties": [],
+      "generation_seconds": 12.04,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \"1\",\n        \"6\",\n        \"6\",\n        \"5\",\n        \"6\",\n        \"5\",\n        \"5\",\n        \"1\",\n        \"2\",\n        \"5\",\n        \"3\",\n        \"3\",\n        \"1\",\n        \"1\",\n        \"2\",\n        \"3\",\n        \"3\",\n        \"5\",\n        \"5\",\n        \"1\",\n        \"i\",\n        \"i\",\n        \"6\",\n        \"6\"\n      ]\n    }\n  ],\n  \"confidence\": 0.98,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 13,
+      "image": "rows/nas_837952642b9584728eb/row_13.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "P2",
+            "P1",
+            "P6",
+            "P1",
+            "R0",
+            "R0",
+            "R0",
+            "P3",
+            "P2",
+            "P3",
+            "P1",
+            "P6",
+            "P6",
+            "R0",
+            "R0"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": [],
+      "generation_seconds": 11.75,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P2\",\n        \"P2\",\n        \"P2\",\n        \"P3\",\n        \"P2\",\n        \"P1\",\n        \"P6\",\n        \"P1\",\n        \"R0\",\n        \"R0\",\n        \"R0\",\n        \"P3\",\n        \"P2\",\n        \"P3\",\n        \"P1\",\n        \"P6\",\n        \"P6\",\n        \"R0\",\n        \"R0\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 14,
+      "image": "rows/nas_837952642b9584728eb/row_14.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P6",
+            "P1",
+            "P5",
+            "P2",
+            "B|",
+            "P3",
+            "-",
+            "-",
+            "P3",
+            "P2",
+            "B|",
+            "P1",
+            "P1",
+            "P6",
+            "P2",
+            "-",
+            "B|",
+            "P3",
+            "P2",
+            "P2",
+            "P1",
+            "-"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": [],
+      "generation_seconds": 11.8,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"6\",\n        \".\",\n        \"1\",\n        \"5\",\n        \".\",\n        \"2\",\n        \"B|\",\n        \"3\",\n        \"-\",\n        \"-\",\n        \"v\",\n        \"3\",\n        \"2\",\n        \"B|\",\n        \"1\",\n        \"1\",\n        \"6\",\n        \"2\",\n        \"-\",\n        \"B|\",\n        \"3\",\n        \"2\",\n        \"2\",\n        \"1\",\n        \"-\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 15,
+      "image": "rows/nas_837952642b9584728eb/row_15.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "P3",
+            "P2",
+            "P5",
+            "B|",
+            "P6",
+            "-",
+            "-",
+            "R0",
+            "B:|",
+            "P1",
+            "-",
+            "R0",
+            "P1",
+            "P1",
+            "P2",
+            "B|",
+            "P3",
+            "P3",
+            "P5",
+            "P5",
+            "-",
+            "B|"
+          ]
+        }
+      ],
+      "confidence": 0.9,
+      "uncertainties": [],
+      "generation_seconds": 11.47,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"1\",\n        \".\",\n        \"3\",\n        \"2\",\n        \"5\",\n        \"|\",\n        \"6\",\n        \"-\",\n        \"-\",\n        \"0\",\n        \")\",\n        \":|\",\n        \"1\",\n        \"-\",\n        \"0\",\n        \"1\",\n        \"1\",\n        \"2\",\n        \"|\",\n        \"3\",\n        \"^\",\n        \"3\",\n        \"5\",\n        \"5\",\n        \"-\",\n        \"|\"\n      ]\n    }\n  ],\n  \"confidence\": 0.9,\n  \"uncertainties\": []\n}"
+    },
+    {
+      "source_row": 16,
+      "image": "rows/nas_837952642b9584728eb/row_16.png",
+      "content_type": "score",
+      "voices": [
+        {
+          "label": "main",
+          "tokens": [
+            "P1",
+            "P1",
+            "P6",
+            "P6",
+            "R0",
+            "P2",
+            "P2",
+            "P2",
+            "P3",
+            "P2",
+            "P1",
+            "P6",
+            "P1",
+            "P1",
+            "R0",
+            "R0",
+            "R0"
+          ]
+        }
+      ],
+      "confidence": 0.95,
+      "uncertainties": [],
+      "generation_seconds": 11.1,
+      "raw_response": "{\n  \"content_type\": \"score\",\n  \"voices\": [\n    {\n      \"label\": \"main\",\n      \"tokens\": [\n        \"P1\",\n        \"P1\",\n        \"P6\",\n        \"P6\",\n        \"R0\",\n        \"P2\",\n        \"P2\",\n        \"P2\",\n        \"P3\",\n        \"P2\",\n        \"P1\",\n        \"P6\",\n        \"P1\",\n        \"P1\",\n        \"R0\",\n          \"R0\",\n          \"R0\"\n      ]\n    }\n  ],\n  \"confidence\": 0.95,\n  \"uncertainties\": []\n}"
+    }
+  ]
+}

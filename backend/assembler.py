@@ -30,6 +30,7 @@ from model.tokenizer import (
     BAR_TOKENS, REPEAT_NUM_TOKENS, CRESC_TOKEN, DECRES_TOKEN,
 )
 from model.transformer import JianpuTransformer  # noqa: F401  (only used when transformer is loaded)
+from model.spatial_tokens import detections_to_tokens
 
 # === YOLO class_id → token 字符串映射 (与 prepare_pairs.py 保持一致) ===
 YOLO_CLASS_TO_TOKEN = {
@@ -56,45 +57,7 @@ def dets_to_yolo_tokens(dets, img_w: int, img_h: int) -> List[str]:
     """
     YOLO 检测结果 → token 序列 (与 prepare_pairs.py 一致)
     """
-    if not dets:
-        return ["<BOS>", "<EOS>"]
-
-    boxes = []
-    for cls_id, cx, cy, w, h, conf in dets:
-        boxes.append({"cls": cls_id, "cx": cx, "cy": cy, "w": w, "h": h, "conf": conf})
-
-    # 按 cy 聚类分行
-    boxes.sort(key=lambda b: b["cy"])
-    heights = [b["h"] for b in boxes]
-    median_h = sorted(heights)[len(heights) // 2]
-    row_thresh = max(median_h * 1.5, 15)
-    rows: List[List] = []
-    for b in boxes:
-        placed = False
-        for row in rows:
-            row_cy = sum(r["cy"] for r in row) / len(row)
-            if abs(b["cy"] - row_cy) < row_thresh:
-                row.append(b)
-                placed = True
-                break
-        if not placed:
-            rows.append([b])
-
-    tokens = ["<BOS>"]
-    for row_idx, row in enumerate(rows):
-        if row_idx > 0:
-            tokens.append("<ROW>")
-        row.sort(key=lambda b: b["cx"])
-        for b in row:
-            tok = YOLO_CLASS_TO_TOKEN.get(b["cls"])
-            if tok is None:
-                continue
-            if isinstance(tok, list):
-                tokens.extend(tok)
-            else:
-                tokens.append(tok)
-    tokens.append("<EOS>")
-    return tokens
+    return detections_to_tokens(dets)
 
 
 # === 状态机: token 流 → Score JSON ===
@@ -123,6 +86,11 @@ def parse_tokens_to_score(tokens: List[str]) -> Dict[str, Any]:
             continue
 
         if tok in BAR_TOKENS:
+            # A left boundary or duplicate detector box must not create an
+            # empty measure before the first musical event.
+            if current_note is None and not current_measure["notes"]:
+                i += 1
+                continue
             if tok == "B|":
                 current_measure["barline"] = "single"
             elif tok == "B||":
@@ -234,7 +202,11 @@ def parse_tokens_to_score(tokens: List[str]) -> Dict[str, Any]:
             if current_note is not None:
                 current_measure["notes"].append(current_note)
             current_note = None
-            current_measure["notes"].append({"type": "dash", "duration": 0.5})
+            # A jianpu augmentation dash extends the preceding note by one beat
+            # (one quarter-note unit in this schema). Treating it as half a beat
+            # shifts every later beat boundary and makes unrelated reduction
+            # lines render as one continuous group.
+            current_measure["notes"].append({"type": "dash", "duration": 1.0})
             i += 1
             continue
 

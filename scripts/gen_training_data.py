@@ -28,6 +28,11 @@ def N(pitch, dur, **kw):
 def D(dur): return {"type": "dash", "duration": dur}
 def R(dur): return {"pitch": 0, "duration": dur}
 
+def pick_duration(remaining, choices):
+    """Pick a duration that is visually supported and never invent .75 tails."""
+    eligible = [d for d in choices if d <= remaining + 1e-6]
+    return random.choice(eligible or [remaining])
+
 def mk_score(title, key="C", ts_num=4, ts_den=4, measures=None):
     return {"title": title, "key": key, "timeSignature": {"numerator": ts_num, "denominator": ts_den}, "measures": measures or []}
 
@@ -51,8 +56,6 @@ def make_note(beats_left, **kwargs):
     """构造一个 note, 根据剩余拍数选时值, 强制生成指定符号"""
     # 选时值
     choices = []
-    if beats_left >= 2.0: choices.extend([2.0])
-    if beats_left >= 1.5: choices.extend([1.5])
     if beats_left >= 1.0: choices.extend([1.0, 1.0])
     if beats_left >= 0.5: choices.extend([0.5, 0.5])
     if beats_left >= 0.25: choices.extend([0.25, 0.25])
@@ -167,9 +170,7 @@ def mk_special_score(title, symbol_type, count=4):
             notes = []
             total = 0.0
             while total < 3.9:
-                dur = random.choice([0.5, 0.5, 1.0, 1.0, 0.25])
-                if total + dur > 4.05:
-                    dur = 4.0 - total
+                dur = pick_duration(4.0 - total, [0.5, 0.5, 1.0, 1.0, 0.25])
                 total += dur
                 pitch = random.choice(COMMON_PITCHES)
                 kw = {"lyric": random.choice(LYRICS)}
@@ -224,9 +225,9 @@ def mk_regular_score(title, measures_count=4):
         tie_ids = {}
         slur_ids = {}
         while total < 3.9:
-            dur = random.choice([1.0, 0.5, 0.5, 0.25, 0.25, 1.0, 0.5, 2.0, 1.5])
-            if total + dur > 4.05:
-                dur = 4.0 - total
+            # Only durations with an explicit visual representation. Long
+            # values must be represented by Dash items, not hidden in spacing.
+            dur = pick_duration(4.0 - total, [1.0, 0.5, 0.5, 0.25, 0.25, 1.0, 0.5])
             total += dur
 
             kw = {}
@@ -292,7 +293,7 @@ all_scores = []
 all_scores.append(mk_score("节奏型示例", measures=[
     {"notes":[N(5,0.5,lyric="四"),N(3,0.5,lyric="分"),N(1,0.25,lyric="八"),N(2,0.25,lyric="八"),N(3,0.25,lyric="八"),N(5,0.25,lyric="八"),N(6,0.5,lyric="四"),N(5,0.5,lyric="四")]},
     {"notes":[N(1,1,dot=1,lyric="附"),N(1,0.5,lyric="点"),N(2,1,lyric="二"),N(3,0.5,lyric="拍"),D(0.5)]},
-    {"notes":[R(0.5),N(5,0.5,lyric="休"),N(3,0.5,lyric="止"),N(2,2,lyric="长"),D(0.5)]},
+    {"notes":[R(0.5),N(5,0.5,lyric="休"),N(3,0.5,lyric="止"),N(2,1,lyric="长"),D(1)]},
     {"notes":[N(1,0.25,lyric="十"),N(2,0.25,lyric="六"),N(3,0.25,lyric="十"),N(5,0.25,lyric="六"),N(6,0.5,lyric="八"),N(5,0.5,lyric="八"),N(3,1,lyric="四"),D(0.5)]},
 ]))
 all_scores.append(mk_score("八度与变音", measures=[
@@ -358,11 +359,11 @@ for sym, cn_name in SPECIAL_SYMBOLS:
     all_scores.extend(mk_special_score(f"{cn_name}专项", sym, count=20))
 
 # 力度专项
-for _ in range(30):
+for _ in range(120):
     all_scores.append(mk_crescendo_score(f"渐强渐弱{len(all_scores)-200}"))
 
-# 反复跳跃专项 (30 页)
-for _ in range(30):
+# 反复跳跃专项（提高反复线/小房子长尾类别覆盖）
+for _ in range(150):
     all_scores.append(mk_repeat_score(f"反复跳跃{len(all_scores)-240}"))
 
 # 每个技巧专项 (各 15 页, 确保均匀覆盖)
@@ -387,22 +388,18 @@ def mk_rest_score(title, count=4):
             while total < 3.9:
                 is_rest = random.random() < 0.25 and total + 0.5 <= 4.05
                 if is_rest:
-                    dur = random.choice([0.5, 1.0, 2.0])
-                    if total + dur > 4.05:
-                        dur = 4.0 - total
+                    dur = pick_duration(4.0 - total, [0.5, 1.0])
                     total += dur
                     notes.append(R(dur))
                 else:
-                    dur = random.choice([0.5, 1.0])
-                    if total + dur > 4.05:
-                        dur = 4.0 - total
+                    dur = pick_duration(4.0 - total, [0.5, 1.0])
                     total += dur
                     notes.append(N(random.choice(COMMON_PITCHES), dur, lyric=random.choice(LYRICS)))
             bar = random.choice(["single", "single", "end", "double"])
             measures.append({"notes": notes, "barline": bar})
         scores.append(mk_score(f"{title}_{i+1}", measures=measures))
     return scores
-all_scores.extend(mk_rest_score("休止符", count=20))
+all_scores.extend(mk_rest_score("休止符", count=100))
 
 # 增时线专项 (确保有 dash 符号)
 def mk_dash_score(title, count=4):
@@ -416,7 +413,7 @@ def mk_dash_score(title, count=4):
             measures.append({"notes": notes, "barline": bar})
         scores.append(mk_score(f"{title}_{i+1}", measures=measures))
     return scores
-all_scores.extend(mk_dash_score("增时线", count=20))
+all_scores.extend(mk_dash_score("增时线", count=100))
 
 # 反复结束专项 (确保有 bar_repeat_end)
 def mk_repeat_end_score(title):
@@ -427,7 +424,7 @@ def mk_repeat_end_score(title):
     measures.append({"notes": [N(random.choice(COMMON_PITCHES), 0.5, lyric=random.choice(LYRICS)) for _ in range(5)],
                      "barline": "repeat-end"})
     return mk_score(f"{title}", measures=measures)
-for _ in range(20):
+for _ in range(150):
     all_scores.append(mk_repeat_end_score(f"反复结束{_}"))
 
 # 渐弱专项 (确保有 descrescendo)
@@ -438,7 +435,7 @@ def mk_descrescendo_score(title):
     m3 = {"notes": [N(p, 0.5, lyric=random.choice(LYRICS)) for p in random.choices(COMMON_PITCHES, k=8)]}
     m4 = {"notes": [N(p, 0.5, lyric=random.choice(LYRICS)) for p in random.choices(COMMON_PITCHES, k=8)]}
     return mk_score(f"{title}", measures=[m1, m2, m3, m4])
-for _ in range(30):
+for _ in range(120):
     all_scores.append(mk_descrescendo_score(f"渐弱{_}"))
 
 # 3. 常规多样化乐谱填充到 2000

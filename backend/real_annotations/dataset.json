@@ -1,0 +1,10 @@
+{
+  "label_policy": "silver labels: detector boxes plus pending independent VLM row review",
+  "weights": "/Users/collin/Documents/hdjianpu/jianpu-renderer/backend/weights/best.pt",
+  "weights_sha256": "c470f83ce4e585baec2f1be2ed07a73951b5721cce0359cc51a1fa6f14d0a61a",
+  "imgsz": 1280,
+  "total": 49,
+  "test": 15,
+  "train_silver": 32,
+  "excluded": 2
+}

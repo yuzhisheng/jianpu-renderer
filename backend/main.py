@@ -12,14 +12,22 @@ from typing import Optional
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from PIL import Image
+from starlette.concurrency import run_in_threadpool
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from detector import YoloDetector
 from assembler import Assembler, TransformerAssembler
+from visual_recognizer import VisualTransformerRecognizer
+from accurate_recognizer import (
+    AccurateVLMRecognizer,
+    AccurateRecognizerBusyError,
+    AccurateRecognizerInterruptedError,
+    AccurateRecognizerTimeoutError,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -47,9 +55,11 @@ app.add_middleware(
 detector: Optional[YoloDetector] = None
 assembler: Optional[Assembler] = None
 transformer: Optional[TransformerAssembler] = None
+visual_recognizer: Optional[VisualTransformerRecognizer] = None
+accurate_recognizer: Optional[AccurateVLMRecognizer] = None
 
 
-def get_models():
+def get_models(load_transformer: bool = False):
     global detector, assembler, transformer
     if detector is None:
         try:
@@ -59,7 +69,7 @@ def get_models():
         except FileNotFoundError as e:
             logger.warning(f"⚠️ YOLOv8 未加载: {e}")
             detector = None
-    if transformer is None:
+    if load_transformer and transformer is None:
         try:
             transformer = TransformerAssembler()
             transformer.load()
@@ -70,6 +80,22 @@ def get_models():
     if assembler is None:
         assembler = Assembler(detector=detector, transformer=transformer, use_transformer=transformer is not None)
     return detector, assembler
+
+
+def get_visual_recognizer():
+    global visual_recognizer
+    if visual_recognizer is None:
+        visual_recognizer = VisualTransformerRecognizer()
+        visual_recognizer.load()
+        logger.info("✅ 图像到序列 Transformer 已加载")
+    return visual_recognizer
+
+
+def get_accurate_recognizer():
+    global accurate_recognizer
+    if accurate_recognizer is None:
+        accurate_recognizer = AccurateVLMRecognizer()
+    return accurate_recognizer
 
 
 @app.get("/")
@@ -88,6 +114,8 @@ def health():
         "status": "ok",
         "yolo_loaded": det is not None and det._loaded,
         "transformer_loaded": transformer is not None and transformer.model is not None,
+        "visual_transformer_loaded": visual_recognizer is not None and visual_recognizer.model is not None,
+        "accurate_vlm_available": get_accurate_recognizer().available,
     }
 
 
@@ -98,13 +126,20 @@ class RecognizeResponse(BaseModel):
     inference_ms: float
     src_tokens: list
     tgt_tokens: list
+    recognizer: str = "fast"
+    confidence: Optional[float] = None
+    warnings: list = Field(default_factory=list)
+    row_results: list = Field(default_factory=list)
+    symbol_summary: dict = Field(default_factory=dict)
 
 
 @app.post("/recognize", response_model=RecognizeResponse)
 async def recognize(
     file: UploadFile = File(...),
-    conf: float = Query(0.25, ge=0.05, le=0.95, description="YOLO 置信度阈值"),
-    use_transformer: bool = Query(True, description="是否使用 Transformer 拼装"),
+    conf: float = Query(0.20, ge=0.05, le=0.95, description="YOLO 置信度阈值"),
+    use_transformer: bool = Query(False, description="实验性序列纠错；默认使用二维几何拼装"),
+    visual_sequence: bool = Query(False, description="实验性行图片→CTC/Transformer 序列识别"),
+    recognizer: str = Query("accurate", description="accurate=本地视觉大模型；fast=YOLO 几何拼装"),
 ):
     """
     上传图片, 识别为 Score JSON
@@ -122,8 +157,13 @@ async def recognize(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"图片读取失败: {e}")
 
-    # 加载模型
-    det, asm = get_models()
+    if recognizer not in {"accurate", "fast", "visual"}:
+        raise HTTPException(status_code=400, detail="recognizer 必须是 accurate、fast 或 visual")
+    if visual_sequence:
+        recognizer = "visual"
+
+    # 加载模型。精确模式仍以低阈值检测框辅助恢复小节线，但音高由 VLM 决定。
+    det, asm = get_models(load_transformer=use_transformer)
     if det is None:
         raise HTTPException(
             status_code=503,
@@ -132,15 +172,33 @@ async def recognize(
 
     # YOLO 检测
     try:
-        detections, img_w, img_h = det.detect(image, conf_threshold=conf)
+        detector_conf = min(conf, 0.12) if recognizer == "accurate" else conf
+        detections, img_w, img_h = await run_in_threadpool(
+            det.detect, image, detector_conf)
     except Exception as e:
         logger.error(f"YOLO 检测失败: {e}")
         raise HTTPException(status_code=500, detail=f"检测失败: {e}")
 
     # 组装 JSON
-    asm_local = Assembler(detector=det, transformer=transformer, use_transformer=use_transformer)
     try:
-        result = asm_local.assemble_from_dets(detections, img_w, img_h)
+        if recognizer == "accurate":
+            result = await run_in_threadpool(
+                get_accurate_recognizer().recognize, image, detections)
+        elif recognizer == "visual":
+            result = await run_in_threadpool(
+                get_visual_recognizer().predict_page, image, detections)
+        else:
+            asm_local = Assembler(
+                detector=det, transformer=transformer, use_transformer=use_transformer,
+            )
+            result = await run_in_threadpool(
+                asm_local.assemble_from_dets, detections, img_w, img_h)
+    except AccurateRecognizerBusyError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except AccurateRecognizerInterruptedError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except AccurateRecognizerTimeoutError as e:
+        raise HTTPException(status_code=504, detail=str(e))
     except Exception as e:
         logger.error(f"拼装失败: {e}")
         raise HTTPException(status_code=500, detail=f"拼装失败: {e}")
@@ -169,6 +227,11 @@ async def recognize(
         inference_ms=elapsed_ms,
         src_tokens=result["src_tokens"],
         tgt_tokens=result["tgt_tokens"],
+        recognizer=recognizer,
+        confidence=result.get("confidence"),
+        warnings=result.get("warnings", []),
+        row_results=result.get("row_results", []),
+        symbol_summary=result.get("symbol_summary", {}),
     )
 
 
