@@ -1,6 +1,6 @@
 import type {
   ScoreLayout, RowLayout, MeasureLayout, NoteLayout, SymbolPosition,
-  Note, Dash, DiziTechnique,
+  Note, Dash, DiziTechnique, NavigationMark,
 } from '../types';
 import type { LayoutConfig } from './layout';
 import { drawSymbol as drawSvgSymbol } from './symbols';
@@ -764,6 +764,54 @@ function drawRepeatEnding(ctx: CanvasRenderingContext2D, numbers: number[], pos:
   ctx.fillText(text, textX, bracketTop);
 }
 
+/** 绘制 D.S./D.C./Fine 及段落定位符，避免把导航文字当成歌词。 */
+function drawNavigationMark(
+  ctx: CanvasRenderingContext2D,
+  mark: NavigationMark,
+  pos: SymbolPosition,
+  config: LayoutConfig,
+  theme: RenderTheme,
+) {
+  ctx.fillStyle = theme.symbolColor;
+  ctx.strokeStyle = theme.symbolColor;
+  ctx.lineWidth = 1;
+  const label = mark.text || ({
+    ds: 'D.S.',
+    dc: 'D.C.',
+    fine: 'Fine',
+    segno: '𝄋',
+    coda: '𝄌',
+  } as Record<string, string>)[mark.type] || mark.type;
+  if (mark.type === 'segno' || mark.type === 'coda') {
+    const cx = pos.x + pos.width / 2;
+    const cy = pos.y + pos.height / 2;
+    const radius = Math.min(pos.height * 0.42, 6);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    if (mark.type === 'coda') {
+      ctx.beginPath();
+      ctx.moveTo(cx - radius - 2, cy);
+      ctx.lineTo(cx + radius + 2, cy);
+      ctx.moveTo(cx, cy - radius - 2);
+      ctx.lineTo(cx, cy + radius + 2);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(cx - radius - 2, cy - radius - 2);
+      ctx.lineTo(cx + radius + 2, cy + radius + 2);
+      ctx.moveTo(cx + radius - 1, cy - radius - 2);
+      ctx.lineTo(cx - radius + 1, cy + radius + 2);
+      ctx.stroke();
+    }
+    return;
+  }
+  ctx.font = `italic bold ${Math.max(9, config.lyricFontSize + 1)}px "Noto Sans", serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(label, pos.x + pos.width / 2, pos.y);
+}
+
 /** 绘制谱行中的局部拍号 */
 function drawInlineTimeSignature(
   ctx: CanvasRenderingContext2D,
@@ -887,6 +935,12 @@ export function render(
       if (measure.timeSignaturePosition && measure.data.timeSignature) {
         drawInlineTimeSignature(ctx, measure.data.timeSignature,
           measure.timeSignaturePosition, config, theme);
+      }
+
+      if (measure.navigationPositions) {
+        for (const navigation of measure.navigationPositions) {
+          drawNavigationMark(ctx, navigation.mark, navigation.position, config, theme);
+        }
       }
 
       // 前奏括号（像音符一样占位，pos.x/pos.y 即中心点）

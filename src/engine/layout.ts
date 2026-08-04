@@ -746,6 +746,23 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         height: cfg.noteHeight,
       } as SymbolPosition : undefined;
 
+      const navigationPositions = m.navigationMarks?.length
+        ? m.navigationMarks.map((mark, navigationIndex) => ({
+          mark,
+          position: {
+            x: mStartX,
+            y: currentY + cfg.noteHeight + 24
+              + Math.max(1, m.notes.reduce((max, item) => {
+                if (!isNote(item)) return max;
+                return Math.max(max, item.lyrics?.length || (item.lyric ? 1 : 0));
+              }, 0)) * (cfg.lyricFontSize + 2)
+              + navigationIndex * (cfg.lyricFontSize + 4),
+            width: Math.max(mWidth, cfg.noteWidth * 3),
+            height: cfg.lyricFontSize + 4,
+          },
+        }))
+        : undefined;
+
       measureLayouts.push({
         data: m,
         position: { x: mStartX, y: currentY, width: mWidth, height: cfg.noteHeight },
@@ -755,6 +772,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         timeSignaturePosition,
         bracketLeft,
         bracketRight,
+        navigationPositions,
       });
 
       currentX = noteX + cfg.barlineWidth + 10;
@@ -784,6 +802,14 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
           maxBottom = Math.max(maxBottom, nl.lyricPosition.y + nl.lyricPosition.height + 2);
         }
       });
+      if (ml.navigationPositions) {
+        for (const navigation of ml.navigationPositions) {
+          maxBottom = Math.max(
+            maxBottom,
+            navigation.position.y + navigation.position.height + 2,
+          );
+        }
+      }
     });
 
     const rowHeight = maxBottom - currentY + 8;

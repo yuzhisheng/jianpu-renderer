@@ -67,6 +67,7 @@ def parse_json(text: str):
         raise ValueError("score response has no voices")
     for voice in voices:
         normalized = []
+        navigation_marks = []
         skip_bar_after_colon = False
         for token in voice.get("tokens", []):
             if skip_bar_after_colon and token == "|":
@@ -98,7 +99,24 @@ def parse_json(text: str):
                 value.setdefault("uncertainties", []).append(
                     f"mistaken rest prefix normalized as pitch: {token}")
                 continue
-            if token in {"D.S.", "D.C.", "Fine", "rit.", "rit"}:
+            navigation_token = re.sub(r"\s+", " ", token.strip())
+            navigation_match = re.fullmatch(
+                r"(?i)(D\.?\s*S\.?|D\.?\s*C\.?|Fine)"
+                r"(?:\s+al\s+(?:Fine|Coda))?",
+                navigation_token,
+            )
+            if navigation_match or token in {"rit.", "rit"}:
+                base = navigation_match.group(1).replace(" ", "").replace(".", "").lower() \
+                    if navigation_match else ""
+                navigation_type = {"ds": "ds", "dc": "dc", "fine": "fine"}.get(base)
+                if navigation_type:
+                    navigation_marks.append({
+                        "type": navigation_type,
+                        "text": navigation_token,
+                        "before_note": sum(
+                            item.startswith("P") or item == "R0"
+                            for item in normalized),
+                    })
                 continue
             prefixed_decorated_pitch = re.fullmatch(r"P([1-7])[.'~]", token)
             if prefixed_decorated_pitch:
@@ -200,6 +218,8 @@ def parse_json(text: str):
                 continue
             normalized.append(token)
         voice["tokens"] = normalized
+        if navigation_marks:
+            voice["navigation_marks"] = navigation_marks
         unknown = [token for token in normalized if token not in ALLOWED_TOKENS]
         if unknown:
             raise ValueError(f"unknown tokens: {unknown}")

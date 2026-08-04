@@ -125,6 +125,15 @@ export interface RepeatEnding {
   numbers: number[];
 }
 
+/** 段落导航记号 */
+export type NavigationMarkType = 'ds' | 'dc' | 'fine' | 'segno' | 'coda';
+
+export interface NavigationMark {
+  type: NavigationMarkType;
+  /** 可选的原文，例如 D.S. 或 D.C. al Fine */
+  text?: string;
+}
+
 /** 小节 */
 export interface Measure {
   /** 小节内的音符/增时线列表 */
@@ -137,6 +146,8 @@ export interface Measure {
   timeSignature?: TimeSignature;
   /** 渐强/渐弱标记 */
   dynamics?: { type: 'crescendo' | 'descrescendo'; endMeasureIndex?: number };
+  /** 段落导航记号，绘制在小节下方 */
+  navigationMarks?: NavigationMark[];
 }
 
 /** 拍号 */
@@ -258,6 +269,8 @@ export interface MeasureLayout {
   bracketLeft?: SymbolPosition;
   /** 前奏右括号位置 */
   bracketRight?: SymbolPosition;
+  /** 段落导航记号位置 */
+  navigationPositions?: { mark: NavigationMark; position: SymbolPosition }[];
 }
 
 /** 行布局 */

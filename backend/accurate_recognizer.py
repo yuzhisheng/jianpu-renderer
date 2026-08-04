@@ -777,6 +777,54 @@ class AccurateVLMRecognizer:
         return markers
 
     @staticmethod
+    def _visual_boyin(
+        image: Image.Image, crop_box: Sequence[int], note_positions: List[float],
+        baseline: float, note_height: float,
+    ):
+        """Recover compact wave ornaments above individual jianpu notes.
+
+        A bow/slur is a sparse, wide arc.  A local bo-yin glyph is much denser
+        and occupies roughly one note width, so component density and height
+        together provide a conservative pixel-only discriminator.
+        """
+        if not note_positions:
+            return []
+        top, bottom = int(crop_box[1]), int(crop_box[3])
+        gray = np.asarray(image.convert("L"))[top:bottom, :]
+        binary = (gray < 150).astype(np.uint8)
+        count, _, stats, centroids = cv2.connectedComponentsWithStats(binary, 8)
+        candidates = []
+        for component in range(1, count):
+            x, y, width, height, area = map(int, stats[component])
+            density = area / max(1, width * height)
+            center_x = float(centroids[component][0])
+            center_y = float(centroids[component][1] + top)
+            if not (
+                note_height * 0.40 <= width <= note_height * 1.25
+                and note_height * 0.18 <= height <= note_height * 0.58
+                and density >= 0.34
+                and baseline - note_height * 1.75 <= center_y
+                <= baseline - note_height * 0.32
+            ):
+                continue
+            note_index = min(
+                range(len(note_positions)),
+                key=lambda index: abs(note_positions[index] - center_x),
+            )
+            if abs(note_positions[note_index] - center_x) > note_height * 0.70:
+                continue
+            candidates.append((note_index, density, area, center_x))
+
+        # Keep one glyph per note; overlapping detector/component fragments are
+        # common in scanned wave marks.
+        selected = {}
+        for note_index, density, area, center_x in candidates:
+            old = selected.get(note_index)
+            if old is None or (density, area) > (old[0], old[1]):
+                selected[note_index] = (density, area, center_x)
+        return sorted(selected)
+
+    @staticmethod
     def _visual_lyric_slots(
         image: Image.Image, crop_box: Sequence[int], note_positions: List[float],
         baseline: float, note_height: float, lyric_lines, lyric_boxes=None,
@@ -1138,6 +1186,12 @@ class AccurateVLMRecognizer:
         for note_index, ornament in ornaments:
             if not (0 <= note_index < len(notes) and isinstance(ornament, dict)):
                 continue
+            if ornament.get("type") == "boyin":
+                technique = {"type": "boyin"}
+                techniques = notes[note_index].setdefault("techniques", [])
+                if technique not in techniques:
+                    techniques.append(technique)
+                continue
             if ornament.get("type") != "yinyin":
                 continue
             grace_notes = ornament.get("grace_notes", [])
@@ -1152,6 +1206,34 @@ class AccurateVLMRecognizer:
             techniques = notes[note_index].setdefault("techniques", [])
             if technique not in techniques:
                 techniques.append(technique)
+
+    @staticmethod
+    def _decorate_navigation(score: Dict[str, Any], navigation_marks):
+        if not isinstance(navigation_marks, list):
+            return
+        notes_by_measure = []
+        for measure_index, measure in enumerate(score.get("measures", [])):
+            for item in measure.get("notes", []):
+                if "pitch" in item:
+                    notes_by_measure.append(measure_index)
+        allowed = {"ds", "dc", "fine", "segno", "coda"}
+        for entry in navigation_marks:
+            if (not isinstance(entry, (list, tuple)) or len(entry) != 2
+                    or not isinstance(entry[0], int)):
+                continue
+            note_index, mark = entry
+            if not isinstance(mark, dict) or mark.get("type") not in allowed:
+                continue
+            if not notes_by_measure:
+                continue
+            note_index = min(max(0, int(note_index)), len(notes_by_measure) - 1)
+            measure = score["measures"][notes_by_measure[note_index]]
+            navigation = measure.setdefault("navigationMarks", [])
+            clean = {"type": mark["type"]}
+            if isinstance(mark.get("text"), str) and mark["text"].strip():
+                clean["text"] = mark["text"].strip()
+            if clean not in navigation:
+                navigation.append(clean)
 
     @staticmethod
     def _normalize_relation_types(relations):
@@ -1211,6 +1293,7 @@ class AccurateVLMRecognizer:
         lyric_layers = []
         time_signatures = []
         ornaments = []
+        navigation_marks = []
         note_offset = 0
         item_offset = 0
         for row in payload.get("rows", []):
@@ -1247,6 +1330,16 @@ class AccurateVLMRecognizer:
                     merged, detections, row["crop_box"], image.width, image,
                     preferred_note_boxes)
                 pitch_tokens = [token for token in merged if token.startswith("P") or token == "R0"]
+                if voice_index == 0:
+                    row_navigation_marks = voice.get("navigation_marks", [])
+                    if not isinstance(row_navigation_marks, list):
+                        row_navigation_marks = []
+                    for mark in row_navigation_marks:
+                        if (isinstance(mark, dict)
+                                and isinstance(mark.get("before_note"), int)
+                                and 0 <= mark["before_note"] <= len(pitch_tokens)):
+                            navigation_marks.append((
+                                note_offset + mark["before_note"], mark))
                 vlm_relations = voice.get("relations")
                 if isinstance(vlm_relations, list):
                     row_relations = []
@@ -1305,6 +1398,10 @@ class AccurateVLMRecognizer:
                                     and isinstance(ornament.get("note"), int)
                                     and 0 <= ornament["note"] < len(pitch_tokens)):
                                 ornaments.append((note_offset + ornament["note"], ornament))
+                    for boyin_note in self._visual_boyin(
+                            image, row["crop_box"], positions, baseline, note_height):
+                        ornaments.append((
+                            note_offset + boyin_note, {"type": "boyin"}))
                 note_offset += len(pitch_tokens)
                 item_offset += len(row_items)
                 pixel_bars = self._pixel_bars(
@@ -1323,6 +1420,7 @@ class AccurateVLMRecognizer:
         self._decorate_parentheses(score, parentheses)
         self._decorate_text_layers(score, lyric_layers, time_signatures)
         self._decorate_ornaments(score, ornaments)
+        self._decorate_navigation(score, navigation_marks)
         metadata = payload.get("metadata", {})
         if isinstance(metadata, dict):
             title = metadata.get("title")
@@ -1368,6 +1466,13 @@ class AccurateVLMRecognizer:
                 any(technique.get("type") == "yinyin"
                     for technique in note.get("techniques", []))
                 for note in score_notes),
+            "boyin": sum(
+                any(technique.get("type") == "boyin"
+                    for technique in note.get("techniques", []))
+                for note in score_notes),
+            "navigation_marks": sum(
+                len(measure.get("navigationMarks", []))
+                for measure in score.get("measures", [])),
         }
         return {
             "score": score,

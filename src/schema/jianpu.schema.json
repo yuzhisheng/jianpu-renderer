@@ -87,6 +87,30 @@
               "description": "跳跃编号"
             }
           }
+        },
+        "timeSignature": {
+          "type": "object",
+          "description": "本小节起始处的局部拍号变更",
+          "required": ["numerator", "denominator"],
+          "properties": {
+            "numerator": { "type": "integer", "minimum": 1, "maximum": 16 },
+            "denominator": { "type": "integer", "enum": [1, 2, 4, 8, 16] }
+          }
+        },
+        "navigationMarks": {
+          "type": "array",
+          "description": "段落导航记号",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["ds", "dc", "fine", "segno", "coda"]
+              },
+              "text": { "type": "string" }
+            }
+          }
         }
       }
     },
@@ -199,7 +223,7 @@
           "enum": [
             "zengyin", "dieyin", "liyin", "huayin", "dayin",
             "yinyin", "chanyin", "qizhenyin", "tuyin", "huashe",
-            "xunhuan", "fanyin"
+            "xunhuan", "fanyin", "boyin", "dunyin"
           ],
           "description": "竹笛技巧类型"
         },

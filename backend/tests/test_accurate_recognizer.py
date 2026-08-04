@@ -286,6 +286,26 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
             "type": "yinyin", "graceNotes": [5, 6], "graceOctave": 0,
         }])
 
+    def test_pixel_wave_ornament_attaches_to_nearest_note(self):
+        image = Image.new("RGB", (120, 100), "white")
+        draw = ImageDraw.Draw(image)
+        draw.line([(41, 51), (44, 45), (47, 51), (50, 45), (53, 51)],
+                  fill="black", width=4)
+        self.assertEqual(
+            self.recognizer._visual_boyin(
+                image, [0, 0, 120, 100], [20.0, 50.0, 80.0], 70, 20),
+            [1],
+        )
+
+    def test_navigation_mark_is_written_to_target_measure(self):
+        score = parse_tokens_to_score(["P1", "P2", "B|", "P3"])
+        self.recognizer._decorate_navigation(score, [
+            (2, {"type": "ds", "text": "D.S."}),
+        ])
+        self.assertEqual(score["measures"][1]["navigationMarks"], [{
+            "type": "ds", "text": "D.S.",
+        }])
+
 
 if __name__ == "__main__":
     unittest.main()
