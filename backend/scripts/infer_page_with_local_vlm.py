@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 
@@ -90,6 +91,33 @@ def fixed_canvas(image: Image.Image, width: int = 1600, height: int = 640):
     canvas = Image.new("RGB", (width, height), "white")
     canvas.paste(resized, ((width - resized.width) // 2, (height - resized.height) // 2))
     return canvas
+
+
+def generate_many(model, processor, images, prompts, max_tokens):
+    """Generate a list of responses without triggering MLX batch-shape bugs.
+
+    The local MLX version bundled with this project occasionally raises an
+    ``IndexError`` in ``batch_generate`` for mixed crop widths.  Sequential
+    generation is the safe default; batching remains an explicit opt-in for
+    environments where that MLX bug is fixed.
+    """
+    if os.environ.get("JIANPU_USE_MLX_BATCH", "0") == "1":
+        try:
+            response = batch_generate(
+                model, processor, images=images, prompts=prompts,
+                max_tokens=max_tokens, temperature=0.0, verbose=False,
+                group_by_shape=True,
+            )
+            return response.texts
+        except Exception:
+            pass
+    return [
+        generate(
+            model, processor, prompt, image=image,
+            max_tokens=max_tokens, temperature=0.0, verbose=False,
+        ).text
+        for image, prompt in zip(images, prompts)
+    ]
 
 
 def estimate_main_digit_count(image: Image.Image):
@@ -498,21 +526,11 @@ def read_text_layers(
 
     for start in range(0, len(tasks), batch_size):
         batch = tasks[start:start + batch_size]
-        try:
-            response = batch_generate(
-                model, processor, images=[item[3] for item in batch],
-                prompts=[item[4] for item in batch], max_tokens=min(max_tokens, 512),
-                temperature=0.0, verbose=False, group_by_shape=True,
-            )
-            texts = response.texts
-        except Exception:
-            texts = [
-                generate(
-                    model, processor, item[4], image=item[3],
-                    max_tokens=min(max_tokens, 512), temperature=0.0, verbose=False,
-                ).text
-                for item in batch
-            ]
+        texts = generate_many(
+            model, processor,
+            [item[3] for item in batch], [item[4] for item in batch],
+            max_tokens=min(max_tokens, 512),
+        )
         for (kind, index, line_index, _, _, note_count, source_box), raw in zip(batch, texts):
             try:
                 layer = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
@@ -640,22 +658,10 @@ def reread_score_rows_by_measure(
     for start in range(0, len(tasks), batch_size):
         batch = tasks[start:start + batch_size]
         images = [fixed_canvas(item[2]) for item in batch]
-        try:
-            response = batch_generate(
-                model, processor, images=images, prompts=[prompt] * len(images),
-                max_tokens=min(max_tokens, 256), temperature=0.0, verbose=False,
-                group_by_shape=True,
-            )
-            texts = response.texts
-        except Exception:
-            texts = [
-                generate(
-                    model, processor, prompt, image=image,
-                    max_tokens=min(max_tokens, 256),
-                    temperature=0.0, verbose=False,
-                ).text
-                for image in images
-            ]
+        texts = generate_many(
+            model, processor, images, [prompt] * len(images),
+            max_tokens=min(max_tokens, 256),
+        )
         for task, raw in zip(batch, texts):
             row_index, part_index, segment_image, row_baseline = task
             try:
@@ -727,12 +733,9 @@ def retry_underread_rows(page, bands, rows, model, processor, prompt, max_tokens
             fixed_canvas(row_image.crop((split, 0, row_image.width, row_image.height))),
         ]
         try:
-            response = batch_generate(
-                model, processor, images=halves, prompts=[prompt, prompt],
-                max_tokens=max_tokens, temperature=0.0, verbose=False,
-                group_by_shape=True,
-            )
-            parts = [parse_json(text) for text in response.texts]
+            parts = [parse_json(text) for text in generate_many(
+                model, processor, halves, [prompt, prompt], max_tokens=max_tokens,
+            )]
         except Exception:
             parts = []
             for half in halves:
@@ -796,41 +799,17 @@ def infer(
     rows = []
     for start in range(0, len(crops), batch_size):
         images = crops[start:start + batch_size]
-        try:
-            response = batch_generate(
-                model, processor, images=images, prompts=[prompt] * len(images),
-                max_tokens=max_tokens, temperature=0.0, verbose=False,
-                group_by_shape=True,
-            )
-            texts = response.texts
-        except Exception:
-            texts = [
-                generate(
-                    model, processor, prompt, image=image, max_tokens=max_tokens,
-                    temperature=0.0, verbose=False,
-                ).text
-                for image in images
-            ]
+        texts = generate_many(
+            model, processor, images, [prompt] * len(images), max_tokens=max_tokens,
+        )
 
         if skip_relations:
             relation_texts = [None] * len(images)
         else:
-            try:
-                relation_response = batch_generate(
-                    model, processor, images=images,
-                    prompts=[relation_prompt] * len(images),
-                    max_tokens=min(max_tokens, 384), temperature=0.0, verbose=False,
-                    group_by_shape=True,
-                )
-                relation_texts = relation_response.texts
-            except Exception:
-                relation_texts = [
-                    generate(
-                        model, processor, relation_prompt, image=image,
-                        max_tokens=min(max_tokens, 384), temperature=0.0, verbose=False,
-                    ).text
-                    for image in images
-                ]
+            relation_texts = generate_many(
+                model, processor, images, [relation_prompt] * len(images),
+                max_tokens=min(max_tokens, 384),
+            )
 
         for offset, (raw, raw_relations) in enumerate(zip(texts, relation_texts)):
             index = start + offset
@@ -893,7 +872,7 @@ def main():
     parser.add_argument("image")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--batch-size", type=int, default=4)
-    parser.add_argument("--max-tokens", type=int, default=512)
+    parser.add_argument("--max-tokens", type=int, default=768)
     parser.add_argument("--only-band", type=int, default=0)
     parser.add_argument("--bands-json", default=None)
     parser.add_argument("--skip-relations", action="store_true")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 
@@ -51,7 +52,7 @@ def main():
     parser.add_argument("--only", default=None)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--batch-size", type=int, default=4)
-    parser.add_argument("--max-tokens", type=int, default=512)
+    parser.add_argument("--max-tokens", type=int, default=768)
     args = parser.parse_args()
 
     root = (ROOT / args.annotations).resolve()
@@ -103,16 +104,21 @@ def main():
         chunk = tasks[start:start + args.batch_size]
         images = [fixed_canvas(item[2]) for item in chunk]
         started = time.perf_counter()
-        try:
-            response = batch_generate(
-                model, processor, images=images, prompts=[prompt] * len(images),
-                max_tokens=args.max_tokens, temperature=0.0, verbose=False,
-                group_by_shape=True,
-            )
-            texts = response.texts
-        except Exception as batch_error:
-            print(f"batch fallback: {batch_error}", flush=True)
+        use_batch = os.environ.get("JIANPU_USE_MLX_BATCH", "0") == "1"
+        if use_batch:
+            try:
+                response = batch_generate(
+                    model, processor, images=images, prompts=[prompt] * len(images),
+                    max_tokens=args.max_tokens, temperature=0.0, verbose=False,
+                    group_by_shape=True,
+                )
+                texts = response.texts
+            except Exception as batch_error:
+                print(f"batch fallback: {batch_error}", flush=True)
+                texts = []
+        else:
             texts = []
+        if not use_batch or not texts:
             for image in images:
                 try:
                     texts.append(generate(
@@ -124,7 +130,7 @@ def main():
                     texts.append(json.dumps({"_generation_error": str(exc)}))
         elapsed = time.perf_counter() - started
 
-        for (annotation_id, row, _), text in zip(chunk, texts):
+        for offset, ((annotation_id, row, _), text) in enumerate(zip(chunk, texts)):
             target, payload = states[annotation_id]
             try:
                 parsed = parse_json(text)
@@ -135,13 +141,32 @@ def main():
                 }
                 label = parsed["content_type"]
             except Exception as exc:
-                record = {
-                    "source_row": row["row"], "image": row["image"],
-                    "error": str(exc),
-                    "batch_seconds_per_row": round(elapsed / len(chunk), 2),
-                    "raw_response": text,
-                }
-                label = "error"
+                # Dense rows can exhaust the compact JSON budget. One bounded
+                # retry with a larger budget is safer than accepting a partial
+                # token stream as silver truth; failed retries remain explicit
+                # errors and are filtered by the training-data builder.
+                try:
+                    retry_text = generate(
+                        model, processor, prompt, image=images[offset],
+                        max_tokens=max(1024, args.max_tokens * 2),
+                        temperature=0.0, verbose=False,
+                    ).text
+                    parsed = parse_json(retry_text)
+                    record = {
+                        "source_row": row["row"], "image": row["image"], **parsed,
+                        "retry": True,
+                        "batch_seconds_per_row": round(elapsed / len(chunk), 2),
+                        "raw_response": retry_text,
+                    }
+                    label = parsed["content_type"]
+                except Exception as retry_error:
+                    record = {
+                        "source_row": row["row"], "image": row["image"],
+                        "error": f"{exc}; retry: {retry_error}",
+                        "batch_seconds_per_row": round(elapsed / len(chunk), 2),
+                        "raw_response": text,
+                    }
+                    label = "error"
             payload["rows"] = [item for item in payload["rows"]
                                if item["source_row"] != row["row"]]
             payload["rows"].append(record)

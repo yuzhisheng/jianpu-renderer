@@ -62,7 +62,13 @@ def main():
     stats=dict(rows_seen=0,rows_kept=0,boxes=0,rejected_quality=0,rejected_alignment=0)
     for page in pages:
         aid=page['annotation_id']; review=json.loads((root/page['review']).read_text())
-        vlm=json.loads((root/'local_vlm_pitch_reviews'/f'{aid}.json').read_text())
+        vlm_path = root / 'local_vlm_pitch_reviews' / f'{aid}.json'
+        if not vlm_path.exists():
+            # Incremental annotation is intentional: a large real-image set
+            # may be reviewed over several local-VLM sessions. Do not make a
+            # completed subset unusable just because later pages are pending.
+            continue
+        vlm=json.loads(vlm_path.read_text())
         vlm_rows={x['source_row']:x for x in vlm['rows']}
         with Image.open(root/page['image']) as im: width,height=im.size
         det=[]

@@ -137,6 +137,18 @@ class YoloDetector:
 
         return detections, img_w, img_h
 
+    @classmethod
+    def is_staff_notation(cls, image: Image.Image) -> bool:
+        """Return True for repeated five-line staff systems.
+
+        A staff page should be rejected before the local jianpu VLM sees it;
+        otherwise the VLM may hallucinate alternating rests and digits from
+        noteheads and stems.  The check is deliberately the same conservative
+        gate used by :meth:`detect`.
+        """
+        normalized = ImageOps.autocontrast(image.convert("L"), cutoff=0.5)
+        return cls._staff_line_group_count(np.asarray(normalized)) >= 2
+
     @staticmethod
     def _staff_line_group_count(gray: np.ndarray) -> int:
         """Count repeated five-line Western staff systems conservatively."""

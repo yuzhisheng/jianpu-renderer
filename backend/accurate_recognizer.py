@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import logging
 import os
 import subprocess
@@ -49,6 +50,7 @@ class AccurateVLMRecognizer:
         self.python = ROOT / ".venv-vlm" / "bin" / "python"
         self.script = ROOT / "scripts" / "infer_page_with_local_vlm.py"
         self.cache = ROOT / ".cache" / "huggingface"
+        self.result_cache = ROOT / ".cache" / "accurate_vlm_results"
         # MLX inference can exhaust unified memory or become dramatically slower
         # when two full-page jobs overlap. Reject duplicates instead of queuing a
         # second multi-minute subprocess behind the first one.
@@ -103,19 +105,36 @@ class AccurateVLMRecognizer:
         if not self._vlm_lock.acquire(blocking=False):
             raise AccurateRecognizerBusyError("已有一个精确识别任务正在运行")
         try:
+            bands = self._hybrid_bands(image, detections)
+            cache_key = hashlib.sha256()
+            cache_key.update(image.size[0].to_bytes(4, "big"))
+            cache_key.update(image.size[1].to_bytes(4, "big"))
+            cache_key.update(image.tobytes())
+            cache_key.update(json.dumps(bands, separators=(",", ":")).encode())
+            try:
+                cache_key.update(str(self.script.stat().st_mtime_ns).encode())
+            except OSError:
+                pass
+            cached_result = self.result_cache / f"{cache_key.hexdigest()}.json"
+            if os.environ.get("JIANPU_VLM_CACHE", "1") != "0":
+                try:
+                    return json.loads(cached_result.read_text())
+                except (FileNotFoundError, json.JSONDecodeError, OSError):
+                    pass
             with tempfile.TemporaryDirectory(prefix="jianpu-vlm-") as directory:
                 image_path = Path(directory) / "page.png"
                 bands_path = Path(directory) / "bands.json"
                 image.save(image_path, format="PNG")
                 bands_path.write_text(json.dumps(
-                    self._hybrid_bands(image, detections), ensure_ascii=False))
+                    bands, ensure_ascii=False))
                 environment = os.environ.copy()
                 environment["HF_HOME"] = str(self.cache)
                 environment["HF_HUB_OFFLINE"] = "1"
+                max_tokens = max(512, int(environment.get("JIANPU_VLM_MAX_TOKENS", "768")))
                 try:
                     completed = subprocess.run(
                         [str(self.python), str(self.script), str(image_path),
-                         "--batch-size", "4", "--max-tokens", "512",
+                         "--batch-size", "4", "--max-tokens", str(max_tokens),
                          "--bands-json", str(bands_path), "--skip-relations",
                          "--text-layers"],
                         cwd=str(ROOT.parent), env=environment, capture_output=True,
@@ -142,7 +161,16 @@ class AccurateVLMRecognizer:
             lines = [line.strip() for line in detail.splitlines() if line.strip()]
             summary = lines[-1] if lines else f"退出码 {completed.returncode}"
             raise RuntimeError(f"本地视觉大模型推理失败: {summary}")
-        return json.loads(marker)
+        result = json.loads(marker)
+        if os.environ.get("JIANPU_VLM_CACHE", "1") != "0":
+            try:
+                self.result_cache.mkdir(parents=True, exist_ok=True)
+                temporary = cached_result.with_suffix(".tmp")
+                temporary.write_text(json.dumps(result, ensure_ascii=False))
+                temporary.replace(cached_result)
+            except OSError:
+                LOGGER.warning("无法写入本地视觉模型缓存: %s", cached_result)
+        return result
 
     @staticmethod
     def _dedupe_bars(detections: Iterable[Sequence[float]], top: int, bottom: int):

@@ -38,7 +38,7 @@ PROMPT = """你是简谱（数字谱）音高骨架标注器。忽略歌词和�
 6. 拍号（例如4/4、6/4）的分子和分母不是音符，必须忽略。
 7. 不要为了补全输出而重复0或其他符号；每个声部的token数量必须与图片实际符号数量接近。
 8. 小节上方反复房子的“1.”、“2.”等编号不是音符，必须忽略；明显小于主旋律数字、写在主旋律数字正上方的替代音或提示音也先忽略，只抄写同一基线上的大号主旋律数字。
-9. 看不清就用?占位并写入uncertainties，不要猜。整个JSON应在200个输出token以内。
+9. 看不清就用?占位并写入uncertainties，不要猜。JSON 要保持紧凑，但不能因为长度限制省略实际音符或提前截断。
 """
 
 RELATION_PROMPT = """你是简谱符号关系标注器。忽略标题和歌词，不要重新抄写音符，只分析主旋律数字之间的关系。
@@ -98,6 +98,14 @@ def parse_json(text: str):
                 normalized.append(f"P{mistaken_rest_pitch.group(1)}")
                 value.setdefault("uncertainties", []).append(
                     f"mistaken rest prefix normalized as pitch: {token}")
+                continue
+            if re.fullmatch(r"P[89]", token):
+                # The model occasionally uses P8/P9 for a high octave digit.
+                # It is not a valid jianpu pitch class; preserve an explicit
+                # uncertainty so the remaining row can still be aligned.
+                normalized.append("?")
+                value.setdefault("uncertainties", []).append(
+                    f"out-of-range pitch token preserved as ?: {token}")
                 continue
             navigation_token = re.sub(r"\s+", " ", token.strip())
             navigation_match = re.fullmatch(

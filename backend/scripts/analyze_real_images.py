@@ -11,7 +11,7 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend"))
@@ -21,6 +21,21 @@ from detector import CLASS_NAMES, YoloDetector
 
 
 EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
+
+def has_image_signature(path: Path) -> bool:
+    """Reject HTML/error pages before Ultralytics can auto-install codecs."""
+    try:
+        with path.open("rb") as handle:
+            header = handle.read(16)
+    except OSError:
+        return False
+    return (
+        header.startswith(b"\x89PNG\r\n\x1a\n")
+        or header.startswith(b"\xff\xd8\xff")
+        or header.startswith((b"GIF87a", b"GIF89a"))
+        or (header.startswith(b"RIFF") and header[8:12] == b"WEBP")
+    )
 
 
 def count_rows(detections) -> int:
@@ -58,14 +73,29 @@ def main():
     detector = YoloDetector(str((ROOT / args.weights).resolve()), device=args.device)
     assembler = Assembler(use_transformer=False)
     records = []
+    skipped = []
 
     for index, path in enumerate(files, 1):
         started = time.perf_counter()
-        with Image.open(path) as source:
-            image = source.convert("RGB")
+        if not has_image_signature(path):
+            error = "file signature is not PNG/JPEG/GIF/WEBP"
+            skipped.append({"file": str(path), "error": error})
+            print(f"[{index:02d}/{len(files)}] {path.name}: skipped ({error})", flush=True)
+            continue
+        try:
+            with Image.open(path) as source:
+                image = source.convert("RGB")
             detections, width, height = detector.detect(
                 image, conf_threshold=args.conf, imgsz=args.imgsz,
             )
+        except (UnidentifiedImageError, OSError, ValueError) as exc:
+            skipped.append({"file": str(path), "error": str(exc)})
+            print(f"[{index:02d}/{len(files)}] {path.name}: skipped ({exc})", flush=True)
+            continue
+        except Exception as exc:
+            skipped.append({"file": str(path), "error": f"{type(exc).__name__}: {exc}"})
+            print(f"[{index:02d}/{len(files)}] {path.name}: error ({exc})", flush=True)
+            continue
         score = assembler.assemble_from_dets(detections, width, height)["score"]
         counts = Counter(CLASS_NAMES[d[0]] for d in detections)
         pitches = [counts[f"pitch_{pitch}"] for pitch in range(1, 8)]
@@ -103,7 +133,7 @@ def main():
         records.append(record)
         retry_label = f", retry={record['effective_conf']:.2f}" if record["adaptive_retry"] else ""
         print(f"[{index:02d}/{len(files)}] {path.name}: notes={notes}, rows={record['rows']}, "
-              f"bars={bars}{retry_label}, flags={record['flags'] or '-'}")
+              f"bars={bars}{retry_label}, flags={record['flags'] or '-'}", flush=True)
 
     output = (ROOT / args.output).resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -112,7 +142,9 @@ def main():
         writer.writeheader()
         writer.writerows(records)
     flagged = sum(bool(record["flags"]) for record in records)
-    print(f"images={len(records)}, flagged={flagged}, report={output}")
+    print(f"images={len(records)}, flagged={flagged}, skipped={len(skipped)}, report={output}")
+    for item in skipped:
+        print(f"skipped: {item['file']}: {item['error']}")
 
 
 if __name__ == "__main__":

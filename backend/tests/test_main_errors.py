@@ -19,6 +19,12 @@ class _FakeDetector:
         return [], image.width, image.height
 
 
+class _StaffDetector(_FakeDetector):
+    @staticmethod
+    def is_staff_notation(image):
+        return True
+
+
 class _FailingRecognizer:
     def __init__(self, error):
         self.error = error
@@ -58,6 +64,14 @@ class RecognizeErrorMappingTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as caught:
             self._request(AccurateRecognizerTimeoutError("推理超时"))
         self.assertEqual(caught.exception.status_code, 504)
+
+    def test_staff_notation_is_rejected_before_vlm(self):
+        with patch("main.get_models", return_value=(_StaffDetector(), None)):
+            with self.assertRaises(HTTPException) as caught:
+                asyncio.run(main.recognize(
+                    file=self._upload(), conf=.12, use_transformer=False,
+                    visual_sequence=False, recognizer="accurate"))
+        self.assertEqual(caught.exception.status_code, 422)
 
 
 if __name__ == "__main__":

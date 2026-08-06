@@ -201,7 +201,23 @@ def yolo_lines(detections, width: int, height: int):
 
 
 def source_files(path: Path):
-    return sorted(item for item in path.iterdir() if item.suffix.lower() in EXTENSIONS)
+    def has_image_signature(item: Path) -> bool:
+        try:
+            with item.open("rb") as handle:
+                header = handle.read(16)
+        except OSError:
+            return False
+        return (
+            header.startswith(b"\x89PNG\r\n\x1a\n")
+            or header.startswith(b"\xff\xd8\xff")
+            or header.startswith((b"GIF87a", b"GIF89a"))
+            or (header.startswith(b"RIFF") and header[8:12] == b"WEBP")
+        )
+
+    return sorted(
+        item for item in path.iterdir()
+        if item.suffix.lower() in EXTENSIONS and has_image_signature(item)
+    )
 
 
 def main():

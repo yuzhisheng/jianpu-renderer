@@ -170,6 +170,14 @@ async def recognize(
             detail="YOLO 模型未加载, 请先训练: python backend/scripts/train_detector.py",
         )
 
+    if (recognizer == "accurate"
+            and callable(getattr(det, "is_staff_notation", None))
+            and det.is_staff_notation(image)):
+        raise HTTPException(
+            status_code=422,
+            detail="图片是五线谱/吉他谱或其他非数字简谱，当前仅支持数字简谱",
+        )
+
     # YOLO 检测
     try:
         detector_conf = min(conf, 0.12) if recognizer == "accurate" else conf
