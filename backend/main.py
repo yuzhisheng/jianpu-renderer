@@ -113,6 +113,17 @@ def health():
     return {
         "status": "ok",
         "yolo_loaded": det is not None and det._loaded,
+        "pitch_refiner_available": bool(
+            det is not None and os.path.exists(
+                os.environ.get(
+                    "JIANPU_PITCH_REFINER_WEIGHTS",
+                    str(ROOT / "weights" / "pitch8_domain_mixed_v1.pt"),
+                )
+            )
+        ),
+        "pitch_refiner_loaded": bool(
+            det is not None and getattr(det, "pitch_model", None) is not None
+        ),
         "transformer_loaded": transformer is not None and transformer.model is not None,
         "visual_transformer_loaded": visual_recognizer is not None and visual_recognizer.model is not None,
         "accurate_vlm_available": get_accurate_recognizer().available,
