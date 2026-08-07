@@ -178,6 +178,11 @@ async def recognize(
             detail="图片是五线谱/吉他谱或其他非数字简谱，当前仅支持数字简谱",
         )
 
+    if recognizer == "accurate":
+        enable_pitch_refinement = getattr(det, "enable_pitch_refinement", None)
+        if callable(enable_pitch_refinement):
+            enable_pitch_refinement()
+
     # YOLO 检测
     try:
         detector_conf = min(conf, 0.12) if recognizer == "accurate" else conf

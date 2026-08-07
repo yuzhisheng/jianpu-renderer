@@ -50,15 +50,19 @@ def clusters(boxes):
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--annotations",default="backend/real_annotations")
     ap.add_argument("--output",default="backend/pitch_silver_dataset"); ap.add_argument("--min-coverage",type=float,default=.82)
-    ap.add_argument("--min-agreement",type=float,default=.55); args=ap.parse_args()
+    ap.add_argument("--min-agreement",type=float,default=.55)
+    ap.add_argument("--split",choices=("train_silver", "test"),default="train_silver",
+                    help="annotation manifest split; test is emitted entirely as val")
+    args=ap.parse_args()
     root=(ROOT/args.annotations).resolve(); out=(ROOT/args.output).resolve()
     if out.exists(): shutil.rmtree(out)
     manifest=[json.loads(x) for x in (root/'manifest.jsonl').read_text().splitlines()]
     pages=sorted(
-        (x for x in manifest if x['split']=='train_silver' and x['kind']=='jianpu'),
+        (x for x in manifest if x['split']==args.split and x['kind']=='jianpu'),
         key=lambda item: item['annotation_id'],
     )
-    val_ids={x['annotation_id'] for i,x in enumerate(pages) if i%5==0}
+    val_ids=({x['annotation_id'] for x in pages} if args.split == "test"
+             else {x['annotation_id'] for i,x in enumerate(pages) if i%5==0})
     stats=dict(rows_seen=0,rows_kept=0,boxes=0,rejected_quality=0,rejected_alignment=0)
     for page in pages:
         aid=page['annotation_id']; review=json.loads((root/page['review']).read_text())
@@ -95,6 +99,7 @@ def main():
             (out/'labels'/split/f'{name}.txt').write_text('\n'.join(lines)+'\n'); stats['rows_kept']+=1; stats['boxes']+=len(lines)
     (out/'data.yaml').write_text(f'path: {out}\ntrain: images/train\nval: images/val\n\nnc: 8\nnames: {TOKENS}\n')
     stats['train_images']=len(list((out/'images/train').glob('*'))); stats['val_images']=len(list((out/'images/val').glob('*')))
+    stats['source_split']=args.split
     (out/'stats.json').write_text(json.dumps(stats,ensure_ascii=False,indent=2)+'\n'); print(json.dumps(stats,ensure_ascii=False,indent=2))
 
 if __name__=='__main__': main()

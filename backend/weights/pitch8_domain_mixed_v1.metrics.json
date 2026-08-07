@@ -1,0 +1,18 @@
+{
+  "model": "pitch8_domain_mixed_v1.pt",
+  "classes": ["P1", "P2", "P3", "P4", "P5", "P6", "P7", "R0"],
+  "training": {
+    "base": "pitch8_silver_v1.pt",
+    "freeze_backbone_layers": 10,
+    "epochs_requested": 5,
+    "epochs_completed": 5,
+    "data_policy": "filtered local-VLM silver rows from user and NAS images"
+  },
+  "validation": {
+    "nas_test_map50": 0.8712,
+    "nas_test_map50_95": 0.6602,
+    "user_test_map50": 0.9248,
+    "user_test_map50_95": 0.7753
+  },
+  "promotion_policy": "auxiliary pitch/rest refiner for accurate mode; never replaces the 42-class production detector"
+}

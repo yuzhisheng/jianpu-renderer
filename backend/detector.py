@@ -37,6 +37,8 @@ class YoloDetector:
         self.weights_path = weights_path or str(WEIGHTS / "best.pt")
         self.device = device or self._best_device()
         self.model = None
+        self.pitch_model = None
+        self.pitch_refiner_path: Optional[str] = None
         self._loaded = False
         self.last_retry_used = False
         self.last_effective_confidence: Optional[float] = None
@@ -65,6 +67,35 @@ class YoloDetector:
         self.model = YOLO(self.weights_path)
         self.model.to(self.device)
         self._loaded = True
+
+    def enable_pitch_refinement(self) -> bool:
+        """Load the optional 8-class pitch refiner for accurate recognition.
+
+        The production detector remains the 42-class model so ties, bars and
+        ornaments are preserved.  The independently trained 8-class model is
+        only used to replace pitch/rest boxes during accurate recognition;
+        fast mode never pays the extra inference cost.
+        """
+        if self.pitch_model is not None:
+            return True
+        if os.environ.get("JIANPU_DISABLE_PITCH_REFINEMENT", "0") == "1":
+            return False
+        candidate = os.environ.get(
+            "JIANPU_PITCH_REFINER_WEIGHTS",
+            str(WEIGHTS / "pitch8_domain_mixed_v1.pt"),
+        )
+        if not os.path.exists(candidate):
+            return False
+        try:
+            from ultralytics import YOLO
+            self.pitch_model = YOLO(candidate)
+            self.pitch_model.to(self.device)
+            self.pitch_refiner_path = candidate
+            return True
+        except Exception:
+            self.pitch_model = None
+            self.pitch_refiner_path = None
+            return False
 
     def detect(self, image: Image.Image, conf_threshold: float = 0.20,
                imgsz: int = 1280, tile_size: int = 1280,
@@ -103,6 +134,7 @@ class YoloDetector:
             found: List[Detection] = []
             for x1, y1, x2, y2 in windows:
                 crop = img[y1:y2, x1:x2]
+                tile_found: List[Detection] = []
                 results = self.model.predict(
                     crop, conf=threshold, imgsz=imgsz, device=self.device,
                     max_det=1000, verbose=False,
@@ -115,10 +147,35 @@ class YoloDetector:
                         conf = float(box.conf.item())
                         bx1, by1, bx2, by2 = box.xyxy[0].tolist()
                         width, height = bx2 - bx1, by2 - by1
-                        found.append((
+                        tile_found.append((
                             cls_id, x1 + bx1 + width / 2, y1 + by1 + height / 2,
                             width, height, conf,
                         ))
+                if self.pitch_model is not None:
+                    pitch_found: List[Detection] = []
+                    pitch_results = self.pitch_model.predict(
+                        crop, conf=threshold, imgsz=imgsz, device=self.device,
+                        max_det=1000, verbose=False,
+                    )
+                    for result in pitch_results:
+                        if result.boxes is None:
+                            continue
+                        for box in result.boxes:
+                            cls_id = int(box.cls.item())
+                            conf = float(box.conf.item())
+                            bx1, by1, bx2, by2 = box.xyxy[0].tolist()
+                            width, height = bx2 - bx1, by2 - by1
+                            pitch_found.append((
+                                cls_id, x1 + bx1 + width / 2,
+                                y1 + by1 + height / 2, width, height, conf,
+                            ))
+                    production_pitch = [item for item in tile_found if item[0] <= 7]
+                    # Keep the production stream as a safety net when the
+                    # auxiliary model is unexpectedly sparse on a crop.
+                    if len(pitch_found) >= max(5, round(len(production_pitch) * 0.65)):
+                        tile_found = [item for item in tile_found if item[0] > 7]
+                        tile_found.extend(pitch_found)
+                found.extend(tile_found)
             return self._filter_score_rows(self._class_aware_nms(found))
 
         detections = predict(conf_threshold)

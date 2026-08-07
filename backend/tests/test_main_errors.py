@@ -25,6 +25,15 @@ class _StaffDetector(_FakeDetector):
         return True
 
 
+class _PitchRefiningDetector(_FakeDetector):
+    def __init__(self):
+        self.enabled = False
+
+    def enable_pitch_refinement(self):
+        self.enabled = True
+        return True
+
+
 class _FailingRecognizer:
     def __init__(self, error):
         self.error = error
@@ -72,6 +81,19 @@ class RecognizeErrorMappingTests(unittest.TestCase):
                     file=self._upload(), conf=.12, use_transformer=False,
                     visual_sequence=False, recognizer="accurate"))
         self.assertEqual(caught.exception.status_code, 422)
+
+    def test_accurate_mode_enables_pitch_refiner(self):
+        detector = _PitchRefiningDetector()
+        with patch("main.get_models", return_value=(detector, None)), \
+                patch("main.get_accurate_recognizer",
+                      return_value=_FailingRecognizer(
+                          AccurateRecognizerBusyError("busy"))):
+            with self.assertRaises(HTTPException) as caught:
+                asyncio.run(main.recognize(
+                    file=self._upload(), conf=.12, use_transformer=False,
+                    visual_sequence=False, recognizer="accurate"))
+        self.assertEqual(caught.exception.status_code, 409)
+        self.assertTrue(detector.enabled)
 
 
 if __name__ == "__main__":
