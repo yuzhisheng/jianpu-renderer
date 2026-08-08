@@ -1,4 +1,4 @@
-import { Download, ZoomIn, ZoomOut, FileMusic, Code, Sun, Moon } from 'lucide-react';
+import { Download, ZoomIn, ZoomOut, FileMusic, Code, Sun, Moon, Redo2, Undo2 } from 'lucide-react';
 import { examples } from '../data/examples';
 
 interface ToolbarProps {
@@ -16,9 +16,13 @@ interface ToolbarProps {
   rowGap: number;
   onNoteSpacingChange: (v: number) => void;
   onRowGapChange: (v: number) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
 }
 
-export default function Toolbar({ onExampleSelect, onExport, onZoomIn, onZoomOut, zoom, isValid, showEditor, onToggleEditor, isDarkTheme, onToggleTheme, noteSpacing, rowGap, onNoteSpacingChange, onRowGapChange }: ToolbarProps) {
+export default function Toolbar({ onExampleSelect, onExport, onZoomIn, onZoomOut, zoom, isValid, showEditor, onToggleEditor, isDarkTheme, onToggleTheme, noteSpacing, rowGap, onNoteSpacingChange, onRowGapChange, canUndo, canRedo, onUndo, onRedo }: ToolbarProps) {
   const bg = isDarkTheme ? 'bg-dark-900' : 'bg-white';
   const border = isDarkTheme ? 'border-gray-800' : 'border-gray-200';
   const text = isDarkTheme ? 'text-gray-200' : 'text-gray-800';
@@ -26,7 +30,6 @@ export default function Toolbar({ onExampleSelect, onExport, onZoomIn, onZoomOut
   const selectBg = isDarkTheme ? 'bg-gray-800' : 'bg-gray-100';
   const selectText = isDarkTheme ? 'text-gray-300' : 'text-gray-700';
   const selectBorder = isDarkTheme ? 'border-gray-700' : 'border-gray-300';
-  const btnBorder = isDarkTheme ? 'border-gray-700' : 'border-gray-300';
 
   return (
     <div className={`h-12 flex items-center justify-between px-4 border-b shadow-lg transition-colors duration-200 ${bg} ${border}`}>
@@ -39,6 +42,15 @@ export default function Toolbar({ onExampleSelect, onExport, onZoomIn, onZoomOut
 
       {/* 右侧操作 */}
       <div className="flex items-center gap-2">
+        <div className={`flex items-center rounded-md border overflow-hidden ${isDarkTheme ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-300'}`}>
+          <button className={`px-2 py-1.5 disabled:opacity-30 ${isDarkTheme ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'}`} disabled={!canUndo} onClick={onUndo} title="撤销">
+            <Undo2 className="w-3.5 h-3.5" />
+          </button>
+          <button className={`px-2 py-1.5 disabled:opacity-30 ${isDarkTheme ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'}`} disabled={!canRedo} onClick={onRedo} title="重做">
+            <Redo2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
         {/* 主题切换 */}
         <button
           className={`flex items-center gap-1.5 text-xs rounded-md px-2.5 py-1.5 font-medium transition-all ${isDarkTheme ? 'text-gray-400 bg-gray-800 border border-gray-700 hover:border-gray-500' : 'text-gray-600 bg-gray-100 border border-gray-300 hover:border-gray-400'}`}
@@ -97,7 +109,7 @@ export default function Toolbar({ onExampleSelect, onExport, onZoomIn, onZoomOut
         {/* 音符间距 */}
         <div className="flex items-center gap-1">
           <span className={`text-[10px] w-5 text-center ${subText}`}>音距</span>
-          <input type="range" min="14" max="32" value={noteSpacing}
+          <input type="range" min="28" max="48" value={noteSpacing}
             className="w-16 h-1 accent-primary-500 cursor-pointer"
             onChange={e => onNoteSpacingChange(Number(e.target.value))}
             title={`音符间距: ${noteSpacing}px`} />

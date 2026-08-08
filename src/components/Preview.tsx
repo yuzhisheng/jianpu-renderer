@@ -1,7 +1,8 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import type { Score, ScoreLayout } from '../types';
-import { calculateLayout, DEFAULT_CONFIG, render, setupCanvasDPI } from '../engine';
+import { calculateLayout, PRINT_CONFIG, render, setupCanvasDPI } from '../engine';
 import type { LayoutConfig, RenderTheme } from '../engine';
+import type { NoteAddress } from '../editor/score';
 
 
 interface PreviewProps {
@@ -10,11 +11,12 @@ interface PreviewProps {
   theme: RenderTheme;
   onLayoutChange?: (layout: ScoreLayout) => void;
   onNoteClick?: (measureIndex: number, noteIndex: number) => void;
+  selected?: NoteAddress | null;
   noteSpacing?: number;
   rowGap?: number;
 }
 
-export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClick, noteSpacing, rowGap }: PreviewProps) {
+export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClick, selected, noteSpacing, rowGap }: PreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasKey, setCanvasKey] = useState(0);
   const layoutRef = useRef<ScoreLayout | null>(null);
@@ -22,7 +24,11 @@ export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClic
   const renderScore = useCallback(() => {
     if (!canvasRef.current || !score) return;
 
-    const config: LayoutConfig = { ...DEFAULT_CONFIG, noteWidth: noteSpacing ?? DEFAULT_CONFIG.noteWidth, rowGap: rowGap ?? DEFAULT_CONFIG.rowGap };
+    const config: LayoutConfig = {
+      ...PRINT_CONFIG,
+      noteWidth: noteSpacing ?? PRINT_CONFIG.noteWidth,
+      rowGap: rowGap ?? PRINT_CONFIG.rowGap,
+    };
     const layout = calculateLayout(score, config);
     layoutRef.current = layout;
 
@@ -85,6 +91,17 @@ export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClic
 
   const isDark = theme.backgroundColor === '#1e1e1e';
 
+  const selectedPosition = (() => {
+    if (!selected || !layoutRef.current) return null;
+    for (const row of layoutRef.current.rows) {
+      for (const measure of row.measures) {
+        const found = measure.notes.find(note => note.measureIndex === selected.measureIndex && note.noteIndex === selected.noteIndex);
+        if (found) return found.position;
+      }
+    }
+    return null;
+  })();
+
   return (
     <div className="h-full w-full overflow-auto flex items-start justify-center p-6 transition-colors duration-200" style={{backgroundColor: isDark ? '#1e1e1e' : '#f5f5f5'}}>
       {!score ? (
@@ -97,7 +114,20 @@ export default function Preview({ score, zoom, theme, onLayoutChange, onNoteClic
         </div>
       ) : (
         <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }} className="transition-transform duration-200">
-          <canvas key={canvasKey} ref={canvasRef} className="shadow-lg rounded-sm cursor-pointer" onClick={handleCanvasClick} />
+          <div className="relative">
+            <canvas key={canvasKey} ref={canvasRef} className="shadow-lg rounded-sm cursor-pointer" onClick={handleCanvasClick} />
+            {selectedPosition && (
+              <div
+                className="pointer-events-none absolute rounded border-2 border-primary-400 bg-primary-400/10 shadow-[0_0_0_2px_rgba(59,130,246,0.18)]"
+                style={{
+                  left: selectedPosition.x - 3,
+                  top: selectedPosition.y - 3,
+                  width: selectedPosition.width + 6,
+                  height: selectedPosition.height + 6,
+                }}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
