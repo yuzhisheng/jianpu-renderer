@@ -172,6 +172,27 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
         self.assertEqual(positions, [30, 143])
         self.assertEqual(tokens, ["P1", "P2", "^"])
 
+    def test_visual_glyph_band_recovers_when_detector_hits_reduction_line(self):
+        image = Image.new("RGB", (520, 150), "white")
+        draw = ImageDraw.Draw(image)
+        # Three large printed digits; detector anchors intentionally point at
+        # the lower reduction-line band rather than the digit centers.
+        for left in (80, 220, 360):
+            draw.rectangle((left, 30, left + 27, 85), fill="black")
+        draw.ellipse((91, 96, 99, 104), fill="black")
+        draw.line((220, 100, 390, 100), fill="black", width=4)
+        detections = [
+            (5, 93, 112, 17, 17, .8),
+            (5, 233, 112, 17, 17, .7),
+            (5, 373, 112, 17, 17, .7),
+        ]
+        tokens, positions, _, baseline, note_height = self.recognizer._apply_note_modifiers(
+            ["P1", "P2", "P3"], detections, [0, 0, 520, 150], 520, image)
+        self.assertEqual([round(value) for value in positions], [94, 234, 374])
+        self.assertAlmostEqual(baseline, 58, delta=1)
+        self.assertAlmostEqual(note_height, 56, delta=1)
+        self.assertEqual(tokens, ["P1", "v", "P2", "_", "P3", "_"])
+
     def test_pixel_rhythm_reads_two_lines_below_digit(self):
         image = Image.new("RGB", (120, 120), "white")
         draw = ImageDraw.Draw(image)

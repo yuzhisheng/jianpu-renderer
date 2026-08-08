@@ -456,6 +456,65 @@ class AccurateVLMRecognizer:
         if len(candidates) == expected_count + 1:
             worst = max(range(len(candidates)), key=lambda index: candidates[index][4])
             return [value[:4] for index, value in enumerate(candidates) if index != worst]
+
+        # On wide scans the detector may lock its pitch boxes onto the first
+        # reduction line (or an octave dot) instead of the printed digit. In
+        # that case the baseline/height above are too small and the strict
+        # pass finds nothing, even though the actual digit components are
+        # cleanly separated. Recover the dominant glyph band without relying
+        # on detector y coordinates. The expected note count is a strong guard
+        # against lyric/title components in a full-page crop.
+        visual_candidates = []
+        min_height = max(12.0, note_height * 0.75)
+        max_height = max(120.0, note_height * 4.0)
+        min_width = max(4.0, note_height * 0.35)
+        max_width = max(80.0, note_height * 2.5)
+        for index in range(1, count):
+            x, y, width, height, area = stats[index]
+            center_x, local_y = centroids[index]
+            center_y = float(local_y + top)
+            density = area / max(1, width * height)
+            if not (
+                min_width <= width <= max_width
+                and min_height <= height <= max_height
+                and 0.18 <= width / max(1, height) <= 1.45
+                and area >= max(20.0, note_height * note_height * 0.12)
+                and density >= 0.08
+            ):
+                continue
+            visual_candidates.append((float(center_x), center_y, float(width),
+                                      float(height), float(area)))
+        if len(visual_candidates) < max(3, min(expected_count, 3)):
+            return []
+
+        # Cluster by vertical band and glyph height. A row's music digits form
+        # a much denser, more consistent cluster than lyrics or page chrome.
+        bands: List[List[Sequence[float]]] = []
+        for candidate in sorted(visual_candidates, key=lambda value: value[1]):
+            matching = next((band for band in bands
+                             if abs(candidate[1] - median(item[1] for item in band))
+                             <= max(10.0, median(item[3] for item in band) * 0.30)
+                             and abs(candidate[3] - median(item[3] for item in band))
+                             <= max(10.0, median(item[3] for item in band) * 0.30)),
+                            None)
+            if matching is None:
+                bands.append([candidate])
+            else:
+                matching.append(candidate)
+        bands.sort(key=lambda band: (abs(len(band) - expected_count), -len(band)))
+        visual_band = bands[0] if bands else []
+        if len(visual_band) == expected_count:
+            return [value[:4] for value in sorted(visual_band)]
+        if len(visual_band) == expected_count + 1:
+            median_y = median(value[1] for value in visual_band)
+            median_h = median(value[3] for value in visual_band)
+            worst = max(
+                range(len(visual_band)),
+                key=lambda index: (abs(visual_band[index][1] - median_y)
+                                   + abs(visual_band[index][3] - median_h)),
+            )
+            return [value[:4] for index, value in enumerate(sorted(visual_band))
+                    if index != worst]
         return []
 
     @classmethod
