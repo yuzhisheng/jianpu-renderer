@@ -58,8 +58,35 @@ RELATION_PROMPT = """你是简谱符号关系标注器。忽略标题和歌词�
 def parse_json(text: str):
     match = re.search(r"\{.*\}", text, re.S)
     if not match:
-        raise ValueError("response has no JSON object")
-    value = json.loads(match.group(0))
+        # Long dense rows can hit the generation budget after emitting the
+        # content type and token array.  Recover only the fields needed by
+        # the silver pitch-skeleton pass; the explicit uncertainty prevents
+        # this from being mistaken for a fully verified annotation.
+        content_match = re.search(
+            r'"content_type"\s*:\s*"(score|metadata|lyrics)"', text)
+        tokens_match = re.search(r'"tokens"\s*:\s*\[(.*?)(?:\]|$)', text, re.S)
+        if not content_match:
+            raise ValueError("response has no JSON object")
+        content_type = content_match.group(1)
+        if content_type != "score":
+            return {
+                "content_type": content_type,
+                "voices": [],
+                "confidence": 0.0,
+                "uncertainties": ["truncated VLM response recovered"],
+            }
+        if not tokens_match:
+            raise ValueError("truncated score response has no token array")
+        raw_tokens = re.findall(
+            r'"((?:\\.|[^"\\])*)"', tokens_match.group(1))
+        value = {
+            "content_type": "score",
+            "voices": [{"label": "main", "tokens": raw_tokens}],
+            "confidence": 0.0,
+            "uncertainties": ["truncated VLM response recovered"],
+        }
+    else:
+        value = json.loads(match.group(0))
     if value.get("content_type") not in {"score", "metadata", "lyrics"}:
         raise ValueError("invalid content_type")
     voices = value.get("voices", [])
@@ -93,6 +120,28 @@ def parse_json(text: str):
                 "i": "P1", "Ri": "P1", "R1": "P1",
                 "B0": "R0", "R0)": "R0",
             }.get(token, token)
+            # Compact VLM tokenization occasionally glues a repeat bar to
+            # the first note of the following measure (for example B|:5).
+            # Split only the unambiguous bar-prefix form so note order stays
+            # recoverable without inventing rhythm symbols.
+            compact_bar = re.fullmatch(r"(B\|:|B:\|)([1-7])", token)
+            if compact_bar:
+                normalized.extend((compact_bar.group(1), f"P{compact_bar.group(2)}"))
+                continue
+            # The model sometimes emits the visual ``i`` glyph for 1 and
+            # attaches the duration dash before tokenization (i- / 1-).
+            compact_pitch_dash = re.fullmatch(r"([1-7i])(-+)", token)
+            if compact_pitch_dash:
+                normalized.append(
+                    f"P1" if compact_pitch_dash.group(1) == "i"
+                    else f"P{compact_pitch_dash.group(1)}")
+                normalized.extend("-" for _ in compact_pitch_dash.group(2))
+                continue
+            if token in {"R", "R)"}:
+                normalized.append("R0")
+                value.setdefault("uncertainties", []).append(
+                    f"rest glyph normalized: {token}")
+                continue
             mistaken_rest_pitch = re.fullmatch(r"R([1-7])", token)
             if mistaken_rest_pitch:
                 normalized.append(f"P{mistaken_rest_pitch.group(1)}")
