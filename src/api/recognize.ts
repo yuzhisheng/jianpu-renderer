@@ -12,6 +12,7 @@ export interface Detection {
 }
 
 export interface RecognizeResponse {
+  recognition_id?: string | null;
   score: Score;        // Score JSON
   detections: Detection[];
   num_detections: number;
@@ -32,7 +33,30 @@ export interface RecognizeResponse {
     ties: number;
     slurs: number;
     triplets: number;
+    lyric_syllables?: number;
   };
+}
+
+export interface RecognitionHistoryItem {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  status: 'running' | 'succeeded' | 'failed' | string;
+  original_filename: string;
+  image_width?: number | null;
+  image_height?: number | null;
+  recognizer?: 'accurate' | 'fast' | 'visual' | string | null;
+  confidence?: number | null;
+  inference_ms?: number | null;
+  error?: string | null;
+  title?: string | null;
+  notes?: number | null;
+  lyric_syllables?: number | null;
+}
+
+export interface RecognitionHistoryDetail extends RecognitionHistoryItem {
+  image_url?: string | null;
+  response?: RecognizeResponse | null;
 }
 
 const DEFAULT_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
@@ -88,4 +112,33 @@ export async function checkHealth(apiBase?: string): Promise<{
   const resp = await fetch(`${base}/health`);
   if (!resp.ok) throw new Error(`health ${resp.status}`);
   return resp.json();
+}
+
+export async function listRecognitionHistory(
+  options: { limit?: number; offset?: number; apiBase?: string } = {},
+): Promise<RecognitionHistoryItem[]> {
+  const base = options.apiBase || DEFAULT_BASE;
+  const params = new URLSearchParams();
+  if (options.limit !== undefined) params.set('limit', String(options.limit));
+  if (options.offset !== undefined) params.set('offset', String(options.offset));
+  const url = `${base}/recognition-history${params.toString() ? '?' + params.toString() : ''}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`历史记录读取失败（HTTP ${resp.status}）`);
+  const payload = await resp.json() as { items?: RecognitionHistoryItem[] };
+  return Array.isArray(payload.items) ? payload.items : [];
+}
+
+export async function getRecognitionHistory(
+  id: string,
+  apiBase?: string,
+): Promise<RecognitionHistoryDetail> {
+  const base = apiBase || DEFAULT_BASE;
+  const resp = await fetch(`${base}/recognition-history/${encodeURIComponent(id)}`);
+  if (!resp.ok) throw new Error(`识别记录读取失败（HTTP ${resp.status}）`);
+  return resp.json();
+}
+
+export function recognitionHistoryImageUrl(id: string, apiBase?: string): string {
+  const base = apiBase || DEFAULT_BASE;
+  return `${base}/recognition-history/${encodeURIComponent(id)}/image`;
 }

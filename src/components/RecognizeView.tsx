@@ -1,9 +1,19 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { ArrowLeft, LayoutPanelLeft, LayoutPanelTop, Sun, Moon, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowLeft, History, LayoutPanelLeft, LayoutPanelTop, Sun, Moon, RefreshCw, AlertCircle } from 'lucide-react';
 import type { Score } from '../types';
-import { recognizeImage, checkHealth, RecognizeResponse } from '../api/recognize';
+import {
+  recognizeImage,
+  checkHealth,
+  getRecognitionHistory,
+  listRecognitionHistory,
+  recognitionHistoryImageUrl,
+  type RecognitionHistoryItem,
+  RecognizeResponse,
+} from '../api/recognize';
 import ImageUploader from './recognize/ImageUploader';
+import HistoryPanel from './recognize/HistoryPanel';
 import JsonPanel from './recognize/JsonPanel';
+import { applyScoreStyle, JPW5_HULUNBUIR_STYLE } from '../styles/scoreStyles';
 
 type Layout = 'horizontal' | 'vertical';
 type RecognizerMode = 'accurate' | 'fast';
@@ -28,6 +38,10 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
   } | null>(null);
   const [recognizerMode, setRecognizerMode] = useState<RecognizerMode>('accurate');
   const [progress, setProgress] = useState<string>('');
+  const [historyItems, setHistoryItems] = useState<RecognitionHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const recognitionActiveRef = useRef(false);
 
   // 健康检查
@@ -37,6 +51,22 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
       setHealth({ yolo_loaded: false, transformer_loaded: false, accurate_vlm_available: false });
     });
   }, []);
+
+  const refreshHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      setHistoryItems(await listRecognitionHistory({ limit: 100 }));
+      setHistoryError(null);
+    } catch (e: unknown) {
+      setHistoryError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshHistory();
+  }, [refreshHistory]);
 
   // 释放 preview url
   useEffect(() => {
@@ -75,7 +105,8 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
         recognizer: recognizerMode,
       });
       setProgress('');
-      setResult(resp);
+      setResult({ ...resp, score: applyScoreStyle(resp.score) });
+      void refreshHistory();
     } catch (e: unknown) {
       console.error(e);
       setErrorMsg(e instanceof Error ? e.message : String(e));
@@ -85,7 +116,7 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
       setProgress('');
       setIsLoading(false);
     }
-  }, [recognizerMode]);
+  }, [recognizerMode, refreshHistory]);
 
   const handleFile = useCallback((f: File) => {
     setFile(f);
@@ -101,11 +132,34 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
     if (file) runRecognize(file);
   }, [file, runRecognize]);
 
+  const handleHistorySelect = useCallback(async (item: RecognitionHistoryItem) => {
+    try {
+      const detail = await getRecognitionHistory(item.id);
+      if (!detail.response) {
+        setErrorMsg(detail.error || '这条记录还没有可显示的识别结果');
+        return;
+      }
+      setFile(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(detail.image_url ? recognitionHistoryImageUrl(item.id) : null);
+      setResult({
+        ...detail.response,
+        recognition_id: detail.response.recognition_id || item.id,
+        score: applyScoreStyle(detail.response.score),
+      });
+      setErrorMsg(detail.status === 'failed' ? (detail.error || '识别失败') : null);
+      setProgress('');
+      setShowHistory(false);
+    } catch (e: unknown) {
+      setHistoryError(e instanceof Error ? e.message : String(e));
+    }
+  }, [previewUrl]);
+
   const score: Score | null = result?.score || null;
 
   return (
     <div
-      className="h-screen w-screen flex flex-col overflow-hidden transition-colors duration-200"
+      className="relative h-screen w-screen flex flex-col overflow-hidden transition-colors duration-200"
       style={{ backgroundColor: isDarkTheme ? '#1e1e1e' : '#f5f5f5' }}
     >
       {/* 顶部工具栏 */}
@@ -126,6 +180,17 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
         <h1 className="text-sm font-semibold" style={{ color: isDarkTheme ? '#fff' : '#111' }}>
           图片简谱识别
         </h1>
+        <button
+          onClick={() => { setShowHistory(true); void refreshHistory(); }}
+          className="flex items-center gap-1 rounded px-2 py-1 text-[10px] hover:bg-blue-500/10"
+          style={{ color: isDarkTheme ? '#cbd5e1' : '#475569' }}
+          title="查看每次识别的结果"
+        >
+          <History size={13} /> 识别记录
+        </button>
+        <span className="rounded bg-emerald-500/15 px-2 py-1 text-[10px] text-emerald-500" title={JPW5_HULUNBUIR_STYLE.description}>
+          输出样式：{JPW5_HULUNBUIR_STYLE.name} v{JPW5_HULUNBUIR_STYLE.version}
+        </span>
         <div
           className="flex items-center rounded p-0.5 text-[11px]"
           style={{ backgroundColor: isDarkTheme ? '#1e1e1e' : '#f3f4f6' }}
@@ -302,6 +367,16 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
           </div>
         </div>
       </div>
+      {showHistory && (
+        <HistoryPanel
+          isDarkTheme={isDarkTheme}
+          items={historyItems}
+          loading={historyLoading}
+          error={historyError}
+          onSelect={handleHistorySelect}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
     </div>
   );
 }

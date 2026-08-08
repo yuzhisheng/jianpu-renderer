@@ -8,6 +8,7 @@ public/training/
 backend/.venv/
 backend/.venv-vlm/
 backend/.cache/
+backend/data/
 backend/real_annotations/images/
 backend/real_annotations/rows/
 backend/real_annotations/overlays/

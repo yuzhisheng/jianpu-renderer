@@ -11,7 +11,7 @@ from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 from PIL import Image
 from starlette.concurrency import run_in_threadpool
@@ -28,6 +28,7 @@ from accurate_recognizer import (
     AccurateRecognizerInterruptedError,
     AccurateRecognizerTimeoutError,
 )
+from recognition_history import RecognitionHistory
 
 logging.basicConfig(
     level=logging.INFO,
@@ -57,6 +58,7 @@ assembler: Optional[Assembler] = None
 transformer: Optional[TransformerAssembler] = None
 visual_recognizer: Optional[VisualTransformerRecognizer] = None
 accurate_recognizer: Optional[AccurateVLMRecognizer] = None
+recognition_history = RecognitionHistory()
 
 
 def get_models(load_transformer: bool = False):
@@ -103,7 +105,10 @@ def root():
     return {
         "service": "jianpu-image-recognizer",
         "version": "1.0.0",
-        "endpoints": ["/recognize (POST)", "/health (GET)"],
+        "endpoints": [
+            "/recognize (POST)", "/recognition-history (GET)",
+            "/recognition-history/{id} (GET)", "/health (GET)",
+        ],
     }
 
 
@@ -127,10 +132,37 @@ def health():
         "transformer_loaded": transformer is not None and transformer.model is not None,
         "visual_transformer_loaded": visual_recognizer is not None and visual_recognizer.model is not None,
         "accurate_vlm_available": get_accurate_recognizer().available,
+        "recognition_history_available": recognition_history.db_path.exists(),
     }
 
 
+@app.get("/recognition-history")
+def list_recognition_history(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    """Return recent recognition attempts, newest first."""
+    return {"items": recognition_history.list(limit=limit, offset=offset)}
+
+
+@app.get("/recognition-history/{record_id}")
+def get_recognition_history(record_id: str):
+    record = recognition_history.get(record_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail="识别记录不存在")
+    return record
+
+
+@app.get("/recognition-history/{record_id}/image")
+def get_recognition_history_image(record_id: str):
+    path = recognition_history.image_path(record_id)
+    if path is None:
+        raise HTTPException(status_code=404, detail="该记录没有保存原图")
+    return FileResponse(path)
+
+
 class RecognizeResponse(BaseModel):
+    recognition_id: Optional[str] = None
     score: dict
     detections: list
     num_detections: int
@@ -156,19 +188,44 @@ async def recognize(
     上传图片, 识别为 Score JSON
     """
     t0 = time.time()
+    history_id: Optional[str] = None
+
+    def record_failure(detail: object) -> None:
+        if history_id is None:
+            return
+        try:
+            recognition_history.fail(
+                history_id, str(detail), (time.time() - t0) * 1000)
+        except Exception as history_error:
+            logger.warning("识别失败记录写入失败: %s", history_error)
 
     # 读图片
     try:
         contents = await file.read()
+        try:
+            history_id = recognition_history.begin(
+                file.filename, contents if len(contents) <= 10 * 1024 * 1024 else b"",
+                recognizer="visual" if visual_sequence else recognizer,
+                confidence=conf,
+            )
+        except Exception as history_error:
+            logger.warning("识别开始记录写入失败: %s", history_error)
         if len(contents) > 10 * 1024 * 1024:
+            record_failure("文件超过 10MB")
             raise HTTPException(status_code=400, detail="文件超过 10MB")
         image = Image.open(io.BytesIO(contents)).convert("RGB")
+        try:
+            recognition_history.set_dimensions(history_id, image.width, image.height)
+        except Exception as history_error:
+            logger.warning("识别图片尺寸记录写入失败: %s", history_error)
     except HTTPException:
         raise
     except Exception as e:
+        record_failure(f"图片读取失败: {e}")
         raise HTTPException(status_code=400, detail=f"图片读取失败: {e}")
 
     if recognizer not in {"accurate", "fast", "visual"}:
+        record_failure("recognizer 必须是 accurate、fast 或 visual")
         raise HTTPException(status_code=400, detail="recognizer 必须是 accurate、fast 或 visual")
     if visual_sequence:
         recognizer = "visual"
@@ -176,6 +233,7 @@ async def recognize(
     # 加载模型。精确模式仍以低阈值检测框辅助恢复小节线，但音高由 VLM 决定。
     det, asm = get_models(load_transformer=use_transformer)
     if det is None:
+        record_failure("YOLO 模型未加载")
         raise HTTPException(
             status_code=503,
             detail="YOLO 模型未加载, 请先训练: python backend/scripts/train_detector.py",
@@ -184,6 +242,7 @@ async def recognize(
     if (recognizer == "accurate"
             and callable(getattr(det, "is_staff_notation", None))
             and det.is_staff_notation(image)):
+        record_failure("图片是五线谱/吉他谱或其他非数字简谱")
         raise HTTPException(
             status_code=422,
             detail="图片是五线谱/吉他谱或其他非数字简谱，当前仅支持数字简谱",
@@ -201,6 +260,7 @@ async def recognize(
             det.detect, image, detector_conf)
     except Exception as e:
         logger.error(f"YOLO 检测失败: {e}")
+        record_failure(f"检测失败: {e}")
         raise HTTPException(status_code=500, detail=f"检测失败: {e}")
 
     # 组装 JSON
@@ -218,13 +278,17 @@ async def recognize(
             result = await run_in_threadpool(
                 asm_local.assemble_from_dets, detections, img_w, img_h)
     except AccurateRecognizerBusyError as e:
+        record_failure(e)
         raise HTTPException(status_code=409, detail=str(e))
     except AccurateRecognizerInterruptedError as e:
+        record_failure(e)
         raise HTTPException(status_code=503, detail=str(e))
     except AccurateRecognizerTimeoutError as e:
+        record_failure(e)
         raise HTTPException(status_code=504, detail=str(e))
     except Exception as e:
         logger.error(f"拼装失败: {e}")
+        record_failure(f"拼装失败: {e}")
         raise HTTPException(status_code=500, detail=f"拼装失败: {e}")
 
     score = result["score"]
@@ -244,7 +308,8 @@ async def recognize(
         for d in detections
     ]
 
-    return RecognizeResponse(
+    response = RecognizeResponse(
+        recognition_id=history_id,
         score=score,
         detections=det_list,
         num_detections=len(detections),
@@ -257,6 +322,15 @@ async def recognize(
         row_results=result.get("row_results", []),
         symbol_summary=result.get("symbol_summary", {}),
     )
+    try:
+        response_payload = response.model_dump()
+    except AttributeError:
+        response_payload = response.dict()
+    try:
+        recognition_history.complete(history_id, response_payload, elapsed_ms)
+    except Exception as history_error:
+        logger.warning("识别结果记录写入失败: %s", history_error)
+    return response
 
 
 @app.on_event("startup")
