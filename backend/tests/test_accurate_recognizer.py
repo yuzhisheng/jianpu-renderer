@@ -305,6 +305,17 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
             [("B|", 40.0), ("B:|", 120.0)])
         self.assertEqual(endings, [])
 
+    def test_score_crop_expands_for_upper_slur_context(self):
+        image = Image.new("RGB", (700, 180), "white")
+        draw = ImageDraw.Draw(image)
+        for left in (60, 150, 240, 330, 420, 510, 600):
+            draw.rectangle((left, 55, left + 27, 110), fill="black")
+        expanded = self.recognizer._expand_score_crop_context(
+            image, [0, 105, 700, 180], 7, [])
+        self.assertEqual(expanded[0], 0)
+        self.assertLess(expanded[1], 105)
+        self.assertEqual(expanded[2:], [700, 180])
+
     def test_repeat_endings_are_injected_inside_target_measure(self):
         tokens = self.recognizer._inject_repeat_endings(
             ["P1", "B|", "P2", "P3", "B:|"], [(1, [2, 3])])

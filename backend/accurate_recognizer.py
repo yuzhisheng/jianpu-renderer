@@ -924,6 +924,42 @@ class AccurateVLMRecognizer:
                 selected[note_index] = (density, area, center_x)
         return sorted(selected)
 
+    @classmethod
+    def _expand_score_crop_context(
+        cls, image: Image.Image, crop_box: Sequence[int], expected_count: int,
+        detections: Iterable[Sequence[float]],
+    ) -> List[int]:
+        """Include the upper relation band when a VLM row crop is too tight.
+
+        Local VLM banding occasionally starts a score crop at the digit
+        baseline. That still preserves pitches, but removes slurs, volta
+        brackets and high-octave dots above the row. A dominant full-image
+        glyph band with the expected note count is a safe anchor for restoring
+        the missing context; the returned box is used only for pixel geometry.
+        """
+        original = [int(value) for value in crop_box]
+        if expected_count < 2 or image is None:
+            return original
+        full_box = [0, 0, image.width, image.height]
+        _, detector_baseline, detector_height, _ = cls._row_geometry(
+            detections, full_box)
+        full_note_boxes = cls._component_note_boxes(
+            image, full_box, detector_baseline, detector_height, expected_count)
+        if len(full_note_boxes) != expected_count:
+            return original
+        baseline = median(float(box[1]) for box in full_note_boxes)
+        note_height = median(float(box[3]) for box in full_note_boxes)
+        context_top = max(0, int(baseline - note_height * 3.0))
+        context_bottom = min(image.height, int(baseline + note_height * 1.25))
+        # Do not let a row's context swallow an unrelated following band.
+        # Expanding upward is the important case (slurs/voltas/high dots).
+        if context_top >= original[1] and context_bottom <= original[3]:
+            return original
+        return [
+            original[0], min(original[1], context_top),
+            original[2], max(original[3], context_bottom),
+        ]
+
     @staticmethod
     def _visual_lyric_slots(
         image: Image.Image, crop_box: Sequence[int], note_positions: List[float],
@@ -1427,11 +1463,17 @@ class AccurateVLMRecognizer:
                         if ((token.startswith("P") or token == "R0")
                                 and isinstance(box, list) and len(box) == 4):
                             preferred_note_boxes.append(box)
+                pitch_count = sum(
+                    token.startswith("P") or token == "R0" for token in voice_tokens
+                )
+                geometry_crop_box = self._expand_score_crop_context(
+                    image, row["crop_box"], pitch_count, detections
+                )
                 merged = self._merge_geometry_bars(
-                    voice_tokens, detections, row["crop_box"], image.width,
+                    voice_tokens, detections, geometry_crop_box, image.width,
                     image, token_geometry)
                 decorated, positions, row_detections, baseline, note_height = self._apply_note_modifiers(
-                    merged, detections, row["crop_box"], image.width, image,
+                    merged, detections, geometry_crop_box, image.width, image,
                     preferred_note_boxes)
                 pitch_tokens = [token for token in merged if token.startswith("P") or token == "R0"]
                 if voice_index == 0:
@@ -1457,7 +1499,7 @@ class AccurateVLMRecognizer:
                 else:
                     row_relations = []
                 row_relations.extend(self._visual_curve_relations(
-                    image, row["crop_box"], pitch_tokens, positions,
+                    image, geometry_crop_box, pitch_tokens, positions,
                     row_detections, baseline, note_height))
                 row_relations = self._production_relations(row_relations)
                 row_relations = [
@@ -1473,14 +1515,14 @@ class AccurateVLMRecognizer:
                 if len(preferred_item_boxes) == len(row_items):
                     item_positions = [float(box[0]) for box in preferred_item_boxes]
                     item_markers = self._visual_parentheses(
-                        image, row["crop_box"], item_positions, baseline, note_height)
+                        image, geometry_crop_box, item_positions, baseline, note_height)
                 else:
                     pitch_to_item = [index for index, token in enumerate(row_items)
                                      if token.startswith("P") or token == "R0"]
                     item_markers = [
                         (side, pitch_to_item[index])
                         for side, index in self._visual_parentheses(
-                            image, row["crop_box"], positions, baseline, note_height)
+                            image, geometry_crop_box, positions, baseline, note_height)
                         if index < len(pitch_to_item)
                     ]
                 for side, item_index in item_markers:
@@ -1489,11 +1531,11 @@ class AccurateVLMRecognizer:
                     text_layer = row.get("text_layer", {})
                     if isinstance(text_layer, dict):
                         lyric_layers.append((note_offset, self._visual_lyric_slots(
-                            image, row["crop_box"], positions, baseline, note_height,
+                            image, geometry_crop_box, positions, baseline, note_height,
                             text_layer.get("lyric_lines", []),
                             text_layer.get("lyric_boxes", []))))
                         for before_note, numerator, denominator in self._visual_time_signatures(
-                                image, row["crop_box"], positions, baseline, note_height,
+                            image, geometry_crop_box, positions, baseline, note_height,
                                 text_layer.get("time_signatures", [])):
                             time_signatures.append((
                                 note_offset + before_note, numerator, denominator))
@@ -1503,16 +1545,16 @@ class AccurateVLMRecognizer:
                                     and 0 <= ornament["note"] < len(pitch_tokens)):
                                 ornaments.append((note_offset + ornament["note"], ornament))
                     for boyin_note in self._visual_boyin(
-                            image, row["crop_box"], positions, baseline, note_height):
+                            image, geometry_crop_box, positions, baseline, note_height):
                         ornaments.append((
                             note_offset + boyin_note, {"type": "boyin"}))
                 note_offset += len(pitch_tokens)
                 item_offset += len(row_items)
                 pixel_bars = self._pixel_bars(
-                    image, row["crop_box"], baseline, note_height)
+                    image, geometry_crop_box, baseline, note_height)
                 decorated = self._inject_repeat_endings(
                     decorated, self._visual_repeat_endings(
-                        image, row["crop_box"], baseline, note_height, pixel_bars))
+                        image, geometry_crop_box, baseline, note_height, pixel_bars))
                 tokens.extend(decorated)
                 if decorated and not any(token.startswith("B") for token in decorated[-2:]):
                     tokens.append("B|")
