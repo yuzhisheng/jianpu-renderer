@@ -120,8 +120,8 @@ def generate_many(model, processor, images, prompts, max_tokens):
     ]
 
 
-def estimate_main_digit_count(image: Image.Image):
-    """Estimate digit components on the uppermost dense music baseline."""
+def estimate_main_digit_geometry(image: Image.Image):
+    """Estimate digit count, baseline and glyph height on the music row."""
     gray = np.asarray(image.convert("L"))
     binary = (gray < 150).astype(np.uint8)
     count, _, stats, centroids = cv2.connectedComponentsWithStats(binary, 8)
@@ -134,7 +134,7 @@ def estimate_main_digit_count(image: Image.Image):
                 and area >= 25 and center_y <= image.height * 0.68):
             candidates.append((float(center_x), float(center_y), width, height, area))
     if not candidates:
-        return 0, image.height / 2
+        return 0, image.height / 2, max(16.0, image.height * 0.22)
     typical_height = float(np.median([item[3] for item in candidates]))
     radius = max(9.0, typical_height * 0.48)
     # Music is the uppermost dense glyph baseline in a projection band; lyric
@@ -149,7 +149,13 @@ def estimate_main_digit_count(image: Image.Image):
     if baseline is None:
         baseline = min(item[1] for item in candidates)
     row = [item for item in candidates if abs(item[1] - baseline) <= radius]
-    return len(row), baseline
+    return len(row), baseline, typical_height
+
+
+def estimate_main_digit_count(image: Image.Image):
+    """Estimate digit components on the uppermost dense music baseline."""
+    count, baseline, _ = estimate_main_digit_geometry(image)
+    return count, baseline
 
 
 def count_digits_near_baseline(image: Image.Image, baseline: float):
@@ -441,11 +447,26 @@ def read_text_layers(
             voice.get("tokens", []), voice.get("token_geometry", []))
             if (token.startswith("P") or token == "R0")
             and isinstance(geometry, dict) and isinstance(geometry.get("box"), list)]
-        if not note_boxes:
-            continue
-        baseline = float(np.median([box[1] for box in note_boxes])) - top
-        note_height = float(np.median([box[3] for box in note_boxes]))
         row_image = page.crop((0, top, page.width, bottom))
+        if note_boxes:
+            baseline = float(np.median([box[1] for box in note_boxes])) - top
+            note_height = float(np.median([box[3] for box in note_boxes]))
+        else:
+            # The pitch pass can be correct while omitting token_geometry.
+            # Do not drop lyrics in that case: recover the score baseline from
+            # connected components and continue with the same lyric projection.
+            estimated, baseline, note_height = estimate_main_digit_geometry(row_image)
+            if estimated < max(3, min(note_count, 6) * 0.45):
+                continue
+        # Detector/VLM row bands often end on the last lyric glyph.  Give the
+        # projection one small, scale-aware safety margin so a line touching
+        # the crop bottom is not rejected as an incomplete border group.  The
+        # margin is much smaller than the distance to the next score baseline,
+        # so it cannot absorb the following music row.
+        context_bottom = min(
+            page.height, bottom + max(8, round(note_height * 0.60)))
+        if context_bottom > bottom:
+            row_image = page.crop((0, top, page.width, context_bottom))
         gray = np.asarray(row_image.convert("L"))
         region_top = max(0, int(baseline + note_height * 1.55))
         binary = (gray[region_top:, :] < 150).astype(np.uint8)
@@ -529,7 +550,10 @@ def read_text_layers(
         texts = generate_many(
             model, processor,
             [item[3] for item in batch], [item[4] for item in batch],
-            max_tokens=min(max_tokens, 512),
+            # Text-layer responses are tiny JSON objects.  Keeping this cap
+            # below the page-level pitch budget prevents a long lyric crop
+            # from spending minutes in autoregressive generation.
+            max_tokens=min(max_tokens, 256),
         )
         for (kind, index, line_index, _, _, note_count, source_box), raw in zip(batch, texts):
             try:
