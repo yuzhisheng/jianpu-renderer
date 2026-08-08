@@ -339,7 +339,11 @@ class AccurateVLMRecognizer:
                     # dense scans.  Keep the x-side constraint narrow while
                     # allowing that real vertical offset; otherwise B:|/B|:
                     # collapses into an ordinary double bar.
-                    and abs(center_y - baseline) <= max(28.0, note_height * 1.25)):
+                    # A detector can place the baseline on an underline by
+                    # 1--1.5 glyph heights. Keep enough vertical headroom to
+                    # retain the two dots; `has_colon` below still requires a
+                    # tightly paired colon centered near the line.
+                    and abs(center_y - baseline) <= max(42.0, note_height * 2.05)):
                 dots.append((float(center_x), center_y))
         if not lines:
             return []
@@ -364,8 +368,12 @@ class AccurateVLMRecognizer:
                     candidates = [dot_y for dot_x, dot_y in dots
                                   if right_x + 7 <= dot_x <= right_x + 32]
                 candidates.sort()
-                return any(second - first >= max(8.0, note_height * 0.30)
-                           for first, second in zip(candidates, candidates[1:]))
+                for first, second in zip(candidates, candidates[1:]):
+                    if (second - first >= max(8.0, note_height * 0.30)
+                            and abs((first + second) / 2 - baseline)
+                            <= max(28.0, note_height * 1.35)):
+                        return True
+                return False
 
             left_colon, right_colon = has_colon("left"), has_colon("right")
             if left_colon and not right_colon:

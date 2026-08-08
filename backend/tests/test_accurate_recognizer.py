@@ -160,6 +160,18 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
         bars = self.recognizer._pixel_bars(image, [0, 0, 120, 110], 77.1, 21.4)
         self.assertEqual([token for token, _ in bars], ["B:|"])
 
+    def test_pixel_repeat_survives_baseline_on_reduction_line(self):
+        image = Image.new("RGB", (120, 130), "white")
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((70, 25, 72, 106), fill="black")
+        draw.rectangle((78, 25, 85, 106), fill="black")
+        draw.ellipse((54, 49, 61, 56), fill="black")
+        draw.ellipse((54, 72, 61, 79), fill="black")
+        # The detector baseline is on the lower reduction-line band, not the
+        # digit center; the paired-colon geometry should still win.
+        bars = self.recognizer._pixel_bars(image, [0, 0, 120, 130], 85.0, 21.4)
+        self.assertEqual([token for token, _ in bars], ["B:|"])
+
     def test_source_boxes_override_interpolated_note_positions(self):
         image = Image.new("RGB", (180, 110), "white")
         draw = ImageDraw.Draw(image)
