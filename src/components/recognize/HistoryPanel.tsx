@@ -97,6 +97,11 @@ export default function HistoryPanel({
                   {item.lyric_syllables != null ? `${item.lyric_syllables} 个歌词音节` : ''}
                 </div>
               )}
+              {item.page_count != null && item.page_count > 1 && (
+                <div className="mt-1 text-[10px]" style={{ color: muted }}>
+                  PDF · {item.page_count} 页
+                </div>
+              )}
               {item.inference_ms != null && (
                 <div className="mt-1 text-[10px]" style={{ color: muted }}>
                   耗时 {item.inference_ms >= 10000 ? `${(item.inference_ms / 1000).toFixed(1)} 秒` : `${item.inference_ms.toFixed(0)} ms`}

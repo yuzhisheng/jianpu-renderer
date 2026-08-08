@@ -1,6 +1,8 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import type { Score } from '../../types';
 import { calculateLayout, render, PRINT_THEME, setupCanvasDPI, PRINT_CONFIG } from '../../engine';
+import { downloadPDF } from '../../engine/export';
+import { resolveScoreStylePreset } from '../../styles/scoreStyles';
 import { Copy, Check, Download, FileJson } from 'lucide-react';
 
 interface JsonPanelProps {
@@ -18,12 +20,13 @@ export default function JsonPanel({ score, isLoading, errorMessage }: JsonPanelP
   useEffect(() => {
     if (isLoading || !score || !canvasRef.current) return;
     try {
-      const config = { ...PRINT_CONFIG };
+      const preset = resolveScoreStylePreset(score);
+      const config = { ...(preset?.layoutConfig || PRINT_CONFIG) };
       const layout = calculateLayout(score, config);
       canvasRef.current.width = layout.width;
       canvasRef.current.height = layout.height;
       const ctx = setupCanvasDPI(canvasRef.current, layout.width, layout.height);
-      render(ctx, layout, score, config, PRINT_THEME);
+      render(ctx, layout, score, config, preset?.theme || PRINT_THEME);
     } catch (e) {
       console.error('渲染失败', e);
     }
@@ -67,6 +70,11 @@ export default function JsonPanel({ score, isLoading, errorMessage }: JsonPanelP
       a.click();
       URL.revokeObjectURL(url);
     });
+  }, [score]);
+
+  const handleDownloadPdf = useCallback(() => {
+    if (!canvasRef.current) return;
+    void downloadPDF(canvasRef.current, `${score?.title || 'recognition-result'}.pdf`);
   }, [score]);
 
   if (isLoading) {
@@ -127,6 +135,12 @@ export default function JsonPanel({ score, isLoading, errorMessage }: JsonPanelP
           className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-1"
         >
           <Download size={12} /> PNG
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-1"
+        >
+          <Download size={12} /> PDF
         </button>
         <span className="ml-auto text-xs text-gray-400">
           {score.measures?.length || 0} 小节

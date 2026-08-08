@@ -6,6 +6,7 @@ import sys
 import io
 import time
 import logging
+from copy import deepcopy
 from pathlib import Path
 from typing import Optional
 
@@ -29,6 +30,7 @@ from accurate_recognizer import (
     AccurateRecognizerTimeoutError,
 )
 from recognition_history import RecognitionHistory
+from pdf_utils import is_pdf, render_pdf_pages
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,7 +41,7 @@ logger = logging.getLogger("jianpu-api")
 # === FastAPI app ===
 app = FastAPI(
     title="简谱图片识别服务",
-    description="上传简谱图片, 返回 Score JSON",
+    description="上传简谱图片或 PDF，返回 Score JSON",
     version="1.0.0",
 )
 
@@ -174,66 +176,21 @@ class RecognizeResponse(BaseModel):
     warnings: list = Field(default_factory=list)
     row_results: list = Field(default_factory=list)
     symbol_summary: dict = Field(default_factory=dict)
+    file_type: str = "image"
+    page_count: int = 1
+    page_results: list = Field(default_factory=list)
 
 
-@app.post("/recognize", response_model=RecognizeResponse)
-async def recognize(
-    file: UploadFile = File(...),
-    conf: float = Query(0.20, ge=0.05, le=0.95, description="YOLO 置信度阈值"),
-    use_transformer: bool = Query(False, description="实验性序列纠错；默认使用二维几何拼装"),
-    visual_sequence: bool = Query(False, description="实验性行图片→CTC/Transformer 序列识别"),
-    recognizer: str = Query("accurate", description="accurate=本地视觉大模型；fast=YOLO 几何拼装"),
+async def recognize_page_image(
+    image: Image.Image,
+    *,
+    conf: float,
+    use_transformer: bool,
+    recognizer: str,
 ):
-    """
-    上传图片, 识别为 Score JSON
-    """
-    t0 = time.time()
-    history_id: Optional[str] = None
-
-    def record_failure(detail: object) -> None:
-        if history_id is None:
-            return
-        try:
-            recognition_history.fail(
-                history_id, str(detail), (time.time() - t0) * 1000)
-        except Exception as history_error:
-            logger.warning("识别失败记录写入失败: %s", history_error)
-
-    # 读图片
-    try:
-        contents = await file.read()
-        try:
-            history_id = recognition_history.begin(
-                file.filename, contents if len(contents) <= 10 * 1024 * 1024 else b"",
-                recognizer="visual" if visual_sequence else recognizer,
-                confidence=conf,
-            )
-        except Exception as history_error:
-            logger.warning("识别开始记录写入失败: %s", history_error)
-        if len(contents) > 10 * 1024 * 1024:
-            record_failure("文件超过 10MB")
-            raise HTTPException(status_code=400, detail="文件超过 10MB")
-        image = Image.open(io.BytesIO(contents)).convert("RGB")
-        try:
-            recognition_history.set_dimensions(history_id, image.width, image.height)
-        except Exception as history_error:
-            logger.warning("识别图片尺寸记录写入失败: %s", history_error)
-    except HTTPException:
-        raise
-    except Exception as e:
-        record_failure(f"图片读取失败: {e}")
-        raise HTTPException(status_code=400, detail=f"图片读取失败: {e}")
-
-    if recognizer not in {"accurate", "fast", "visual"}:
-        record_failure("recognizer 必须是 accurate、fast 或 visual")
-        raise HTTPException(status_code=400, detail="recognizer 必须是 accurate、fast 或 visual")
-    if visual_sequence:
-        recognizer = "visual"
-
-    # 加载模型。精确模式仍以低阈值检测框辅助恢复小节线，但音高由 VLM 决定。
-    det, asm = get_models(load_transformer=use_transformer)
+    """Run the existing single-image pipeline for one rasterized page."""
+    det, _ = get_models(load_transformer=use_transformer)
     if det is None:
-        record_failure("YOLO 模型未加载")
         raise HTTPException(
             status_code=503,
             detail="YOLO 模型未加载, 请先训练: python backend/scripts/train_detector.py",
@@ -242,7 +199,6 @@ async def recognize(
     if (recognizer == "accurate"
             and callable(getattr(det, "is_staff_notation", None))
             and det.is_staff_notation(image)):
-        record_failure("图片是五线谱/吉他谱或其他非数字简谱")
         raise HTTPException(
             status_code=422,
             detail="图片是五线谱/吉他谱或其他非数字简谱，当前仅支持数字简谱",
@@ -253,17 +209,13 @@ async def recognize(
         if callable(enable_pitch_refinement):
             enable_pitch_refinement()
 
-    # YOLO 检测
+    detector_conf = min(conf, 0.12) if recognizer == "accurate" else conf
     try:
-        detector_conf = min(conf, 0.12) if recognizer == "accurate" else conf
         detections, img_w, img_h = await run_in_threadpool(
             det.detect, image, detector_conf)
-    except Exception as e:
-        logger.error(f"YOLO 检测失败: {e}")
-        record_failure(f"检测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"检测失败: {e}")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"检测失败: {exc}") from exc
 
-    # 组装 JSON
     try:
         if recognizer == "accurate":
             result = await run_in_threadpool(
@@ -277,6 +229,148 @@ async def recognize(
             )
             result = await run_in_threadpool(
                 asm_local.assemble_from_dets, detections, img_w, img_h)
+    except (AccurateRecognizerBusyError,
+            AccurateRecognizerInterruptedError,
+            AccurateRecognizerTimeoutError):
+        raise
+    except Exception as exc:
+        raise RuntimeError(f"拼装失败: {exc}") from exc
+
+    det_list = [
+        {
+            "class_id": d[0],
+            "class_name": det.class_name(d[0]),
+            "cx": d[1],
+            "cy": d[2],
+            "w": d[3],
+            "h": d[4],
+            "conf": d[5],
+        }
+        for d in detections
+    ]
+    return result, det_list, image.width, image.height
+
+
+def merge_page_scores(scores: list[dict]) -> dict:
+    """Join page scores into one renderable score while preserving page breaks."""
+    if not scores:
+        return {"title": "识别结果", "measures": []}
+    merged = deepcopy(scores[0])
+    for page_score in scores[1:]:
+        page_measures = deepcopy(page_score.get("measures", []))
+        if page_measures:
+            page_measures[0]["lineBreakBefore"] = True
+            merged.setdefault("measures", []).extend(page_measures)
+        if isinstance(merged.get("parts"), list) and isinstance(page_score.get("parts"), list):
+            for part_index, part in enumerate(page_score["parts"]):
+                if part_index >= len(merged["parts"]):
+                    merged["parts"].append(deepcopy(part))
+                else:
+                    target = merged["parts"][part_index]
+                    extra = deepcopy(part.get("measures", []))
+                    if extra:
+                        extra[0]["lineBreakBefore"] = True
+                        target.setdefault("measures", []).extend(extra)
+    return merged
+
+
+def aggregate_symbol_summary(results: list[dict]) -> dict:
+    aggregate: dict = {}
+    for result in results:
+        summary = result.get("symbol_summary", {})
+        if not isinstance(summary, dict):
+            continue
+        for key, value in summary.items():
+            if isinstance(value, (int, float)):
+                aggregate[key] = aggregate.get(key, 0) + value
+            elif key not in aggregate:
+                aggregate[key] = value
+    return aggregate
+
+
+@app.post("/recognize", response_model=RecognizeResponse)
+async def recognize(
+    file: UploadFile = File(...),
+    conf: float = Query(0.20, ge=0.05, le=0.95, description="YOLO 置信度阈值"),
+    use_transformer: bool = Query(False, description="实验性序列纠错；默认使用二维几何拼装"),
+    visual_sequence: bool = Query(False, description="实验性行图片→CTC/Transformer 序列识别"),
+    recognizer: str = Query("accurate", description="accurate=本地视觉大模型；fast=YOLO 几何拼装"),
+):
+    """
+    上传图片或多页 PDF，识别为 Score JSON
+    """
+    t0 = time.time()
+    history_id: Optional[str] = None
+
+    def record_failure(detail: object) -> None:
+        if history_id is None:
+            return
+        try:
+            recognition_history.fail(
+                history_id, str(detail), (time.time() - t0) * 1000)
+        except Exception as history_error:
+            logger.warning("识别失败记录写入失败: %s", history_error)
+
+    # 读图片或 PDF。PDF 页面会先栅格化，再逐页复用同一识别管线。
+    try:
+        contents = await file.read()
+        pdf_input = is_pdf(contents, file.filename)
+        max_upload_size = 50 * 1024 * 1024 if pdf_input else 10 * 1024 * 1024
+        try:
+            history_id = recognition_history.begin(
+                file.filename, contents if len(contents) <= max_upload_size else b"",
+                recognizer="visual" if visual_sequence else recognizer,
+                confidence=conf,
+            )
+        except Exception as history_error:
+            logger.warning("识别开始记录写入失败: %s", history_error)
+        if len(contents) > max_upload_size:
+            record_failure(f"文件超过 {max_upload_size // (1024 * 1024)}MB")
+            raise HTTPException(
+                status_code=400,
+                detail=f"文件超过 {max_upload_size // (1024 * 1024)}MB",
+            )
+        if pdf_input:
+            pages = await run_in_threadpool(render_pdf_pages, contents)
+        else:
+            pages = [Image.open(io.BytesIO(contents)).convert("RGB")]
+        if not pages:
+            raise ValueError("文件没有可识别的页面")
+        try:
+            recognition_history.set_dimensions(history_id, pages[0].width, pages[0].height)
+        except Exception as history_error:
+            logger.warning("识别图片尺寸记录写入失败: %s", history_error)
+    except HTTPException:
+        raise
+    except Exception as e:
+        record_failure(f"文件读取或 PDF 转换失败: {e}")
+        raise HTTPException(status_code=400, detail=f"文件读取或 PDF 转换失败: {e}")
+
+    if recognizer not in {"accurate", "fast", "visual"}:
+        record_failure("recognizer 必须是 accurate、fast 或 visual")
+        raise HTTPException(status_code=400, detail="recognizer 必须是 accurate、fast 或 visual")
+    if visual_sequence:
+        recognizer = "visual"
+
+    page_outputs = []
+    try:
+        for page_index, image in enumerate(pages):
+            result, det_list, page_width, page_height = await recognize_page_image(
+                image,
+                conf=conf,
+                use_transformer=use_transformer,
+                recognizer=recognizer,
+            )
+            page_outputs.append({
+                "page": page_index + 1,
+                "width": page_width,
+                "height": page_height,
+                "result": result,
+                "detections": det_list,
+            })
+    except HTTPException as e:
+        record_failure(e.detail)
+        raise
     except AccurateRecognizerBusyError as e:
         record_failure(e)
         raise HTTPException(status_code=409, detail=str(e))
@@ -291,36 +385,54 @@ async def recognize(
         record_failure(f"拼装失败: {e}")
         raise HTTPException(status_code=500, detail=f"拼装失败: {e}")
 
-    score = result["score"]
+    page_scores = [page["result"]["score"] for page in page_outputs]
+    score = merge_page_scores(page_scores)
+    page_count = len(page_outputs)
+    page_results = []
+    all_detections = []
+    all_src_tokens = []
+    all_tgt_tokens = []
+    all_warnings = []
+    confidences = []
+    for page in page_outputs:
+        result = page["result"]
+        page_index = page["page"]
+        all_detections.extend(
+            [{**detection, "page": page_index} for detection in page["detections"]])
+        all_src_tokens.extend(result.get("src_tokens", []))
+        all_tgt_tokens.extend(result.get("tgt_tokens", []))
+        all_warnings.extend(result.get("warnings", []))
+        if isinstance(result.get("confidence"), (int, float)):
+            confidences.append(float(result["confidence"]))
+        if page_count > 1:
+            page_results.append({
+                "page": page_index,
+                "width": page["width"],
+                "height": page["height"],
+                "score": result.get("score", {}),
+                "row_results": result.get("row_results", []),
+                "symbol_summary": result.get("symbol_summary", {}),
+            })
     elapsed_ms = (time.time() - t0) * 1000
-
-    # 构造响应
-    det_list = [
-        {
-            "class_id": d[0],
-            "class_name": det.class_name(d[0]),
-            "cx": d[1],
-            "cy": d[2],
-            "w": d[3],
-            "h": d[4],
-            "conf": d[5],
-        }
-        for d in detections
-    ]
 
     response = RecognizeResponse(
         recognition_id=history_id,
         score=score,
-        detections=det_list,
-        num_detections=len(detections),
+        detections=all_detections,
+        num_detections=len(all_detections),
         inference_ms=elapsed_ms,
-        src_tokens=result["src_tokens"],
-        tgt_tokens=result["tgt_tokens"],
+        src_tokens=all_src_tokens,
+        tgt_tokens=all_tgt_tokens,
         recognizer=recognizer,
-        confidence=result.get("confidence"),
-        warnings=result.get("warnings", []),
-        row_results=result.get("row_results", []),
-        symbol_summary=result.get("symbol_summary", {}),
+        confidence=(sum(confidences) / len(confidences) if confidences else None),
+        warnings=list(dict.fromkeys(all_warnings)),
+        row_results=(page_outputs[0]["result"].get("row_results", [])
+                     if page_count == 1 else page_results),
+        symbol_summary=aggregate_symbol_summary(
+            [page["result"] for page in page_outputs]),
+        file_type="pdf" if pdf_input else "image",
+        page_count=page_count,
+        page_results=page_results,
     )
     try:
         response_payload = response.model_dump()

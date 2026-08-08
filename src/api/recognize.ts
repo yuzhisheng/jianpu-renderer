@@ -23,6 +23,9 @@ export interface RecognizeResponse {
   confidence?: number | null;
   warnings?: string[];
   row_results?: unknown[];
+  file_type?: 'image' | 'pdf' | string;
+  page_count?: number;
+  page_results?: unknown[];
   symbol_summary?: {
     notes: number;
     eighth_notes: number;
@@ -52,6 +55,8 @@ export interface RecognitionHistoryItem {
   title?: string | null;
   notes?: number | null;
   lyric_syllables?: number | null;
+  file_type?: 'image' | 'pdf' | string | null;
+  page_count?: number | null;
 }
 
 export interface RecognitionHistoryDetail extends RecognitionHistoryItem {

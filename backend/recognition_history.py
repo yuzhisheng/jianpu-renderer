@@ -169,6 +169,9 @@ class RecognitionHistory:
                 response = json.loads(row["response_json"])
                 score = response.get("score") if isinstance(response, dict) else None
                 symbols = response.get("symbol_summary") if isinstance(response, dict) else None
+                if isinstance(response, dict):
+                    result["file_type"] = response.get("file_type", "image")
+                    result["page_count"] = response.get("page_count", 1)
                 if isinstance(score, dict) and isinstance(score.get("title"), str):
                     result["title"] = score["title"]
                 if isinstance(symbols, dict):

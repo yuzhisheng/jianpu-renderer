@@ -27,6 +27,7 @@ interface RecognizeViewProps {
 export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: RecognizeViewProps) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<'image' | 'pdf'>('image');
   const [layout, setLayout] = useState<Layout>('horizontal');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
     setFile(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
+    setPreviewType('image');
     setResult(null);
     setErrorMsg(null);
     setProgress('');
@@ -122,6 +124,7 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
     setFile(f);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(f));
+    setPreviewType(f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
     setResult(null);
     setErrorMsg(null);
     // 自动开始识别
@@ -142,6 +145,7 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
       setFile(null);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(detail.image_url ? recognitionHistoryImageUrl(item.id) : null);
+      setPreviewType(item.original_filename.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image');
       setResult({
         ...detail.response,
         recognition_id: detail.response.recognition_id || item.id,
@@ -309,6 +313,7 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
             <ImageUploader
               onFile={handleFile}
               previewUrl={previewUrl}
+              previewType={previewType}
               onClear={handleClear}
               disabled={isLoading}
             />
@@ -329,6 +334,7 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
             {result && (
               <span style={{ color: isDarkTheme ? '#6b7280' : '#9ca3af' }}>
                 · {result.recognizer === 'accurate' ? '精确模式' : '快速模式'}
+                {result.page_count && result.page_count > 1 ? ` · ${result.page_count} 页 PDF` : ''}
                 · {result.inference_ms < 10000
                   ? `${result.inference_ms.toFixed(0)}ms`
                   : `${(result.inference_ms / 1000).toFixed(1)}s`}

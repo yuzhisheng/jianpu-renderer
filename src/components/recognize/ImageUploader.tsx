@@ -4,11 +4,18 @@ import { Upload, Image as ImageIcon, X } from 'lucide-react';
 interface ImageUploaderProps {
   onFile: (file: File) => void;
   previewUrl: string | null;
+  previewType?: 'image' | 'pdf';
   onClear: () => void;
   disabled?: boolean;
 }
 
-export default function ImageUploader({ onFile, previewUrl, onClear, disabled }: ImageUploaderProps) {
+function isSupportedFile(file: File): boolean {
+  return file.type.startsWith('image/')
+    || file.type === 'application/pdf'
+    || file.name.toLowerCase().endsWith('.pdf');
+}
+
+export default function ImageUploader({ onFile, previewUrl, previewType = 'image', onClear, disabled }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -27,7 +34,7 @@ export default function ImageUploader({ onFile, previewUrl, onClear, disabled }:
     setIsDragging(false);
     if (disabled) return;
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && isSupportedFile(file)) {
       onFile(file);
     }
   }, [disabled, onFile]);
@@ -43,12 +50,20 @@ export default function ImageUploader({ onFile, previewUrl, onClear, disabled }:
   if (previewUrl) {
     return (
       <div className="relative h-full flex items-center justify-center p-4 overflow-auto">
-        <img
-          src={previewUrl}
-          alt="原图"
-          className="max-w-full max-h-full object-contain rounded border border-gray-200"
-          style={{ background: '#fafafa' }}
-        />
+        {previewType === 'pdf' ? (
+          <iframe
+            src={previewUrl}
+            title="原始 PDF"
+            className="h-full w-full rounded border border-gray-200 bg-white"
+          />
+        ) : (
+          <img
+            src={previewUrl}
+            alt="原图"
+            className="max-w-full max-h-full object-contain rounded border border-gray-200"
+            style={{ background: '#fafafa' }}
+          />
+        )}
         <button
           onClick={onClear}
           disabled={disabled}
@@ -80,7 +95,7 @@ export default function ImageUploader({ onFile, previewUrl, onClear, disabled }:
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,image/jpg,image/webp"
+        accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf,.pdf"
         onChange={handleSelect}
         className="hidden"
         disabled={disabled}
@@ -89,9 +104,9 @@ export default function ImageUploader({ onFile, previewUrl, onClear, disabled }:
         {isDragging ? <ImageIcon size={32} className="text-blue-500" /> : <Upload size={32} className="text-gray-400" />}
       </div>
       <p className="text-sm font-medium text-gray-700">
-        {isDragging ? '松开鼠标上传' : '拖拽简谱图片或点击上传'}
+        {isDragging ? '松开鼠标上传' : '拖拽简谱图片或 PDF，或点击上传'}
       </p>
-      <p className="text-xs text-gray-400 mt-1">支持 PNG / JPG / WEBP, 最大 10MB</p>
+      <p className="text-xs text-gray-400 mt-1">支持 PNG / JPG / WEBP / PDF，图片最大 10MB，PDF 最大 50MB</p>
     </div>
   );
 }
