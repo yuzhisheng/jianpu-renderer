@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import type { Score, ScoreLayout } from '../types';
-import { calculateLayout, DEFAULT_CONFIG, render, DEFAULT_THEME, setupCanvasDPI } from '../engine';
+import { calculateLayout, DEFAULT_CONFIG, render, setupCanvasDPI } from '../engine';
 import type { LayoutConfig, RenderTheme } from '../engine';
 
 
