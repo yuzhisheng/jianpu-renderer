@@ -1100,6 +1100,10 @@ class AccurateVLMRecognizer:
         top, bottom = int(crop_box[1]), int(crop_box[3])
         band_top = max(top, int(baseline - note_height * 3.0))
         band_bottom = min(bottom, int(baseline - note_height * 0.7))
+        # A final short row/crop can end above the expected volta band. OpenCV
+        # rejects an empty ROI; absence of a bracket is the correct result.
+        if band_bottom <= band_top:
+            return []
         gray = np.asarray(image.convert("L"))[band_top:band_bottom, :]
         binary = (gray < 160).astype(np.uint8)
         kernel_width = max(12, int(note_height * 4.0))

@@ -298,6 +298,13 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
             [("B|", 40.0), ("B:|", 120.0)])
         self.assertEqual(endings, [(1, [1])])
 
+    def test_repeat_endings_skip_empty_short_crop(self):
+        image = Image.new("RGB", (180, 40), "white")
+        endings = self.recognizer._visual_repeat_endings(
+            image, [0, 20, 180, 40], 70, 20,
+            [("B|", 40.0), ("B:|", 120.0)])
+        self.assertEqual(endings, [])
+
     def test_repeat_endings_are_injected_inside_target_measure(self):
         tokens = self.recognizer._inject_repeat_endings(
             ["P1", "B|", "P2", "P3", "B:|"], [(1, [2, 3])])
