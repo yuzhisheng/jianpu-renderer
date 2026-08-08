@@ -14,6 +14,28 @@ TOKENS = [*(f"P{i}" for i in range(1, 8)), "R0"]
 TOKEN_TO_CLASS = {token: index for index, token in enumerate(TOKENS)}
 
 
+def benign_uncertainties(uncertainties, tokens):
+    """Return true for parser repairs that do not invalidate pitch labels.
+
+    The local VLM records uncertainty for compact digit runs, normalized rest
+    glyphs and punctuation artifacts even when the resulting pitch tokens are
+    complete.  Keep those rows when no unknown token remains; reject visual
+    glyphs (``A``/``X``/``?``), truncated generations and out-of-range notes.
+    """
+    if not uncertainties or "?" in tokens:
+        return not uncertainties
+    benign_prefixes = (
+        "decorated/compacted digit run split into pitches:",
+        "decorated digit run split into pitches:",
+        "compacted P digit run split into pitches:",
+        "rest glyph normalized:",
+        "mistaken rest prefix normalized as pitch:",
+        "underscore-separated pitch run split:",
+        "ignored VLM punctuation artifact:",
+    )
+    return all(str(item).startswith(benign_prefixes) for item in uncertainties)
+
+
 def align(expected, detected):
     n, m = len(expected), len(detected)
     dp = [[0.0] * (m + 1) for _ in range(n + 1)]
@@ -119,7 +141,10 @@ def main():
         for row in review['rows']:
             stats['rows_seen']+=1; item=vlm_rows.get(row['row']); voices=item.get('voices',[]) if item else []
             expected=[t for t in (voices[0].get('tokens',[]) if len(voices)==1 else []) if t in TOKEN_TO_CLASS]
-            if not item or item.get('content_type')!='score' or len(voices)!=1 or item.get('confidence',0)<.9 or item.get('uncertainties') or '?' in voices[0].get('tokens',[]) or len(expected)<3:
+            if (not item or item.get('content_type') != 'score' or len(voices) != 1
+                    or item.get('confidence', 0) < .9
+                    or not benign_uncertainties(item.get('uncertainties', []), voices[0].get('tokens', []))
+                    or len(expected) < 3):
                 stats['rejected_quality']+=1; continue
             left,top,right,bottom=row['crop_box']; candidates=[x for x in det if x[0]<8 and left<=x[1]<=right and top<=x[2]<=bottom]
             row_clusters=clusters(candidates)
