@@ -120,6 +120,47 @@ def parse_json(text: str):
                 "i": "P1", "Ri": "P1", "R1": "P1",
                 "B0": "R0", "R0)": "R0",
             }.get(token, token)
+            if token in {"}", ">"}:
+                # JSON/arrow artifacts are not score symbols in this pass.
+                value.setdefault("uncertainties", []).append(
+                    f"ignored VLM punctuation artifact: {token}")
+                continue
+            bar_suffix = re.fullmatch(r"B\|(-+)", token)
+            if bar_suffix:
+                normalized.append("B|")
+                normalized.extend("-" for _ in bar_suffix.group(1))
+                continue
+            bare_bar_dash = re.fullmatch(r"B(-+)", token)
+            if bare_bar_dash:
+                normalized.append("B|")
+                normalized.extend("-" for _ in bare_bar_dash.group(1))
+                continue
+            bar_prefixed = re.fullmatch(r"\|(.+)", token)
+            if bar_prefixed:
+                normalized.append("B|")
+                token = bar_prefixed.group(1)
+            accidental_pitch = re.fullmatch(r"P([#bn])([1-7])", token)
+            if accidental_pitch:
+                normalized.extend((f"P{accidental_pitch.group(2)}", accidental_pitch.group(1)))
+                continue
+            accidental_pitch = re.fullmatch(r"([#bn])([1-7i])", token)
+            if accidental_pitch:
+                digit = "1" if accidental_pitch.group(2) == "i" else accidental_pitch.group(2)
+                normalized.extend((f"P{digit}", accidental_pitch.group(1)))
+                continue
+            compact_underscore = re.fullmatch(r"P?([1-7])_([1-7])", token)
+            if compact_underscore:
+                normalized.extend((f"P{compact_underscore.group(1)}", f"P{compact_underscore.group(2)}"))
+                value.setdefault("uncertainties", []).append(
+                    f"underscore-separated pitch run split: {token}")
+                continue
+            uppercase_dash = re.fullmatch(r"[A-Z](-+)", token)
+            if uppercase_dash:
+                normalized.append("?")
+                normalized.extend("-" for _ in uppercase_dash.group(1))
+                value.setdefault("uncertainties", []).append(
+                    f"letter notehead preserved as ?: {token}")
+                continue
             # Compact VLM tokenization occasionally glues a repeat bar to
             # the first note of the following measure (for example B|:5).
             # Split only the unambiguous bar-prefix form so note order stays
