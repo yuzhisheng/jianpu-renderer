@@ -29,18 +29,18 @@ export const bieRangAiYuanHang: Score = {
     {
       lineBreakBefore: true,
       notes: [
-        n(1, .5, { beamLevel: 1, parenthesisLeft: true }), n(5, .5, { beamLevel: 1 }),
-        n(3, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1 }),
-        n(1, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1 }),
-        n(3, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1 }),
+        n(1, .5, { beamLevel: 1, parenthesisLeft: true }), n(5, .5, { beamLevel: 1, octave: -1 }),
+        n(3, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1, octave: -1 }),
+        n(1, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1, octave: -1 }),
+        n(3, .5, { beamLevel: 1, octave: -1 }), n(5, .5, { beamLevel: 1, octave: -1 }),
       ],
     },
     {
       notes: [
-        n(2, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1 }),
-        n(4, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1 }),
-        n(7, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1 }),
-        n(2, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1 }),
+        n(2, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1, octave: -1 }),
+        n(4, .5, { beamLevel: 1 }), n(5, .5, { beamLevel: 1, octave: -1 }),
+        n(7, .5, { beamLevel: 1, octave: -1 }), n(5, .5, { beamLevel: 1, octave: -1 }),
+        n(2, .5, { beamLevel: 1, octave: -1 }), n(5, .5, { beamLevel: 1, octave: -1 }),
       ],
     },
     {
@@ -56,7 +56,7 @@ export const bieRangAiYuanHang: Score = {
       notes: [
         n(5, .5, { beamLevel: 1 }), n(6, .5, { beamLevel: 1 }),
         n(1, .5, { beamLevel: 1, slurId: 'b2-1' }), n(1, .5, { beamLevel: 1, slurId: 'b2-1' }),
-        n(6, .5, { beamLevel: 1 }), n(1, .5, { beamLevel: 1 }),
+        n(6, .5, { beamLevel: 1, octave: -1 }), n(1, .5, { beamLevel: 1 }),
         n(4, .5, { dot: 1, beamLevel: 1 }), n(3, .25, { beamLevel: 2 }),
       ],
     },
