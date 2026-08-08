@@ -20,35 +20,15 @@
 
 当前本地分支：master
 
-最近一次已提交的编辑器 commit：
+当前远程状态：本地 master 与 origin/master 已同步，工作区干净。
 
+最近三个重要 commit：
+
+    ca93705 chore: 提交当前识谱与渲染改动
+    9123aab docs: 添加项目交接与开发指南
     259c02e feat: 增加可视化简谱编辑器 MVP
 
-这个 commit 包含：
-
-- src/App.tsx
-- src/components/Preview.tsx
-- src/components/Toolbar.tsx
-- src/components/ScoreEditorPanel.tsx
-- src/editor/score.ts
-
-注意：当前工作区还有一批识谱和渲染相关的未提交改动，它们没有被放进上面的 commit：
-
-    backend/assembler.py
-    backend/tests/test_accurate_recognizer.py
-    public/别让爱远航_jianpu_rendered.png
-    scripts/render_bie_rang_ai_yuan_hang.ts
-    src/api/recognize.ts
-    src/components/RecognizeView.tsx
-    src/components/recognize/JsonPanel.tsx
-    src/engine/index.ts
-    src/engine/layout.ts
-    src/engine/renderer.ts
-    src/engine/symbols.ts
-
-如果要把这些工作也带到另一台电脑，需要在确认内容后单独 commit，或者使用 patch 保存：
-
-    git diff > work-in-progress.patch
+ca93705 包含了此前暂存的识谱、渲染、识谱面板、测试和生成示例图片改动。模型权重和训练数据仍按 .gitignore 规则不进入 Git。
 
 ## 3. 快速启动前端
 
