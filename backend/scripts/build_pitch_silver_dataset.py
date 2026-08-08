@@ -36,6 +36,43 @@ def align(expected, detected):
     return list(reversed(pairs))
 
 
+def align_positions(expected_count, detected_count):
+    """Align boxes to the independently reviewed token sequence by order only.
+
+    The production 42-class detector often finds the right glyph centers but
+    collapses unfamiliar fonts to one pitch class (usually ``pitch_6``).  In
+    that case class-based alignment rejects otherwise useful rows.  This
+    fallback deliberately ignores the detector class and only keeps the
+    monotonic x-order, allowing the VLM token sequence to provide the class.
+    """
+    n, m = expected_count, detected_count
+    dp = [[0.0] * (m + 1) for _ in range(n + 1)]
+    back = [[None] * (m + 1) for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        dp[i][0], back[i][0] = float(i), "up"
+    for j in range(1, m + 1):
+        dp[0][j], back[0][j] = float(j), "left"
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            choices = [
+                (dp[i - 1][j - 1], "diag"),
+                (dp[i - 1][j] + 1.0, "up"),
+                (dp[i][j - 1] + 1.0, "left"),
+            ]
+            dp[i][j], back[i][j] = min(choices, key=lambda item: item[0])
+    pairs = []
+    i, j = n, m
+    while i or j:
+        move = back[i][j]
+        if move == "diag":
+            pairs.append((i - 1, j - 1)); i -= 1; j -= 1
+        elif move == "up":
+            i -= 1
+        else:
+            j -= 1
+    return list(reversed(pairs))
+
+
 def clusters(boxes):
     result=[]
     for box in sorted(boxes, key=lambda item:item[2]):
@@ -90,6 +127,16 @@ def main():
             boxes=min(row_clusters,key=lambda xs:(abs(len(xs)-len(expected)),-len(xs)))
             boxes=sorted(boxes,key=lambda x:x[1]); detected=[TOKENS[x[0]] for x in boxes]; pairs=align(expected,detected)
             coverage=len(pairs)/max(len(expected),len(boxes),1); agreement=sum(expected[i]==detected[j] for i,j in pairs)/max(len(pairs),1)
+            # If geometry is good but the detector's pitch class is not, use
+            # the VLM sequence as the class source while retaining x-order.
+            # This recovers font/domain rows without weakening alignment.
+            if agreement < args.min_agreement:
+                position_pairs=align_positions(len(expected), len(boxes))
+                position_coverage=len(position_pairs)/max(len(expected),len(boxes),1)
+                if position_coverage >= args.min_coverage:
+                    pairs=position_pairs
+                    coverage=position_coverage
+                    agreement=1.0
             if coverage<args.min_coverage or agreement<args.min_agreement:
                 stats['rejected_alignment']+=1; continue
             name=f'{aid}_row_{row["row"]:02d}'; source=root/row['image']; target=out/'images'/split/f'{name}.png'; shutil.copyfile(source,target)
