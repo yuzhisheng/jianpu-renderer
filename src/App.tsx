@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Code, Sun, ScanLine } from 'lucide-react';
+import { ScanLine } from 'lucide-react';
 import type { Score, ScoreLayout } from './types';
 import type { RenderTheme } from './engine';
 import type { EditorHandle } from './components/Editor';
-import { examples, moonSong } from './data/examples';
+import { examples } from './data/examples';
 import { downloadPNG, DEFAULT_THEME, LIGHT_THEME } from './engine';
 import Editor from './components/Editor';
 import Preview from './components/Preview';
@@ -17,8 +17,8 @@ export default function App() {
     const saved = localStorage.getItem('jianpu-theme');
     return saved !== null ? saved === 'dark' : true;
   });
-  const savedExampleKey = localStorage.getItem('jianpu-example') || 'moon';
-  const savedExample = examples[savedExampleKey] || examples['moon'];
+  const savedExampleKey = localStorage.getItem('jianpu-example') || 'bie-rang-ai-yuan-hang';
+  const savedExample = examples[savedExampleKey] || examples['bie-rang-ai-yuan-hang'];
   const [jsonValue, setJsonValue] = useState(() => JSON.stringify(savedExample.data, null, 2));
   const [score, setScore] = useState<Score | null>(savedExample.data);
   const [zoom, setZoom] = useState(1);

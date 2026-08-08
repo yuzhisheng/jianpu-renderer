@@ -66,6 +66,8 @@ export interface Note {
   octave?: Octave;
   /** 时值分数，1=四分音符，0.5=八分音符，0.25=十六分音符，2=二分音符，4=全音符 */
   duration: number;
+  /** 显式减时线层级；用于扫描谱中时值线与拍号推断不完全一致的情况 */
+  beamLevel?: 0 | 1 | 2 | 3;
   /** 附点数量，默认 0 */
   dot?: DotCount;
   /** 升降号 */
@@ -117,7 +119,7 @@ export interface Dash {
 }
 
 /** 小节线类型 */
-export type BarlineType = 'single' | 'double' | 'end' | 'repeat-start' | 'repeat-end';
+export type BarlineType = 'none' | 'single' | 'double' | 'end' | 'repeat-start' | 'repeat-end';
 
 /** 反复跳跃记号 */
 export interface RepeatEnding {
@@ -138,6 +140,8 @@ export interface NavigationMark {
 export interface Measure {
   /** 小节内的音符/增时线列表 */
   notes: (Note | Dash)[];
+  /** 在本小节前强制换行，适合保留原谱的谱行分段 */
+  lineBreakBefore?: boolean;
   /** 小节线类型（画在小节右侧），默认 single */
   barline?: BarlineType;
   /** 反复跳跃记号 */
@@ -173,6 +177,12 @@ export interface Score {
   tempo?: number;
   /** 速度文字描述 */
   tempoText?: string;
+  /** 谱头副标题/演奏提示 */
+  subtitle?: string;
+  /** 词作者署名 */
+  lyricist?: string;
+  /** 曲作者署名 */
+  composer?: string;
   /** 力度 */
   dynamics?: DynamicMark;
   /** 谱面力度术语（一次性） */
@@ -297,6 +307,10 @@ export interface ScoreLayout {
   timeSignaturePosition?: SymbolPosition;
   /** 速度位置 */
   tempoPosition?: SymbolPosition;
+  /** 副标题位置 */
+  subtitlePosition?: SymbolPosition;
+  /** 署名位置 */
+  creditPositions?: { lyricist?: SymbolPosition; composer?: SymbolPosition };
   /** 行布局列表 */
   rows: RowLayout[];
 }

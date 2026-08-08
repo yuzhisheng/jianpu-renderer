@@ -42,6 +42,18 @@
       "type": "string",
       "description": "速度文字，如 Andante, Allegro 等"
     },
+    "subtitle": {
+      "type": "string",
+      "description": "谱头副标题或演奏提示"
+    },
+    "lyricist": {
+      "type": "string",
+      "description": "词作者署名"
+    },
+    "composer": {
+      "type": "string",
+      "description": "曲作者署名"
+    },
     "dynamics": {
       "type": "string",
       "enum": ["pp", "p", "mp", "mf", "f", "ff"],
@@ -70,9 +82,13 @@
             ]
           }
         },
+        "lineBreakBefore": {
+          "type": "boolean",
+          "description": "在本小节前强制换行"
+        },
         "barline": {
           "type": "string",
-          "enum": ["single", "double", "end", "repeat-start", "repeat-end"],
+          "enum": ["none", "single", "double", "end", "repeat-start", "repeat-end"],
           "description": "小节线类型（画在小节右侧）",
           "default": "single"
         },
@@ -135,6 +151,12 @@
           "type": "number",
           "description": "时值：1=四分音符, 0.5=八分, 0.25=十六分, 2=二分, 4=全音符",
           "enum": [0.125, 0.25, 0.5, 1, 2, 4]
+        },
+        "beamLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "显式减时线层级：0=无，1=一线，2=两线，3=三线"
         },
         "dot": {
           "type": "integer",

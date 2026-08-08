@@ -176,7 +176,7 @@ function layoutNote(
         });
       }
     } else if (!groupInfo) {
-      const levels = getUnderlineLevel(note.duration);
+      const levels = getUnderlineLevel(note.duration, note.beamLevel);
       // 单个音符：宽度占位用全宽，渲染时按实际数字宽度调整
       for (let i = 0; i < levels; i++) {
         underlines.push({
@@ -438,7 +438,7 @@ export function analyzeUnderlineGroups(
     const dottedFactor = dots > 0 ? 2 - 1 / (2 ** dots) : 1;
     const itemDuration = Math.max(0, item.duration * dottedFactor);
     const beatIndex = Math.floor((time + 1e-7) / unit);
-    const noteLevel = isNote(item) ? getUnderlineLevel(item.duration) : 0;
+    const noteLevel = isNote(item) ? getUnderlineLevel(item.duration, item.beamLevel) : 0;
 
     if (noteLevel > 0) {
       // Only adjacent short notes beginning in the same beat may share a line.
@@ -462,7 +462,8 @@ export function analyzeUnderlineGroups(
   return groups;
 }
 
-function getUnderlineLevel(duration: number): number {
+function getUnderlineLevel(duration: number, explicitLevel?: number): number {
+  if (explicitLevel !== undefined) return Math.max(0, Math.min(3, explicitLevel));
   if (duration <= 0.125) return 3;
   if (duration <= 0.25) return 2;
   if (duration <= 0.5) return 1;
@@ -480,6 +481,7 @@ function fitMeasuresInRow(
   let count = 0;
   for (let i = startIdx; i < measures.length; i++) {
     const m = measures[i];
+    if (i > startIdx && m.lineBreakBefore) break;
     const noteCount = m.notes.length;
     const dashCount = m.notes.filter(n => !isNote(n)).length;
     let mWidth = 0;
@@ -555,7 +557,29 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
       height: cfg.metaFontSize + 4,
     };
   }
-  currentY = tempoPosition
+  const subtitlePosition: SymbolPosition | undefined = score.subtitle ? {
+    x: cfg.paddingHorizontal,
+    y: (tempoPosition ? tempoPosition.y + tempoPosition.height + 3 : metaY + cfg.metaFontSize + 6),
+    width: contentWidth * 0.62,
+    height: cfg.metaFontSize + 4,
+  } : undefined;
+  const creditPositions = (score.lyricist || score.composer) ? {
+    lyricist: score.lyricist ? {
+      x: cfg.canvasWidth - cfg.paddingHorizontal - 180,
+      y: metaY + 2,
+      width: 180,
+      height: cfg.metaFontSize + 4,
+    } : undefined,
+    composer: score.composer ? {
+      x: cfg.canvasWidth - cfg.paddingHorizontal - 180,
+      y: metaY + cfg.metaFontSize + 7,
+      width: 180,
+      height: cfg.metaFontSize + 4,
+    } : undefined,
+  } : undefined;
+  currentY = subtitlePosition
+    ? subtitlePosition.y + subtitlePosition.height + 4
+    : tempoPosition
     ? tempoPosition.y + tempoPosition.height + 4
     : timeSignaturePosition.y + tsTotalHeight + 4;
   currentY += 60; // 谱子主体额外下移
@@ -668,7 +692,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
           let segStart = -1;
           for (let ni = g.startIndex; ni <= g.endIndex; ni++) {
             const item = m.notes[ni];
-            const nLevel = isNote(item) ? getUnderlineLevel(item.duration) : 0;
+            const nLevel = isNote(item) ? getUnderlineLevel(item.duration, item.beamLevel) : 0;
             const inSeg = nLevel >= requiredLevel;
             if (inSeg && segStart < 0) {
               segStart = ni;
@@ -825,6 +849,8 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
     keyPosition,
     timeSignaturePosition,
     tempoPosition,
+    subtitlePosition,
+    creditPositions,
     rows,
   };
 }

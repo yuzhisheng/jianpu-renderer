@@ -838,10 +838,10 @@ function drawInlineTimeSignature(
 }
 
 /** 绘制标题和元信息 */
-function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { title?: string; key: string; timeSignature: { numerator: number; denominator: number }; tempo?: number; tempoText?: string }, config: LayoutConfig, theme: RenderTheme) {
+function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { title?: string; key: string; timeSignature: { numerator: number; denominator: number }; tempo?: number; tempoText?: string; subtitle?: string; lyricist?: string; composer?: string }, config: LayoutConfig, theme: RenderTheme) {
   if (layout.titlePosition && score.title) {
     ctx.fillStyle = theme.titleColor;
-    ctx.font = `bold ${config.titleFontSize}px "Noto Sans", sans-serif`;
+    ctx.font = `bold ${config.titleFontSize}px "Noto Sans", "STSong", "Songti SC", serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(score.title, layout.titlePosition.x + layout.titlePosition.width / 2, layout.titlePosition.y);
@@ -849,7 +849,7 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 
   if (layout.keyPosition) {
     ctx.fillStyle = theme.metaColor;
-    ctx.font = `${config.metaFontSize}px "Noto Sans", serif`;
+    ctx.font = `${config.metaFontSize}px "Noto Sans", "STSong", "Songti SC", serif`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(`1=${score.key}`, layout.keyPosition.x, layout.keyPosition.y);
@@ -887,10 +887,32 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 
   if (layout.tempoPosition && score.tempo) {
     ctx.fillStyle = theme.metaColor;
-    ctx.font = `${config.metaFontSize - 2}px "Noto Sans", serif`;
+    ctx.font = `${config.metaFontSize - 2}px "Noto Sans", "STSong", "Songti SC", serif`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(`♩=${score.tempo}`, layout.tempoPosition.x, layout.tempoPosition.y);
+    const tempoLabel = score.tempoText ? `♩=${score.tempo}  ${score.tempoText}` : `♩=${score.tempo}`;
+    ctx.fillText(tempoLabel, layout.tempoPosition.x, layout.tempoPosition.y);
+  }
+
+  if (layout.subtitlePosition && score.subtitle) {
+    ctx.fillStyle = theme.metaColor;
+    ctx.font = `${config.metaFontSize}px "Noto Sans", "STSong", serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(score.subtitle, layout.subtitlePosition.x, layout.subtitlePosition.y);
+  }
+
+  if (layout.creditPositions) {
+    ctx.fillStyle = theme.metaColor;
+    ctx.font = `${config.metaFontSize}px "Noto Sans", "STSong", serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    if (layout.creditPositions.lyricist && score.lyricist) {
+      ctx.fillText(`${score.lyricist} 词`, layout.creditPositions.lyricist.x + layout.creditPositions.lyricist.width, layout.creditPositions.lyricist.y);
+    }
+    if (layout.creditPositions.composer && score.composer) {
+      ctx.fillText(`${score.composer} 曲`, layout.creditPositions.composer.x + layout.creditPositions.composer.width, layout.creditPositions.composer.y);
+    }
   }
 }
 
@@ -898,7 +920,7 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 export function render(
   ctx: CanvasRenderingContext2D,
   layout: ScoreLayout,
-  score: { title?: string; key: string; timeSignature: { numerator: number; denominator: number }; tempo?: number; tempoText?: string; introMeasureCount?: number },
+  score: { title?: string; key: string; timeSignature: { numerator: number; denominator: number }; tempo?: number; tempoText?: string; subtitle?: string; lyricist?: string; composer?: string; introMeasureCount?: number },
   config: LayoutConfig,
   theme: RenderTheme = DEFAULT_THEME,
 ) {
@@ -1017,7 +1039,7 @@ export function render(
           const positions = noteLayout.lyricPositions || (noteLayout.lyricPosition ? [noteLayout.lyricPosition] : []);
           if (lyricLines.length > 0 && positions.length > 0) {
             ctx.fillStyle = theme.lyricColor;
-            ctx.font = `${config.lyricFontSize}px "Noto Sans", sans-serif`;
+            ctx.font = `${config.lyricFontSize}px "Noto Sans", "STSong", "Songti SC", sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             const count = Math.min(lyricLines.length, positions.length);

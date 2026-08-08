@@ -1,4 +1,5 @@
 import type { Score } from '../types';
+import { bieRangAiYuanHang } from './bie-rang-ai-yuan-hang';
 
 /** 茉莉花 - 基础简谱示例 */
 export const jasmineFlower: Score = {
@@ -577,6 +578,7 @@ export const moonSong: Score = {
 };
 
 export const examples: Record<string, { name: string; data: Score }> = {
+  'bie-rang-ai-yuan-hang': { name: '别让爱远航（识别谱）', data: bieRangAiYuanHang },
   jasmine: { name: '茉莉花', data: jasmineFlower },
   gusu: { name: '姑苏行（片段）', data: guSuXing },
   technique: { name: '竹笛技巧演示', data: techniqueDemo },
