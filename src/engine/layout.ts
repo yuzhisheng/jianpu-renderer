@@ -80,6 +80,38 @@ export const DEFAULT_CONFIG: LayoutConfig = {
   lyricOffset: 14,
 };
 
+/**
+ * 纸面谱的默认排版。
+ *
+ * DEFAULT_CONFIG 仍然保留给训练素材和轻量预览使用；实际识别结果使用
+ * 这一套更接近扫描谱的尺寸，避免在 800px 画布里把字和间距压得过小。
+ */
+export const PRINT_CONFIG: LayoutConfig = {
+  ...DEFAULT_CONFIG,
+  canvasWidth: 1200,
+  paddingHorizontal: 42,
+  paddingVertical: 34,
+  noteFontSize: 28,
+  noteWidth: 38,
+  noteHeight: 32,
+  // 原谱的小节线前后留白较紧；保持这个值也能让显式谱行完整保留。
+  measureGap: 10,
+  rowGap: 26,
+  dotRadius: 2.2,
+  dotGap: 3,
+  accentDotRadius: 2.2,
+  underlineOffset: 3.5,
+  underlineGap: 4,
+  underlineThickness: 1.8,
+  barlineWidth: 2,
+  techniqueFontSize: 13,
+  titleFontSize: 28,
+  metaFontSize: 18,
+  lyricFontSize: 18,
+  lyricOffset: 22,
+  tieCurveHeight: 9,
+};
+
 function isNote(item: NoteType | Dash): item is NoteType {
   return 'pitch' in item;
 }
@@ -87,6 +119,30 @@ function isNote(item: NoteType | Dash): item is NoteType {
 /** 音符主体之间的水平间距：固定 noteWidth（不按时值区分） */
 function getNoteSpacing(_duration: number, cfg: LayoutConfig): number {
   return cfg.noteWidth;
+}
+
+/** 计算小节从起点到小节线的真实宽度，布局和换行共用同一套度量。 */
+function getMeasureWidth(measure: Measure, config: LayoutConfig): number {
+  let width = measure.timeSignature ? config.noteWidth * 1.15 : 0;
+
+  for (const item of measure.notes) {
+    width += getNoteSpacing(item.duration, config);
+    if (item.parenthesisLeft) width += config.noteWidth * 0.45;
+    if (item.parenthesisRight) width += config.noteWidth * 0.45;
+    if (isNote(item) && item.dot) {
+      width += item.dot * (config.accentDotRadius * 2 + 10);
+    }
+    if (isNote(item) && item.accidental) {
+      width += 10;
+    }
+  }
+
+  // 小节线前留白，以及反复记号粗线需要的额外位置。
+  width += config.measureGap;
+  if (measure.barline === 'repeat-end' || measure.barline === 'repeat-start') {
+    width += 6;
+  }
+  return width + config.barlineWidth;
 }
 
 /** 计算单个音符的布局 */
@@ -192,7 +248,7 @@ function layoutNote(
     const techYBase = y - config.techniqueFontSize + 4;
     const hasYinyin = note.techniques?.some(t => t.type === 'yinyin') ?? false;
     if (note.techniques) {
-      note.techniques.forEach((tech, idx) => {
+      note.techniques.forEach((tech) => {
         if (tech.type === 'yinyin') {
           const notes = tech.graceNotes || [];
           const label = notes.join('');
@@ -482,29 +538,10 @@ function fitMeasuresInRow(
   for (let i = startIdx; i < measures.length; i++) {
     const m = measures[i];
     if (i > startIdx && m.lineBreakBefore) break;
-    const noteCount = m.notes.length;
-    const dashCount = m.notes.filter(n => !isNote(n)).length;
-    let mWidth = 0;
-    m.notes.forEach(n => {
-      if (n.parenthesisLeft) mWidth += config.noteWidth * 0.45;
-      if (n.parenthesisRight) mWidth += config.noteWidth * 0.45;
-      if (isNote(n)) {
-        mWidth += getNoteSpacing(n.duration, config);
-        if ((n.dot || 0) > 0) {
-          mWidth += (n.dot || 0) * (config.accentDotRadius * 2 + 10);
-        }
-        if (n.accidental) {
-          mWidth += 10;
-        }
-      } else {
-        mWidth += config.noteWidth;
-      }
-    });
-    if (m.timeSignature) mWidth += config.noteWidth * 1.15;
-    mWidth += config.barlineWidth;
-    if (count > 0) mWidth += config.measureGap;
-    if (width + mWidth > availWidth && count > 0) break;
-    width += mWidth;
+    const mWidth = getMeasureWidth(m, config);
+    const interMeasureGap = count > 0 ? config.measureGap : 0;
+    if (width + interMeasureGap + mWidth > availWidth && count > 0) break;
+    width += interMeasureGap + mWidth;
     count++;
   }
   return Math.max(count, 1);
@@ -614,24 +651,9 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         4 / (m.timeSignature || score.timeSignature).denominator,
       );
 
-      // 计算小节宽度
-      let mWidth = m.notes.length * cfg.noteWidth;
-      m.notes.forEach(n => {
-        if (n.parenthesisLeft) {
-          mWidth += cfg.noteWidth * 0.45;
-        }
-        if (n.parenthesisRight) {
-          mWidth += cfg.noteWidth * 0.45;
-        }
-        if (isNote(n) && (n.dot || 0) > 0) {
-          mWidth += (n.dot || 0) * (cfg.accentDotRadius * 2 + 12);
-        }
-        if (isNote(n) && n.accidental) {
-          mWidth += 14;
-        }
-      });
-      mWidth += cfg.barlineWidth;
-      if (m.timeSignature) mWidth += cfg.noteWidth * 1.15;
+      // 计算小节宽度。换行计算和实际绘制必须使用同一套度量，
+      // 否则最后一个小节会贴边或溢出画布。
+      const mWidth = getMeasureWidth(m, cfg);
 
       // 音符布局
       const noteLayouts: NoteLayout[] = [];
@@ -732,7 +754,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
       // 单独的音符（不在分组中）使用 layoutNote 已创建的独立横线
 
       // 每次小节线前留出间距，与后面间距一致
-      noteX += 10;
+      noteX += cfg.measureGap;
       if (m.barline === 'repeat-end' || m.barline === 'repeat-start') {
         noteX += 6;
       }
@@ -799,7 +821,7 @@ export function calculateLayout(score: Score, config: LayoutConfig = DEFAULT_CON
         navigationPositions,
       });
 
-      currentX = noteX + cfg.barlineWidth + 10;
+      currentX = noteX + cfg.barlineWidth + cfg.measureGap;
       prevBarlineX = noteX;
     }
 

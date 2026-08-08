@@ -29,6 +29,13 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
         self.assertEqual([note["duration"] for note in score["measures"][0]["notes"]],
                          [.5, .5, .5])
 
+    def test_row_tokens_preserve_original_score_line_breaks(self):
+        score = parse_tokens_to_score([
+            "P1", "P2", "B|", "<ROW>", "P3", "P5", "B|]",
+        ])
+        self.assertFalse(score["measures"][0].get("lineBreakBefore", False))
+        self.assertTrue(score["measures"][1]["lineBreakBefore"])
+
     def test_second_vlm_request_is_rejected_instead_of_overlapping(self):
         self.recognizer._vlm_lock.acquire()
         try:

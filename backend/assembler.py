@@ -81,7 +81,19 @@ def parse_tokens_to_score(tokens: List[str]) -> Dict[str, Any]:
     i = 0
     while i < len(tokens):
         tok = tokens[i]
-        if tok in ("<BOS>", "<EOS>", "<ROW>"):
+        if tok in ("<BOS>", "<EOS>"):
+            i += 1
+            continue
+
+        # 识别器会在每个原始谱行之间输出 <ROW>。保留这个边界，
+        # 前端才能按原图换行，而不是重新根据音符数量猜测行宽。
+        if tok == "<ROW>":
+            if current_note is not None:
+                current_measure["notes"].append(current_note)
+                current_note = None
+            if current_measure["notes"] or current_measure.get("barline"):
+                score["measures"].append(current_measure)
+            current_measure = {"notes": [], "lineBreakBefore": True}
             i += 1
             continue
 

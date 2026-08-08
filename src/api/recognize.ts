@@ -1,4 +1,6 @@
 // 后端识别 API 封装
+import type { Score } from '../types';
+
 export interface Detection {
   class_id: number;
   class_name: string;
@@ -10,7 +12,7 @@ export interface Detection {
 }
 
 export interface RecognizeResponse {
-  score: any;          // Score JSON
+  score: Score;        // Score JSON
   detections: Detection[];
   num_detections: number;
   inference_ms: number;
@@ -33,7 +35,7 @@ export interface RecognizeResponse {
   };
 }
 
-const DEFAULT_BASE = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:8000';
+const DEFAULT_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 export async function recognizeImage(
   file: File,

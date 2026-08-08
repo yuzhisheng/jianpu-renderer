@@ -298,7 +298,6 @@ export default function RecognizeView({ isDarkTheme, onToggleTheme, onBack }: Re
               score={score}
               isLoading={isLoading}
               errorMessage={errorMsg}
-              isDarkTheme={isDarkTheme}
             />
           </div>
         </div>

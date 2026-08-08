@@ -1,9 +1,14 @@
 import type {
-  ScoreLayout, RowLayout, MeasureLayout, NoteLayout, SymbolPosition,
+  ScoreLayout, MeasureLayout, NoteLayout, SymbolPosition,
   Note, Dash, DiziTechnique, NavigationMark,
 } from '../types';
 import type { LayoutConfig } from './layout';
 import { drawSymbol as drawSvgSymbol } from './symbols';
+
+// 数字需要稳定、均匀的西文字形；标题和歌词使用中文衬线字体，避免
+// 浏览器在不同平台上随机回退到比例不一致的字体。
+const NOTATION_FONT_FAMILY = '"Helvetica Neue", Arial, "Noto Sans", sans-serif';
+const CHINESE_FONT_FAMILY = '"Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", serif';
 
 /** 用 SVG 路径符号替换 Canvas 本地绘制 */
 function drawSymbol(ctx: CanvasRenderingContext2D, num: number, x: number, y: number, size: number, color: string) {
@@ -59,6 +64,23 @@ export const LIGHT_THEME: RenderTheme = {
   repeatDotColor: '#333333',
 };
 
+/** 扫描谱和导出 PNG 使用的纸面黑白主题。 */
+export const PRINT_THEME: RenderTheme = {
+  noteColor: '#252525',
+  symbolColor: '#252525',
+  barlineColor: '#8a8a8a',
+  titleColor: '#202020',
+  metaColor: '#555555',
+  lyricColor: '#777777',
+  techniqueColor: '#252525',
+  backgroundColor: '#ffffff',
+  dashColor: '#252525',
+  dotColor: '#252525',
+  underlineColor: '#252525',
+  tieColor: '#252525',
+  repeatDotColor: '#252525',
+};
+
 function isNoteType(data: Note | Dash): data is Note {
   return 'pitch' in data;
 }
@@ -66,7 +88,7 @@ function isNoteType(data: Note | Dash): data is Note {
 /** 绘制音符数字 */
 function drawNoteNumber(ctx: CanvasRenderingContext2D, note: Note, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme) {
   ctx.fillStyle = theme.noteColor;
-  ctx.font = `bold ${config.noteFontSize}px "Noto Sans", "SimSun", serif`;
+  ctx.font = `bold ${config.noteFontSize}px ${NOTATION_FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   const text = note.pitch === 0 ? '0' : String(note.pitch);
@@ -74,12 +96,12 @@ function drawNoteNumber(ctx: CanvasRenderingContext2D, note: Note, pos: SymbolPo
 }
 
 /** 绘制增时线（短横线，居中于音符区域） */
-function drawDash(ctx: CanvasRenderingContext2D, pos: SymbolPosition, _config: LayoutConfig, theme: RenderTheme) {
+function drawDash(ctx: CanvasRenderingContext2D, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme) {
   const cx = pos.x + pos.width / 2;
   const cy = pos.y + pos.height / 2;
   const halfW = pos.width * 0.25;
   ctx.strokeStyle = theme.dashColor;
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = config.dashThickness;
   ctx.beginPath();
   ctx.moveTo(cx - halfW, cy);
   ctx.lineTo(cx + halfW, cy);
@@ -118,7 +140,7 @@ function drawAccidental(ctx: CanvasRenderingContext2D, accidental: string, pos: 
     return;
   }
   ctx.fillStyle = theme.symbolColor;
-  ctx.font = `bold ${config.noteFontSize - 4}px "Noto Sans", serif`;
+  ctx.font = `bold ${config.noteFontSize - 4}px ${NOTATION_FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   const symbols: Record<string, string> = { sharp: '♯', flat: '♭', natural: '♮' };
@@ -131,7 +153,7 @@ function drawUnderlines(ctx: CanvasRenderingContext2D, noteLayout: NoteLayout, c
   ctx.lineWidth = config.underlineThickness;
 
   // 获取当前音符数字宽度
-  ctx.font = `bold ${config.noteFontSize}px "Noto Sans", "SimSun", serif`;
+  ctx.font = `bold ${config.noteFontSize}px ${NOTATION_FONT_FAMILY}`;
   const getDigitWidth = (pitch: number): number => {
     const t = pitch === 0 ? '0' : String(pitch);
     return ctx.measureText(t).width;
@@ -145,8 +167,13 @@ function drawUnderlines(ctx: CanvasRenderingContext2D, noteLayout: NoteLayout, c
     let startX: number;
     let endX: number;
 
-    const ulExt = ul as any;
-    if (ulExt.groupFirstCenter !== undefined) {
+    const ulExt = ul as typeof ul & {
+      groupFirstCenter?: number;
+      groupLastCenter?: number;
+      groupFirstPitch?: number;
+      groupLastPitch?: number;
+    };
+    if (ulExt.groupFirstCenter !== undefined && ulExt.groupLastCenter !== undefined) {
       // 分组横线：从段首音符数字左边缘到段尾音符数字右边缘
       const firstCenter = ulExt.groupFirstCenter;
       const lastCenter = ulExt.groupLastCenter;
@@ -217,7 +244,7 @@ function drawBarline(ctx: CanvasRenderingContext2D, type: string, pos: SymbolPos
       ctx.lineTo(x + 3, y2);
       ctx.stroke();
       break;
-    case 'repeat-start':
+    case 'repeat-start': {
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(x - 4, y1);
@@ -239,7 +266,8 @@ function drawBarline(ctx: CanvasRenderingContext2D, type: string, pos: SymbolPos
       ctx.arc(x + 8, dotY2, 2.5, 0, Math.PI * 2);
       ctx.fill();
       break;
-    case 'repeat-end':
+    }
+    case 'repeat-end': {
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(x - 5, y1);
@@ -261,6 +289,7 @@ function drawBarline(ctx: CanvasRenderingContext2D, type: string, pos: SymbolPos
       ctx.arc(x - 10, dotY4, 2.5, 0, Math.PI * 2);
       ctx.fill();
       break;
+    }
   }
 }
 
@@ -373,7 +402,7 @@ function drawTriplet(ctx: CanvasRenderingContext2D, startNote: NoteLayout, endNo
   ctx.stroke();
 
   ctx.fillStyle = theme.symbolColor;
-  ctx.font = `${config.techniqueFontSize}px "Noto Sans", sans-serif`;
+  ctx.font = `${config.techniqueFontSize}px ${NOTATION_FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.fillText('3', (x1 + x2) / 2, y - 1);
@@ -382,7 +411,7 @@ function drawTriplet(ctx: CanvasRenderingContext2D, startNote: NoteLayout, endNo
 /** 绘制技巧符号 */
 function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: SymbolPosition, config: LayoutConfig, theme: RenderTheme, mainNotePos?: SymbolPosition, nextNotePos?: SymbolPosition) {
   ctx.fillStyle = theme.techniqueColor;
-  ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", "SimSun", serif`;
+  ctx.font = `bold ${config.techniqueFontSize}px ${CHINESE_FONT_FAMILY}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
 
@@ -408,7 +437,7 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
   if (tech.type === 'chanyin') {
     const cx = pos.x + pos.width / 2;
     ctx.fillStyle = theme.symbolColor;
-    ctx.font = `italic bold ${config.techniqueFontSize + 5}px "Noto Sans", serif`;
+    ctx.font = `italic bold ${config.techniqueFontSize + 5}px ${NOTATION_FONT_FAMILY}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText('tr', cx, pos.y + 6);
@@ -445,7 +474,7 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
 
     // 小字
     ctx.fillStyle = theme.noteColor;
-    ctx.font = `bold ${gFontSize}px "Noto Sans", serif`;
+    ctx.font = `bold ${gFontSize}px ${NOTATION_FONT_FAMILY}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(graceText, cx, textBottom - 1);
@@ -548,7 +577,7 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
 
     // 小字
     ctx.fillStyle = theme.noteColor;
-    ctx.font = `bold ${gFontSize}px "Noto Sans", serif`;
+    ctx.font = `bold ${gFontSize}px ${NOTATION_FONT_FAMILY}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(graceText, cx, textBottom - 1);
@@ -600,7 +629,7 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
 
     // 小字
     ctx.fillStyle = theme.noteColor;
-    ctx.font = `bold ${gFontSize}px "Noto Sans", serif`;
+    ctx.font = `bold ${gFontSize}px ${NOTATION_FONT_FAMILY}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(labelText, cx, textBottom - 1);
@@ -648,7 +677,7 @@ function drawTechnique(ctx: CanvasRenderingContext2D, tech: DiziTechnique, pos: 
   }
 
   ctx.fillStyle = theme.symbolColor;
-  ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", serif`;
+  ctx.font = `bold ${config.techniqueFontSize}px ${CHINESE_FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.fillText(label, pos.x + pos.width / 2, pos.y + 3);
@@ -734,7 +763,7 @@ function drawRepeatEnding(ctx: CanvasRenderingContext2D, numbers: number[], pos:
   ctx.stroke();
 
   // 测量文字宽度
-  ctx.font = `bold ${config.techniqueFontSize + 1}px "Noto Sans", sans-serif`;
+  ctx.font = `bold ${config.techniqueFontSize + 1}px ${NOTATION_FONT_FAMILY}`;
   const textX = pos.x + 14;
   const textWidth = ctx.measureText(text).width + 4;
 
@@ -806,7 +835,7 @@ function drawNavigationMark(
     }
     return;
   }
-  ctx.font = `italic bold ${Math.max(9, config.lyricFontSize + 1)}px "Noto Sans", serif`;
+  ctx.font = `italic bold ${Math.max(9, config.lyricFontSize + 1)}px ${NOTATION_FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillText(label, pos.x + pos.width / 2, pos.y);
@@ -825,7 +854,7 @@ function drawInlineTimeSignature(
   const lineY = pos.y + pos.height / 2;
   ctx.fillStyle = theme.symbolColor;
   ctx.strokeStyle = theme.symbolColor;
-  ctx.font = `bold ${fontSize}px "Noto Sans", sans-serif`;
+  ctx.font = `bold ${fontSize}px ${NOTATION_FONT_FAMILY}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(String(signature.numerator), centerX, lineY - fontSize * 0.56);
@@ -841,7 +870,7 @@ function drawInlineTimeSignature(
 function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { title?: string; key: string; timeSignature: { numerator: number; denominator: number }; tempo?: number; tempoText?: string; subtitle?: string; lyricist?: string; composer?: string }, config: LayoutConfig, theme: RenderTheme) {
   if (layout.titlePosition && score.title) {
     ctx.fillStyle = theme.titleColor;
-    ctx.font = `bold ${config.titleFontSize}px "Noto Sans", "STSong", "Songti SC", serif`;
+    ctx.font = `bold ${config.titleFontSize}px ${CHINESE_FONT_FAMILY}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(score.title, layout.titlePosition.x + layout.titlePosition.width / 2, layout.titlePosition.y);
@@ -849,7 +878,7 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 
   if (layout.keyPosition) {
     ctx.fillStyle = theme.metaColor;
-    ctx.font = `${config.metaFontSize}px "Noto Sans", "STSong", "Songti SC", serif`;
+    ctx.font = `${config.metaFontSize}px ${CHINESE_FONT_FAMILY}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(`1=${score.key}`, layout.keyPosition.x, layout.keyPosition.y);
@@ -857,7 +886,7 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 
   if (layout.timeSignaturePosition) {
     ctx.fillStyle = theme.metaColor;
-    ctx.font = `bold ${config.metaFontSize}px "Noto Sans", serif`;
+    ctx.font = `bold ${config.metaFontSize}px ${NOTATION_FONT_FAMILY}`;
     ctx.textAlign = 'center';
 
     const ts = score.timeSignature;
@@ -887,7 +916,7 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 
   if (layout.tempoPosition && score.tempo) {
     ctx.fillStyle = theme.metaColor;
-    ctx.font = `${config.metaFontSize - 2}px "Noto Sans", "STSong", "Songti SC", serif`;
+    ctx.font = `${config.metaFontSize - 2}px ${CHINESE_FONT_FAMILY}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     const tempoLabel = score.tempoText ? `♩=${score.tempo}  ${score.tempoText}` : `♩=${score.tempo}`;
@@ -896,7 +925,7 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 
   if (layout.subtitlePosition && score.subtitle) {
     ctx.fillStyle = theme.metaColor;
-    ctx.font = `${config.metaFontSize}px "Noto Sans", "STSong", serif`;
+    ctx.font = `${config.metaFontSize}px ${CHINESE_FONT_FAMILY}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(score.subtitle, layout.subtitlePosition.x, layout.subtitlePosition.y);
@@ -904,7 +933,7 @@ function drawMeta(ctx: CanvasRenderingContext2D, layout: ScoreLayout, score: { t
 
   if (layout.creditPositions) {
     ctx.fillStyle = theme.metaColor;
-    ctx.font = `${config.metaFontSize}px "Noto Sans", "STSong", serif`;
+    ctx.font = `${config.metaFontSize}px ${CHINESE_FONT_FAMILY}`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
     if (layout.creditPositions.lyricist && score.lyricist) {
@@ -1026,7 +1055,7 @@ export function render(
           } else {
             // fallback：非标准力度文字仍用文本渲染
             ctx.fillStyle = theme.symbolColor;
-            ctx.font = `bold ${config.techniqueFontSize}px "Noto Sans", serif`;
+            ctx.font = `bold ${config.techniqueFontSize}px ${CHINESE_FONT_FAMILY}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
             ctx.fillText(data.forceAccent, noteLayout.position.x + noteLayout.position.width / 2, noteLayout.position.y - 2);
@@ -1039,7 +1068,7 @@ export function render(
           const positions = noteLayout.lyricPositions || (noteLayout.lyricPosition ? [noteLayout.lyricPosition] : []);
           if (lyricLines.length > 0 && positions.length > 0) {
             ctx.fillStyle = theme.lyricColor;
-            ctx.font = `${config.lyricFontSize}px "Noto Sans", "STSong", "Songti SC", sans-serif`;
+            ctx.font = `${config.lyricFontSize}px ${CHINESE_FONT_FAMILY}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             const count = Math.min(lyricLines.length, positions.length);
@@ -1052,7 +1081,7 @@ export function render(
         // 力度标记 (pp/mp/mf/f/ff 等)，放在歌词下方
         if (isNoteType(data) && data.dynamic && noteLayout.dynamicPosition) {
           ctx.fillStyle = theme.symbolColor;
-          ctx.font = `bold italic ${config.lyricFontSize}px "Noto Sans", serif`;
+          ctx.font = `bold italic ${config.lyricFontSize}px ${NOTATION_FONT_FAMILY}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'top';
           ctx.fillText(data.dynamic, noteLayout.dynamicPosition.x + noteLayout.dynamicPosition.width / 2, noteLayout.dynamicPosition.y);

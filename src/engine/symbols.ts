@@ -232,7 +232,7 @@ const SYMBOLS: Record<number, SymbolDef> = {
   },
 };
 
-let path2DCache = new Map<number, Path2D>();
+const path2DCache = new Map<number, Path2D>();
 
 function getPath(num: number): Path2D | undefined {
   if (path2DCache.has(num)) return path2DCache.get(num);

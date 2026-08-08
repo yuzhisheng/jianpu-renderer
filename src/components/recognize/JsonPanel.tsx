@@ -1,16 +1,15 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import type { Score } from '../../types';
-import { calculateLayout, render, DEFAULT_THEME, setupCanvasDPI, DEFAULT_CONFIG } from '../../engine';
+import { calculateLayout, render, PRINT_THEME, setupCanvasDPI, PRINT_CONFIG } from '../../engine';
 import { Copy, Check, Download, FileJson } from 'lucide-react';
 
 interface JsonPanelProps {
   score: Score | null;
   isLoading: boolean;
   errorMessage?: string | null;
-  isDarkTheme: boolean;
 }
 
-export default function JsonPanel({ score, isLoading, errorMessage, isDarkTheme }: JsonPanelProps) {
+export default function JsonPanel({ score, isLoading, errorMessage }: JsonPanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const [showJson, setShowJson] = useState(false);
@@ -19,19 +18,18 @@ export default function JsonPanel({ score, isLoading, errorMessage, isDarkTheme 
   useEffect(() => {
     if (isLoading || !score || !canvasRef.current) return;
     try {
-      const config = { ...DEFAULT_CONFIG, canvasWidth: 900 };
-      const layout = calculateLayout(score as any, config as any);
+      const config = { ...PRINT_CONFIG };
+      const layout = calculateLayout(score, config);
       canvasRef.current.width = layout.width;
       canvasRef.current.height = layout.height;
       const ctx = setupCanvasDPI(canvasRef.current, layout.width, layout.height);
-      const theme = isDarkTheme ? DEFAULT_THEME : { ...DEFAULT_THEME, backgroundColor: '#ffffff', noteColor: '#000000', symbolColor: '#000000' };
-      render(ctx, layout, score as any, config as any, theme as any);
+      render(ctx, layout, score, config, PRINT_THEME);
     } catch (e) {
       console.error('渲染失败', e);
     }
   // The canvas is not mounted while loading. Include isLoading so the score is
   // rendered after the loading placeholder is replaced by the real canvas.
-  }, [score, isDarkTheme, isLoading]);
+  }, [score, isLoading]);
 
   const handleCopy = useCallback(async () => {
     if (!score) return;
@@ -52,7 +50,7 @@ export default function JsonPanel({ score, isLoading, errorMessage, isDarkTheme 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${(score as any).title || 'recognition-result'}.json`;
+    a.download = `${score.title || 'recognition-result'}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }, [score]);
@@ -65,7 +63,7 @@ export default function JsonPanel({ score, isLoading, errorMessage, isDarkTheme 
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${(score as any)?.title || 'recognition-result'}.png`;
+      a.download = `${score?.title || 'recognition-result'}.png`;
       a.click();
       URL.revokeObjectURL(url);
     });
