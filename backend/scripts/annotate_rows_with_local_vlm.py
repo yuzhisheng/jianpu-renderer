@@ -137,6 +137,13 @@ def parse_json(text: str):
                     else f"P{compact_pitch_dash.group(1)}")
                 normalized.extend("-" for _ in compact_pitch_dash.group(2))
                 continue
+            compact_pitch_run = re.fullmatch(r"P([0-7]{2,})", token)
+            if compact_pitch_run:
+                for digit in compact_pitch_run.group(1):
+                    normalized.append("R0" if digit == "0" else f"P{digit}")
+                value.setdefault("uncertainties", []).append(
+                    f"compacted P digit run split into pitches: {token}")
+                continue
             if token in {"R", "R)"}:
                 normalized.append("R0")
                 value.setdefault("uncertainties", []).append(
@@ -212,6 +219,24 @@ def parse_json(text: str):
                     f"P{joined_pitches.group(2)}",
                 ))
                 continue
+            decorated_run = re.fullmatch(r"[0-7i#bn.]{3,}", token)
+            if decorated_run and any(ch.isdigit() or ch == "i" for ch in token):
+                pending_accidental = None
+                for character in token:
+                    if character in "#bn":
+                        pending_accidental = character
+                        continue
+                    if character == ".":
+                        continue
+                    if character in "01234567i":
+                        digit = "1" if character == "i" else character
+                        normalized.append("R0" if digit == "0" else f"P{digit}")
+                        if pending_accidental and digit != "0":
+                            normalized.append(pending_accidental)
+                        pending_accidental = None
+                value.setdefault("uncertainties", []).append(
+                    f"decorated digit run split into pitches: {token}")
+                continue
             bracketed_pitch = re.fullmatch(r"\[([1-7])\]", token)
             if bracketed_pitch:
                 normalized.append(f"P{bracketed_pitch.group(1)}")
@@ -232,21 +257,29 @@ def parse_json(text: str):
             compound = token.split("-")
             if len(compound) > 1 and all(
                     part in {*map(str, range(8)), "X", "x", "?"}
+                    or (part and set(part) <= set("01234567"))
                     for part in compound):
                 for part in compound:
-                    if part == "0":
-                        normalized.append("R0")
-                    elif part in {"X", "x", "?"}:
-                        normalized.append("?")
-                        value.setdefault("uncertainties", []).append(
-                            f"non-pitched notehead preserved as ?: {part}")
-                    else:
-                        normalized.append(f"P{part}")
+                    symbols = part if len(part) > 1 and part.isdigit() else [part]
+                    for symbol in symbols:
+                        if symbol == "0":
+                            normalized.append("R0")
+                        elif symbol in {"X", "x", "?"}:
+                            normalized.append("?")
+                            value.setdefault("uncertainties", []).append(
+                                f"non-pitched notehead preserved as ?: {symbol}")
+                        else:
+                            normalized.append(f"P{symbol}")
                 continue
             if token in {"X", "x"}:
                 normalized.append("?")
                 value.setdefault("uncertainties", []).append(
                     f"non-pitched notehead preserved as ?: {token}")
+                continue
+            if re.fullmatch(r"[A-Z]+", token):
+                normalized.append("?")
+                value.setdefault("uncertainties", []).append(
+                    f"unrecognized uppercase glyph preserved as ?: {token}")
                 continue
             dotted_pitch = re.fullmatch(r"\.?([1-7])\.?", token)
             if dotted_pitch:
