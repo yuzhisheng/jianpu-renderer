@@ -334,7 +334,12 @@ class AccurateVLMRecognizer:
             if (3 <= width <= max_dot and 3 <= height <= max_dot
                     and 0.58 <= width / max(1, height) <= 1.65
                     and density >= 0.45
-                    and abs(center_y - baseline) <= max(24.0, note_height * 0.95)):
+                    # The upper repeat dot is often above the detected digit
+                    # baseline by slightly more than one glyph height on
+                    # dense scans.  Keep the x-side constraint narrow while
+                    # allowing that real vertical offset; otherwise B:|/B|:
+                    # collapses into an ordinary double bar.
+                    and abs(center_y - baseline) <= max(28.0, note_height * 1.25)):
                 dots.append((float(center_x), center_y))
         if not lines:
             return []

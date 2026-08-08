@@ -148,6 +148,18 @@ class AccurateRecognizerGeometryTests(unittest.TestCase):
         bars = self.recognizer._pixel_bars(image, [0, 0, 180, 110], 55, 28)
         self.assertEqual([token for token, _ in bars], ["B|:", "B:|"])
 
+    def test_pixel_repeat_keeps_high_colon_dot_on_dense_scan(self):
+        image = Image.new("RGB", (120, 110), "white")
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((70, 25, 72, 99), fill="black")
+        draw.rectangle((78, 25, 85, 99), fill="black")
+        # The upper dot is 24.6px above a baseline of 77.1px, a common
+        # scaled-scan offset for a 21.4px note glyph.
+        draw.rectangle((54, 49, 61, 56), fill="black")
+        draw.rectangle((54, 72, 61, 79), fill="black")
+        bars = self.recognizer._pixel_bars(image, [0, 0, 120, 110], 77.1, 21.4)
+        self.assertEqual([token for token, _ in bars], ["B:|"])
+
     def test_source_boxes_override_interpolated_note_positions(self):
         image = Image.new("RGB", (180, 110), "white")
         draw = ImageDraw.Draw(image)
